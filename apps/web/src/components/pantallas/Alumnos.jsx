@@ -296,6 +296,7 @@ export default function Alumnos() {
   const [cargando, setCargando] = useState(true);
   const [busqueda, setBusqueda] = useState('');
   const [profesor, setProfesor] = useState('');
+  const [profesores, setProfesores] = useState([]);
   const [vista, setVista] = useState('todos');
   const [fechaAgenda, setFechaAgenda] = useState(hoy);
   const [claseId, setClaseId] = useState('');
@@ -303,16 +304,33 @@ export default function Alumnos() {
   const { ocupado, aviso, setAviso, ejecutar } = useOperacion();
   const cargar = useCallback(async () => {
     setCargando(true);
+    setProfesores([]);
     try {
-      setAlumnos(
-        await leerRespuesta(await apiFetch('/alumnos'), 'No se pudieron cargar los alumnos.'),
-      );
+      const [datos, listaProfesores] = await Promise.all([
+        apiFetch('/alumnos', { cache: 'no-store' }).then((r) =>
+          leerRespuesta(r, 'No se pudieron cargar los alumnos.'),
+        ),
+        sesion?.perfil === 'administrador'
+          ? apiFetch('/profesores', { cache: 'no-store' }).then((r) =>
+              leerRespuesta(r, 'No se pudieron cargar los profesores registrados.'),
+            )
+          : Promise.resolve([]),
+      ]);
+      const actuales = [
+        ...new Set(
+          listaProfesores.filter((p) => p.estado === 'activo' && p.nombre).map((p) => p.nombre),
+        ),
+      ].sort();
+      setAlumnos(datos);
+      setProfesores(actuales);
+      setProfesor((seleccionado) => (actuales.includes(seleccionado) ? seleccionado : ''));
     } catch (error) {
+      setProfesor('');
       setAviso({ tipo: 'error', texto: error.message });
     } finally {
       setCargando(false);
     }
-  }, [setAviso]);
+  }, [sesion, setAviso]);
   useEffect(() => {
     if (sesion) cargar();
   }, [sesion, cargar]);
@@ -398,7 +416,7 @@ export default function Alumnos() {
             href="/cuentas"
             className="inline-flex min-h-11 items-center font-semibold text-dojo-700"
           >
-            Administrar cuentas y perfiles
+            Administrar profesores y alumnos
           </a>
         )}
         {!alumnoPropio && (
@@ -421,11 +439,9 @@ export default function Alumnos() {
               className={campo}
             >
               <option value="">Todos</option>
-              {[...new Set(alumnos.map((a) => a.clase?.profesor).filter(Boolean))]
-                .sort()
-                .map((p) => (
-                  <option key={p}>{p}</option>
-                ))}
+              {profesores.map((p) => (
+                <option key={p}>{p}</option>
+              ))}
             </select>
           </label>
         )}

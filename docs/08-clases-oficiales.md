@@ -30,4 +30,4 @@ Para grupos permanentes pueden dejarse vacías `fechaInicio`, `duracion` y `fech
 
 La retirada de los profesores de prueba se hará sobre los datos de la hoja por su responsable. Esta entrega **no elimina registros reales**. Conservar la fila de encabezados. Las cuentas vinculadas a un profesor eliminado dejarán de poder ingresar; no se reasignan automáticamente a un profesor nuevo.
 
-Crear el profesor oficial desde **Usuario → Cuentas y perfiles** permite guardar su nombre, contacto opcional y credenciales de acceso en un solo paso. Para que vea las clases oficiales, completar el mismo nombre en `Clases`. No es obligatorio usar correo ni teléfono como credencial.
+Crear el profesor oficial desde **Usuario → Profesores y alumnos** permite guardar su nombre, contacto opcional y credenciales de acceso en un solo paso. Para que vea las clases oficiales, completar el mismo nombre en `Clases`. No es obligatorio usar correo ni teléfono como credencial.

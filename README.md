@@ -299,4 +299,4 @@ Planes continuos de 4, 8 o 12 clases, renovaciones con saldo conservado, congela
 
 La creación de clases desde la app está deshabilitada. Se utilizan las filas de la pestaña `Clases` de Google Sheets; los horarios oficiales y los campos que faltan se completan allí. No se han cargado filas de demostración ni borrado profesores reales. [Preparar las clases oficiales](docs/08-clases-oficiales.md).
 
-Desde **Usuario → Cuentas y perfiles**, al elegir Profesor, se puede crear su registro y su cuenta en un solo paso. Nombre obligatorio; teléfono y correo opcionales (cualquier proveedor). Las columnas A–C de `Profesores` se conservan y se añaden D `telefono` y E `correo`.
+Desde **Usuario → Profesores y alumnos**, al elegir Profesor, se puede crear su registro y su cuenta en un solo paso. Nombre obligatorio; teléfono y correo opcionales (cualquier proveedor). Las columnas A–C de `Profesores` se conservan y se añaden D `telefono` y E `correo`.

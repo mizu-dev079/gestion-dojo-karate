@@ -5,8 +5,8 @@ Hay tres perfiles: **administrador, profesor y alumno**. El rol no se elige en e
 ## Activación
 
 1. El administrador continúa ingresando con `ADMIN_USUARIO` y `ADMIN_PASSWORD` configurados en el entorno. Las sesiones de ese administrador mantienen compatibilidad.
-2. Entrar a **Usuario → Cuentas y perfiles**. Aceptar primero las postulaciones de los alumnos que necesitarán una cuenta. Los profesores pueden crearse en el mismo formulario de cuenta.
-3. Para Profesor, elegir **Crear profesor nuevo y su cuenta**: nombre obligatorio, teléfono y correo opcionales. Se guardan juntos mediante una operación atómica de Google Sheets; no se deja uno creado sin el otro si el lote falla. Todos los profesores oficiales se crean desde cero junto con su cuenta; no se permite vincular registros existentes. Para Alumno, vincular sus inscripciones aceptadas/aprobadas. Si un alumno tiene varios grupos, seleccionar solo sus propias inscripciones.
+2. Entrar a **Usuario → Profesores y alumnos**, la pantalla única de registro y administración. Al abrirla se muestran dos tarjetas: Registrar profesor y Registrar alumno, seguidas de las listas de registros. Elegir la tarjeta correspondiente abre su formulario. Aceptar primero las postulaciones de los alumnos que necesitarán una cuenta. Los profesores pueden crearse en el mismo formulario de cuenta.
+3. Para Profesor, pulsar **Crear profesor y cuenta**: nombre obligatorio, teléfono y correo opcionales. Se guardan juntos mediante una operación atómica de Google Sheets; no se deja uno creado sin el otro si el lote falla. Todos los profesores oficiales se crean desde cero junto con su cuenta; no se permite vincular registros existentes. Para Alumno, vincular sus inscripciones aceptadas/aprobadas. Si un alumno tiene varios grupos, seleccionar solo sus propias inscripciones.
 4. Entregar usuario y contraseña inicial por un medio privado. El titular puede cambiar su contraseña desde **Usuario**. Las contraseñas requieren al menos 12 caracteres. No hay registro público ni contraseñas compartidas predeterminadas.
 5. Desactivar acceso o restablecer contraseña desde la cuenta. Ambas acciones invalidan sesiones existentes inmediatamente; el usuario debe volver a ingresar.
 
@@ -41,3 +41,5 @@ Las escrituras de cuentas, como el seguimiento, requieren una sola instancia de 
 No se han creado cuentas reales ni modificado datos privados durante las pruebas. Se verifican login por perfil, acceso a objetos ajenos, contraseñas, revocación de sesiones y denegación de rutas administrativas usando repositorios simulados.
 
 El contacto del profesor no se usa como usuario de acceso: no necesita teléfono ni correo para iniciar sesión. La lectura de Profesores admite registros anteriores de tres columnas; el alta combinada añade D `telefono` y E `correo` respetando A–C. Para que el profesor vea sus grupos, el nombre en la columna E de `Clases` debe coincidir con su nombre registrado.
+
+La ruta anterior `/profesores` redirige a `/cuentas`, que es la pantalla unificada **Profesores y alumnos**. En cada registro se administra su acceso y contraseña; en profesores también se conserva la activación/desactivación de su registro y la eliminación con confirmación. Los alumnos aceptados que todavía no tienen cuenta aparecen con Cuenta pendiente.

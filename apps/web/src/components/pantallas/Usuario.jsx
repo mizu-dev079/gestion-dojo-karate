@@ -156,13 +156,8 @@ export default function Usuario() {
           {[
             {
               href: '/cuentas',
-              titulo: 'Cuentas y perfiles',
-              texto: 'Acceso de profesores y alumnos.',
-            },
-            {
-              href: '/profesores',
-              titulo: 'Profesores',
-              texto: 'Registrar y administrar profesores.',
+              titulo: 'Profesores y alumnos',
+              texto: 'Registro, cuentas y acceso.',
             },
             {
               href: '/ajustes',

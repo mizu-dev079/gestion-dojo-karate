@@ -20,14 +20,14 @@ export default function Ajustes({ version }) {
           </details>
           <details className="py-2">
             <summary className="flex min-h-11 cursor-pointer items-center font-semibold text-gray-800">
-              Administrar profesores
+              Administrar profesores y alumnos
             </summary>
             <p className="pb-3 leading-6">
-              Desde Cuentas y perfiles puedes crear un profesor y su acceso al mismo tiempo, con
-              nombre obligatorio y teléfono y correo opcionales. En Profesores puedes activar,
-              desactivar o eliminar. Desactivar permite conservar el registro para usarlo después;
-              eliminar lo quita definitivamente de la lista. Las clases ya registradas conservan el
-              nombre del profesor.
+              Desde Usuario → Profesores y alumnos puedes crear un profesor y su acceso al mismo
+              tiempo, con nombre obligatorio y teléfono y correo opcionales. En la misma pantalla
+              puedes activar, desactivar o eliminar. Desactivar permite conservar el registro para
+              usarlo después; eliminar lo quita definitivamente de la lista. Las clases ya
+              registradas conservan el nombre del profesor.
             </p>
           </details>
           <details className="py-2">

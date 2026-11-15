@@ -9,9 +9,9 @@ Las rutas están en `apps/web/src/pages/`. El contenido interactivo de cada pant
 | Ruta antigua de alta | `/nueva-clase` → `/clases` | `nueva-clase.astro` | Redirección, sin formulario |
 | Postulaciones | `/postulaciones` | `postulaciones.astro` | `Postulaciones.jsx` |
 | Calendario | `/calendario` | `calendario.astro` | `Calendario.jsx` |
-| Cuentas y perfiles | `/cuentas` | `cuentas.astro` | `Cuentas.jsx` |
+| Profesores y alumnos | `/cuentas` | `cuentas.astro` | `Cuentas.jsx` |
 | Alumnos | `/alumnos` | `alumnos.astro` | `Alumnos.jsx` |
-| Profesores | `/profesores` | `profesores.astro` | `Profesores.jsx` |
+| Ruta anterior de profesores | `/profesores` → `/cuentas` | `profesores.astro` | Redirección |
 | Usuario | `/usuario` | `usuario.astro` | `Usuario.jsx` |
 | Ajustes | `/ajustes` | `ajustes.astro` | `Ajustes.jsx` |
 | Convocatoria desde el calendario | `/configurar-convocatoria` | `configurar-convocatoria.astro` | `ConfigurarConvocatoria.jsx` |
@@ -45,4 +45,4 @@ La dirección pública `/formulario?clase=ID` se conserva para que sigan funcion
 
 La API conserva la convención de NestJS por módulo: `apps/api/src/clases/`, `profesores/` y `auth/`. Dentro de cada módulo, los sufijos `.controller.ts`, `.service.ts`, `.module.ts`, `.dto.ts` y `.repository.ts` indican la función del archivo. Los tipos y estados comunes están en `packages/shared/src/`.
 
-La navegación inferior incluye **Alumnos**. La gestión de **Profesores** sigue disponible desde **Usuario → Profesores**. Consulta [planes y asistencia](06-alumnos-asistencia.md) para conocer los planes, recuperaciones y permisos.
+La navegación inferior incluye **Alumnos**. El registro y la gestión de ambos perfiles se unifican en **Usuario → Profesores y alumnos**. Consulta [planes y asistencia](06-alumnos-asistencia.md) para conocer los planes, recuperaciones y permisos.
