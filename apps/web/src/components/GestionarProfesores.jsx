@@ -88,7 +88,7 @@ export default function GestionarProfesores() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f9fb] text-gray-800">
+    <div className="min-h-screen bg-[var(--color-dojo-canvas)] text-gray-800">
       <header className="flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4">
         <div>
           <p className="text-[9px] font-semibold text-gray-400">ADMINISTRACIÓN</p>
@@ -120,13 +120,13 @@ export default function GestionarProfesores() {
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
             placeholder="Nombre del profesor"
-            className="mt-4 h-9 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-[9px] text-gray-700 outline-none focus:border-blue-500"
+            className="mt-4 h-9 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-[9px] text-gray-700 outline-none focus:border-dojo-500"
           />
 
           <button
             type="button"
             onClick={agregarProfesor}
-            className="mt-2 h-9 w-full rounded-xl bg-blue-500 text-[9px] font-semibold text-white hover:bg-blue-600"
+            className="mt-2 h-9 w-full rounded-xl bg-dojo-500 text-[9px] font-semibold text-white hover:bg-dojo-600"
           >
             Agregar profesor
           </button>

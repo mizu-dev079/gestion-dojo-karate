@@ -144,7 +144,7 @@ export default function CrearClase() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f9fb] text-gray-800">
+    <div className="min-h-screen bg-[var(--color-dojo-canvas)] text-gray-800">
       {/* ENCABEZADO */}
 
       <header className="flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4">
@@ -218,7 +218,7 @@ export default function CrearClase() {
               <button
                 type="button"
                 onClick={() => irA('/clases')}
-                className="h-9 w-full rounded-xl border border-blue-200 bg-white text-[9px] font-semibold text-blue-500 hover:bg-blue-50"
+                className="h-9 w-full rounded-xl border border-dojo-200 bg-white text-[9px] font-semibold text-dojo-500 hover:bg-dojo-50"
               >
                 Gestionar clases
               </button>
@@ -251,7 +251,7 @@ export default function CrearClase() {
                   value={fechaInicio}
                   min={obtenerFechaHoy()}
                   onChange={(e) => setFechaInicio(e.target.value)}
-                  className="block h-9 w-full min-w-0 rounded-xl border border-gray-200 bg-gray-50 px-3 text-[9px] text-gray-700 outline-none focus:border-blue-500"
+                  className="block h-9 w-full min-w-0 rounded-xl border border-gray-200 bg-gray-50 px-3 text-[9px] text-gray-700 outline-none focus:border-dojo-500"
                 />
               </div>
 
@@ -261,7 +261,7 @@ export default function CrearClase() {
                 <select
                   value={duracion}
                   onChange={(e) => setDuracion(e.target.value)}
-                  className="block h-9 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-[9px] text-gray-700 outline-none focus:border-blue-500"
+                  className="block h-9 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-[9px] text-gray-700 outline-none focus:border-dojo-500"
                 >
                   <option value="">Seleccionar</option>
 
@@ -295,7 +295,7 @@ export default function CrearClase() {
                   className={
                     'h-8 rounded-full border text-[8px] transition ' +
                     (sede === item
-                      ? 'border-blue-500 bg-blue-50 font-semibold text-blue-600'
+                      ? 'border-dojo-500 bg-dojo-50 font-semibold text-dojo-600'
                       : 'border-gray-200 bg-white text-gray-500')
                   }
                 >
@@ -319,7 +319,7 @@ export default function CrearClase() {
                   className={
                     'h-8 rounded-full border text-[8px] transition ' +
                     (nivel === item
-                      ? 'border-blue-500 bg-blue-50 font-semibold text-blue-600'
+                      ? 'border-dojo-500 bg-dojo-50 font-semibold text-dojo-600'
                       : 'border-gray-200 bg-white text-gray-500')
                   }
                 >
@@ -342,7 +342,7 @@ export default function CrearClase() {
                   type="time"
                   value={horaInicio}
                   onChange={(e) => setHoraInicio(e.target.value)}
-                  className="block h-9 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-[9px] text-gray-700 outline-none focus:border-blue-500"
+                  className="block h-9 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-[9px] text-gray-700 outline-none focus:border-dojo-500"
                 />
               </div>
 
@@ -353,7 +353,7 @@ export default function CrearClase() {
                   type="time"
                   value={horaFin}
                   onChange={(e) => setHoraFin(e.target.value)}
-                  className="block h-9 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-[9px] text-gray-700 outline-none focus:border-blue-500"
+                  className="block h-9 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-[9px] text-gray-700 outline-none focus:border-dojo-500"
                 />
               </div>
             </div>
@@ -376,7 +376,7 @@ export default function CrearClase() {
                   className={
                     'h-8 rounded-full border text-[8px] font-semibold transition ' +
                     (frecuencia.includes(dia)
-                      ? 'border-blue-500 bg-blue-50 text-blue-600'
+                      ? 'border-dojo-500 bg-dojo-50 text-dojo-600'
                       : 'border-gray-200 bg-white text-gray-400')
                   }
                 >
@@ -434,7 +434,7 @@ export default function CrearClase() {
                   className={
                     'h-8 rounded-full border text-[9px] font-semibold ' +
                     (tarifa === precio
-                      ? 'border-blue-500 bg-blue-50 text-blue-600'
+                      ? 'border-dojo-500 bg-dojo-50 text-dojo-600'
                       : 'border-gray-200 text-gray-500')
                   }
                 >
@@ -457,7 +457,7 @@ export default function CrearClase() {
               value={cupos}
               onChange={(e) => setCupos(e.target.value)}
               placeholder="Ej. 10"
-              className="h-9 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-[9px] text-gray-700 outline-none focus:border-blue-500"
+              className="h-9 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-[9px] text-gray-700 outline-none focus:border-dojo-500"
             />
           </div>
 
@@ -466,7 +466,7 @@ export default function CrearClase() {
           <button
             type="button"
             onClick={crearClase}
-            className="mt-5 h-9 w-full rounded-xl bg-blue-500 text-[9px] font-semibold text-white shadow-sm transition hover:bg-blue-600"
+            className="mt-5 h-9 w-full rounded-xl bg-dojo-500 text-[9px] font-semibold text-white shadow-sm transition hover:bg-dojo-600"
           >
             Aceptar y publicar ciclo
           </button>
@@ -489,7 +489,7 @@ export default function CrearClase() {
         <button
           type="button"
           onClick={() => irA('/')}
-          className="flex flex-col items-center gap-1 text-blue-500"
+          className="flex flex-col items-center gap-1 text-dojo-500"
         >
           <span className="text-base">🏠</span>
 
@@ -501,7 +501,7 @@ export default function CrearClase() {
         <button
           type="button"
           onClick={() => irA('/postulaciones')}
-          className="flex flex-col items-center gap-1 text-gray-400 hover:text-blue-500"
+          className="flex flex-col items-center gap-1 text-gray-400 hover:text-dojo-500"
         >
           <span className="text-base">🥋</span>
 
@@ -513,7 +513,7 @@ export default function CrearClase() {
         <button
           type="button"
           onClick={() => irA('/clases')}
-          className="flex flex-col items-center gap-1 text-gray-400 hover:text-blue-500"
+          className="flex flex-col items-center gap-1 text-gray-400 hover:text-dojo-500"
         >
           <span className="text-base">📅</span>
 
@@ -525,7 +525,7 @@ export default function CrearClase() {
         <button
           type="button"
           onClick={() => irA('/profesores')}
-          className="flex flex-col items-center gap-1 text-gray-400 hover:text-blue-500"
+          className="flex flex-col items-center gap-1 text-gray-400 hover:text-dojo-500"
         >
           <span className="text-base">👨‍🏫</span>
 
@@ -537,7 +537,7 @@ export default function CrearClase() {
         <button
           type="button"
           onClick={() => irA('/configurar-convocatoria')}
-          className="flex flex-col items-center gap-1 text-gray-400 hover:text-blue-500"
+          className="flex flex-col items-center gap-1 text-gray-400 hover:text-dojo-500"
         >
           <span className="text-base">⚙️</span>
 

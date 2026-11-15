@@ -329,7 +329,7 @@ export default function GestionarClases() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f9fb] text-gray-800">
+    <div className="min-h-screen bg-[var(--color-dojo-canvas)] text-gray-800">
       <header className="flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4">
         <div>
           <p className="text-[9px] font-semibold text-gray-400">ADMINISTRACIÓN</p>
@@ -350,9 +350,9 @@ export default function GestionarClases() {
 
       <main className="space-y-4 px-4 pb-10 pt-4">
         {editandoId !== null && (
-          <section className="relative z-10 rounded-2xl border-2 border-blue-100 bg-white p-4 shadow-sm">
+          <section className="relative z-10 rounded-2xl border-2 border-dojo-100 bg-white p-4 shadow-sm">
             <div className="mb-4">
-              <p className="text-[9px] font-semibold text-blue-500">EDITANDO CLASE</p>
+              <p className="text-[9px] font-semibold text-dojo-500">EDITANDO CLASE</p>
 
               <h2 className="mt-1 text-[13px] font-bold text-gray-900">
                 Modificar datos de la clase
@@ -552,7 +552,7 @@ export default function GestionarClases() {
                   <button
                     type="button"
                     onClick={aceptarEdicion}
-                    className="h-9 rounded-xl border border-blue-200 bg-white text-[9px] font-semibold text-blue-500 hover:bg-blue-50"
+                    className="h-9 rounded-xl border border-dojo-200 bg-white text-[9px] font-semibold text-dojo-500 hover:bg-dojo-50"
                   >
                     Aceptar
                   </button>
@@ -580,7 +580,7 @@ export default function GestionarClases() {
               </p>
             </div>
 
-            <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[8px] font-semibold text-blue-500">
+            <span className="rounded-full bg-dojo-50 px-2.5 py-1 text-[8px] font-semibold text-dojo-500">
               {clases.length} clases
             </span>
           </div>
@@ -694,7 +694,7 @@ export default function GestionarClases() {
                     <button
                       type="button"
                       onClick={() => iniciarEdicion(clase)}
-                      className="h-9 rounded-xl border border-blue-200 bg-white text-[9px] font-semibold text-blue-500 hover:bg-blue-50"
+                      className="h-9 rounded-xl border border-dojo-200 bg-white text-[9px] font-semibold text-dojo-500 hover:bg-dojo-50"
                     >
                       Editar clase
                     </button>

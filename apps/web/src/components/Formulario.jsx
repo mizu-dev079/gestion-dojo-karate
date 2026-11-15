@@ -198,9 +198,9 @@ export default function Formulario() {
             setEnviado(true);
           }}
           onChange={() => setEnviado(false)}
-          className="max-w-xl mx-auto min-h-screen bg-[#f3edf9] px-4 pb-6 mt-10 rounded-xl shadow-md"
+          className="max-w-xl mx-auto min-h-screen bg-[var(--color-dojo-canvas)] px-4 pb-6 mt-10 rounded-xl shadow-md"
         >
-          <div className="-mx-4 mb-4 bg-[#673ab7] px-5 py-4 text-white">
+          <div className="-mx-4 mb-4 bg-[var(--color-dojo-600)] px-5 py-4 text-white">
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -249,30 +249,32 @@ export default function Formulario() {
           )}
 
           <div className="mb-5 h-2 w-full rounded-full bg-white">
-            <div className="h-2 w-full rounded-full bg-[#673ab7]"></div>
+            <div className="h-2 w-full rounded-full bg-[var(--color-dojo-600)]"></div>
           </div>
 
           {claseFormulario && (
             <div className="mb-5 rounded-xl bg-white p-4">
               <div className="mb-4 flex items-center gap-2">
-                <span className="h-5 w-1 rounded-full bg-[#673ab7]"></span>
+                <span className="h-5 w-1 rounded-full bg-[var(--color-dojo-600)]"></span>
 
                 <h2 className="text-sm font-bold text-gray-800">Clase y horario asignado</h2>
               </div>
 
-              <div className="rounded-2xl bg-[#f3dff7] p-4">
-                <p className="text-sm font-bold text-[#542078]">
+              <div className="rounded-2xl bg-[var(--color-dojo-50)] p-4">
+                <p className="text-sm font-bold text-[var(--color-dojo-900)]">
                   {claseFormulario.nombre} — Sede {claseFormulario.sede}
                 </p>
 
-                <p className="mt-1 text-xs text-[#7b4b8f]">Prof. {claseFormulario.profesor}</p>
+                <p className="mt-1 text-xs text-[var(--color-dojo-800)]">
+                  Prof. {claseFormulario.profesor}
+                </p>
 
-                <p className="mt-1 text-xs text-[#7b4b8f]">
+                <p className="mt-1 text-xs text-[var(--color-dojo-800)]">
                   📅 {formatearDias(claseFormulario.frecuencia)}
                 </p>
               </div>
 
-              <div className="mt-3 rounded-2xl bg-[#f1f5f9] p-3">
+              <div className="mt-3 rounded-2xl bg-[var(--color-dojo-canvas)] p-3">
                 <p className="text-xs text-gray-600">
                   🔒 Horario: {claseFormulario.horaInicio} - {claseFormulario.horaFin}
                 </p>
@@ -291,13 +293,13 @@ export default function Formulario() {
 
           <div className="mb-5 rounded-xl bg-white p-4">
             <div className="mb-4 flex items-center gap-2">
-              <span className="h-5 w-1 rounded-full bg-[#673ab7]"></span>
+              <span className="h-5 w-1 rounded-full bg-[var(--color-dojo-600)]"></span>
 
               <h2 className="text-sm font-bold text-gray-800">Datos del postulante</h2>
             </div>
 
             <div className="mb-4">
-              <label className="block text-xs font-medium text-[#673ab7]">
+              <label className="block text-xs font-medium text-[var(--color-dojo-600)]">
                 Nombres y Apellidos completos *
                 <input
                   type="text"
@@ -305,13 +307,13 @@ export default function Formulario() {
                   required
                   disabled={!claseVigente}
                   placeholder="Ej. Mateo Javier Morales"
-                  className="mt-1 w-full rounded-lg border-0 bg-[#f8f6fc] p-3 text-sm outline-none focus:ring-2 focus:ring-[#673ab7]/30"
+                  className="mt-1 w-full rounded-lg border-0 bg-[var(--color-dojo-canvas)] p-3 text-sm outline-none focus:ring-2 focus:ring-[var(--color-dojo-600)]/30"
                 />
               </label>
             </div>
 
             <div className="mb-4">
-              <label className="block text-xs font-medium text-[#673ab7]">
+              <label className="block text-xs font-medium text-[var(--color-dojo-600)]">
                 Número de WhatsApp *
                 <input
                   type="tel"
@@ -322,13 +324,13 @@ export default function Formulario() {
                   value={telefono}
                   onChange={(e) => setTelefono(e.target.value.replace(/\D/g, '').slice(0, 9))}
                   placeholder="Ej. 999 888 111"
-                  className="mt-1 w-full rounded-lg border-0 bg-[#f8f6fc] p-3 text-sm outline-none focus:ring-2 focus:ring-[#673ab7]/30"
+                  className="mt-1 w-full rounded-lg border-0 bg-[var(--color-dojo-canvas)] p-3 text-sm outline-none focus:ring-2 focus:ring-[var(--color-dojo-600)]/30"
                 />
               </label>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-[#673ab7]">
+              <label className="block text-xs font-medium text-[var(--color-dojo-600)]">
                 Correo electrónico *
                 <input
                   type="email"
@@ -336,7 +338,7 @@ export default function Formulario() {
                   required
                   disabled={!claseVigente}
                   placeholder="correo@ejemplo.com"
-                  className="mt-1 w-full rounded-lg border-0 bg-[#f8f6fc] p-3 text-sm outline-none focus:ring-2 focus:ring-[#673ab7]/30"
+                  className="mt-1 w-full rounded-lg border-0 bg-[var(--color-dojo-canvas)] p-3 text-sm outline-none focus:ring-2 focus:ring-[var(--color-dojo-600)]/30"
                 />
               </label>
             </div>
@@ -344,12 +346,12 @@ export default function Formulario() {
 
           <div className="mb-5 rounded-xl bg-white p-4">
             <div className="mb-4 flex items-center gap-2">
-              <span className="h-5 w-1 rounded-full bg-[#673ab7]"></span>
+              <span className="h-5 w-1 rounded-full bg-[var(--color-dojo-600)]"></span>
 
               <h2 className="text-sm font-bold text-gray-800">Fecha de nacimiento</h2>
             </div>
 
-            <label className="block text-xs font-medium text-[#673ab7]">
+            <label className="block text-xs font-medium text-[var(--color-dojo-600)]">
               Fecha de nacimiento *
               <input
                 type="date"
@@ -360,7 +362,7 @@ export default function Formulario() {
                 onChange={(e) => setFechaNacimiento(e.target.value)}
                 min={fechaMinimaFormato}
                 max={hoy}
-                className="mt-1 w-full rounded-lg border-0 bg-[#f8f6fc] p-3 text-sm outline-none focus:ring-2 focus:ring-[#673ab7]/30"
+                className="mt-1 w-full rounded-lg border-0 bg-[var(--color-dojo-canvas)] p-3 text-sm outline-none focus:ring-2 focus:ring-[var(--color-dojo-600)]/30"
               />
             </label>
 
@@ -372,13 +374,13 @@ export default function Formulario() {
           {esMenor && (
             <div className="mb-5 rounded-xl bg-white p-4">
               <div className="mb-4 flex items-center gap-2">
-                <span className="h-5 w-1 rounded-full bg-[#673ab7]"></span>
+                <span className="h-5 w-1 rounded-full bg-[var(--color-dojo-600)]"></span>
 
                 <h2 className="text-sm font-bold text-gray-800">Datos del apoderado</h2>
               </div>
 
               <div className="mb-4">
-                <label className="block text-xs font-medium text-[#673ab7]">
+                <label className="block text-xs font-medium text-[var(--color-dojo-600)]">
                   Nombre completo del apoderado *
                   <input
                     type="text"
@@ -386,13 +388,13 @@ export default function Formulario() {
                     required
                     disabled={!claseVigente}
                     placeholder="Ej. Juan Carlos Morales"
-                    className="mt-1 w-full rounded-lg border-0 bg-[#f8f6fc] p-3 text-sm outline-none focus:ring-2 focus:ring-[#673ab7]/30"
+                    className="mt-1 w-full rounded-lg border-0 bg-[var(--color-dojo-canvas)] p-3 text-sm outline-none focus:ring-2 focus:ring-[var(--color-dojo-600)]/30"
                   />
                 </label>
               </div>
 
               <div className="mb-4">
-                <label className="block text-xs font-medium text-[#673ab7]">
+                <label className="block text-xs font-medium text-[var(--color-dojo-600)]">
                   Correo del apoderado *
                   <input
                     type="email"
@@ -400,13 +402,13 @@ export default function Formulario() {
                     required
                     disabled={!claseVigente}
                     placeholder="Ej. correo@ejemplo.com"
-                    className="mt-1 w-full rounded-lg border-0 bg-[#f8f6fc] p-3 text-sm outline-none focus:ring-2 focus:ring-[#673ab7]/30"
+                    className="mt-1 w-full rounded-lg border-0 bg-[var(--color-dojo-canvas)] p-3 text-sm outline-none focus:ring-2 focus:ring-[var(--color-dojo-600)]/30"
                   />
                 </label>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-[#673ab7]">
+                <label className="block text-xs font-medium text-[var(--color-dojo-600)]">
                   Teléfono del apoderado *
                   <input
                     type="tel"
@@ -419,7 +421,7 @@ export default function Formulario() {
                     onChange={(e) =>
                       setTelefonoApoderado(e.target.value.replace(/\D/g, '').slice(0, 9))
                     }
-                    className="mt-1 w-full rounded-lg border-0 bg-[#f8f6fc] p-3 text-sm outline-none focus:ring-2 focus:ring-[#673ab7]/30"
+                    className="mt-1 w-full rounded-lg border-0 bg-[var(--color-dojo-canvas)] p-3 text-sm outline-none focus:ring-2 focus:ring-[var(--color-dojo-600)]/30"
                   />
                 </label>
               </div>
@@ -432,7 +434,7 @@ export default function Formulario() {
             className={
               'w-full rounded-xl py-3 text-sm font-semibold text-white shadow-sm cursor-pointer transition ' +
               (claseVigente
-                ? 'bg-[#673ab7] hover:bg-[#5b2fa8] active:scale-[0.98]'
+                ? 'bg-[var(--color-dojo-600)] hover:bg-[var(--color-dojo-700)] active:scale-[0.98]'
                 : 'bg-gray-400 cursor-not-allowed')
             }
           >
@@ -440,8 +442,8 @@ export default function Formulario() {
           </button>
         </form>
       ) : (
-        <div className="min-h-screen bg-[#f3edf9] px-4 pb-6">
-          <div className="-mx-4 mb-6 bg-[#673ab7] px-5 py-4 text-white">
+        <div className="min-h-screen bg-[var(--color-dojo-canvas)] px-4 pb-6">
+          <div className="-mx-4 mb-6 bg-[var(--color-dojo-600)] px-5 py-4 text-white">
             <h1 className="text-base font-semibold">Postulación enviada</h1>
           </div>
 
@@ -458,24 +460,30 @@ export default function Formulario() {
               </p>
 
               {claseFormulario && (
-                <div className="mt-5 rounded-2xl bg-[#f3dff7] p-4 text-left">
-                  <p className="text-xs font-medium text-[#7b4b8f]">Clase seleccionada</p>
+                <div className="mt-5 rounded-2xl bg-[var(--color-dojo-50)] p-4 text-left">
+                  <p className="text-xs font-medium text-[var(--color-dojo-800)]">
+                    Clase seleccionada
+                  </p>
 
-                  <p className="mt-1 text-sm font-bold text-[#542078]">{claseFormulario.nombre}</p>
+                  <p className="mt-1 text-sm font-bold text-[var(--color-dojo-900)]">
+                    {claseFormulario.nombre}
+                  </p>
 
-                  <p className="mt-1 text-xs text-[#7b4b8f]">Sede {claseFormulario.sede}</p>
+                  <p className="mt-1 text-xs text-[var(--color-dojo-800)]">
+                    Sede {claseFormulario.sede}
+                  </p>
 
-                  <p className="mt-1 text-xs text-[#7b4b8f]">
+                  <p className="mt-1 text-xs text-[var(--color-dojo-800)]">
                     {formatearDias(claseFormulario.frecuencia)}
                   </p>
 
-                  <p className="mt-1 text-xs text-[#7b4b8f]">
+                  <p className="mt-1 text-xs text-[var(--color-dojo-800)]">
                     {claseFormulario.horaInicio} - {claseFormulario.horaFin}
                   </p>
                 </div>
               )}
 
-              <div className="mt-5 rounded-xl bg-[#f8f6fc] p-4 text-left">
+              <div className="mt-5 rounded-xl bg-[var(--color-dojo-canvas)] p-4 text-left">
                 <p className="text-sm font-semibold text-gray-800">¿Qué debes hacer ahora?</p>
 
                 <p className="mt-2 text-sm leading-6 text-gray-600">
@@ -483,8 +491,10 @@ export default function Formulario() {
                 </p>
               </div>
 
-              <div className="mt-5 rounded-xl border border-purple-100 bg-white p-4 text-left">
-                <p className="text-xs font-medium text-[#673ab7]">Estado de tu postulación</p>
+              <div className="mt-5 rounded-xl border border-dojo-100 bg-white p-4 text-left">
+                <p className="text-xs font-medium text-[var(--color-dojo-600)]">
+                  Estado de tu postulación
+                </p>
 
                 <div className="mt-2 flex items-center gap-2">
                   <span className="h-2.5 w-2.5 rounded-full bg-yellow-400"></span>

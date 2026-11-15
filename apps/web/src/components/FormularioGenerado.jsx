@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import QrFormulario from './QrFormulario';
 
 export default function FormularioGenerado() {
   const [clase, setClase] = useState(null);
@@ -32,7 +33,7 @@ export default function FormularioGenerado() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f5f3f8] px-4 py-6">
+    <main className="min-h-screen bg-[var(--color-dojo-canvas)] px-4 py-6">
       <div className="mx-auto max-w-md">
         <header className="mb-6 flex items-center gap-3">
           <button
@@ -63,8 +64,8 @@ export default function FormularioGenerado() {
             </p>
 
             {clase && (
-              <div className="mt-4 rounded-2xl bg-[#f4edff] px-4 py-3">
-                <p className="text-sm font-semibold text-[#673ab7]">
+              <div className="mt-4 rounded-2xl bg-[var(--color-dojo-50)] px-4 py-3">
+                <p className="text-sm font-semibold text-[var(--color-dojo-600)]">
                   {clase.nivel || clase.nombre || 'Clase'}
                 </p>
 
@@ -78,10 +79,10 @@ export default function FormularioGenerado() {
               url={enlace}
               nombreArchivo={'qr-clase-' + clase.id}
               tamano={160}
-              colorQr="#673ab7"
+              colorQr="#c62828"
               claseContenedor="mt-7 flex justify-center"
               claseMarco="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
-              claseBoton="mx-auto mt-4 block rounded-full border border-[#d9c5f5] bg-[#f8f3ff] px-4 py-2 text-[10px] font-semibold text-[#673ab7] transition hover:bg-[#f0e7ff]"
+              claseBoton="mx-auto mt-4 block rounded-full border border-[var(--color-dojo-200)] bg-[var(--color-dojo-50)] px-4 py-2 text-[10px] font-semibold text-[var(--color-dojo-600)] transition hover:bg-[var(--color-dojo-100)]"
               textoBoton="↓ Descargar QR"
             />
           )}
@@ -95,7 +96,7 @@ export default function FormularioGenerado() {
               <button
                 type="button"
                 onClick={copiarEnlace}
-                className="shrink-0 rounded-lg bg-white px-3 py-1.5 text-[10px] font-semibold text-[#673ab7] shadow-sm transition hover:bg-[#f8f3ff]"
+                className="shrink-0 rounded-lg bg-white px-3 py-1.5 text-[10px] font-semibold text-[var(--color-dojo-600)] shadow-sm transition hover:bg-[var(--color-dojo-50)]"
               >
                 {copiado ? '¡Copiado!' : 'Copiar'}
               </button>
@@ -115,7 +116,7 @@ export default function FormularioGenerado() {
             onClick={() => {
               window.location.href = '/formulario';
             }}
-            className="mt-3 h-11 w-full rounded-xl border border-[#673ab7] bg-white text-xs font-semibold text-[#673ab7] transition hover:bg-[#f8f3ff]"
+            className="mt-3 h-11 w-full rounded-xl border border-[var(--color-dojo-600)] bg-white text-xs font-semibold text-[var(--color-dojo-600)] transition hover:bg-[var(--color-dojo-50)]"
           >
             Ver vista previa del formulario
           </button>

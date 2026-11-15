@@ -1,4 +1,4 @@
-import { Calendar, ConfigProvider, List, Modal } from 'antd';
+import { Calendar, ConfigProvider, List, Modal, theme } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { apiFetch } from '../lib/api.js';
@@ -187,16 +187,16 @@ export default function Calendario() {
         className={
           'flex h-full min-h-13 flex-col items-center justify-center rounded-xl border border-gray-100 transition ' +
           (esSeleccionado
-            ? 'border-blue-500 bg-blue-500 text-white'
+            ? 'border-dojo-500 bg-dojo-500 text-white'
             : esHoy
-              ? 'border-blue-100 bg-blue-50'
+              ? 'border-dojo-100 bg-dojo-50'
               : 'border-gray-100')
         }
       >
         <span
           className={
             'text-[11px] font-medium ' +
-            (esSeleccionado ? 'text-white' : esHoy ? 'text-blue-600' : 'text-gray-700')
+            (esSeleccionado ? 'text-white' : esHoy ? 'text-dojo-600' : 'text-gray-700')
           }
         >
           {value.format('DD')}
@@ -279,50 +279,63 @@ export default function Calendario() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f9fb] pb-20 text-gray-800">
-      <header className="flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              window.location.href = '/';
-            }}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-gray-500"
-          >
-            ←
-          </button>
+    <ConfigProvider
+      locale={locale}
+      theme={{
+        algorithm: theme.defaultAlgorithm,
+        token: {
+          colorPrimary: '#c62828',
+          colorInfo: '#c62828',
+          colorText: '#171717',
+          colorBgContainer: '#ffffff',
+          colorBgElevated: '#ffffff',
+          colorPrimaryBg: '#fff1f0',
+        },
+      }}
+    >
+      <div className="min-h-screen bg-[var(--color-dojo-canvas)] pb-20 text-gray-800">
+        <header className="flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = '/';
+              }}
+              className="flex h-8 w-8 items-center justify-center rounded-full text-gray-500"
+            >
+              ←
+            </button>
 
-          <h1 className="text-sm font-bold text-gray-900">Calendario</h1>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className="relative flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500"
-          >
-            ♧
-            <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[7px] font-bold text-white">
-              3
-            </span>
-          </button>
-
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white">
-            AC
+            <h1 className="text-sm font-bold text-gray-900">Calendario</h1>
           </div>
-        </div>
-      </header>
 
-      <main className="mx-auto max-w-md space-y-4 px-4 pt-4">
-        <div>
-          <p className="text-[9px] font-semibold uppercase tracking-wide text-gray-400">
-            PROGRAMACIÓN
-          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="relative flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500"
+            >
+              ♧
+              <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[7px] font-bold text-white">
+                3
+              </span>
+            </button>
 
-          <h2 className="mt-1 text-lg font-bold text-gray-900">Calendario de clases</h2>
-        </div>
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-dojo-500 text-[10px] font-bold text-white">
+              AC
+            </div>
+          </div>
+        </header>
 
-        <section className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm">
-          <ConfigProvider locale={locale}>
+        <main className="mx-auto max-w-md space-y-4 px-4 pt-4">
+          <div>
+            <p className="text-[9px] font-semibold uppercase tracking-wide text-gray-400">
+              PROGRAMACIÓN
+            </p>
+
+            <h2 className="mt-1 text-lg font-bold text-gray-900">Calendario de clases</h2>
+          </div>
+
+          <section className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm">
             <Calendar
               fullCellRender={cellRender}
               onSelect={onSelect}
@@ -361,133 +374,134 @@ export default function Calendario() {
                 );
               }}
             />
-          </ConfigProvider>
-        </section>
+          </section>
 
-        <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[9px] font-semibold text-gray-400">CLASES PROGRAMADAS</p>
+          <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[9px] font-semibold text-gray-400">CLASES PROGRAMADAS</p>
 
-              <p className="mt-1 text-xs text-gray-600">Selecciona un día para ver sus clases.</p>
+                <p className="mt-1 text-xs text-gray-600">Selecciona un día para ver sus clases.</p>
+              </div>
+
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-50 text-sm">
+                ✓
+              </div>
             </div>
+          </section>
 
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-50 text-sm">
-              ✓
-            </div>
-          </div>
-        </section>
+          <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+            <p className="text-[9px] font-semibold text-gray-400">ACCIONES</p>
 
-        <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-          <p className="text-[9px] font-semibold text-gray-400">ACCIONES</p>
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = '/';
+              }}
+              className="mt-3 h-9 w-full rounded-xl bg-dojo-500 text-[9px] font-semibold text-white shadow-sm"
+            >
+              Crear nueva clase
+            </button>
+          </section>
+        </main>
 
+        <nav className="fixed bottom-0 left-0 right-0 mx-auto flex h-14 max-w-md items-center justify-around border-t border-gray-200 bg-white">
           <button
             type="button"
             onClick={() => {
               window.location.href = '/';
             }}
-            className="mt-3 h-9 w-full rounded-xl bg-blue-500 text-[9px] font-semibold text-white shadow-sm"
+            className="flex flex-col items-center gap-1 text-dojo-500"
           >
-            Crear nueva clase
+            <span className="text-sm">⌂</span>
+
+            <span className="text-[7px]">Inicio</span>
           </button>
-        </section>
-      </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 mx-auto flex h-14 max-w-md items-center justify-around border-t border-gray-200 bg-white">
-        <button
-          type="button"
-          onClick={() => {
-            window.location.href = '/';
-          }}
-          className="flex flex-col items-center gap-1 text-blue-500"
-        >
-          <span className="text-sm">⌂</span>
+          <button type="button" className="flex flex-col items-center gap-1 text-gray-400">
+            <span className="text-sm">♧</span>
 
-          <span className="text-[7px]">Inicio</span>
-        </button>
+            <span className="text-[7px]">Familias</span>
+          </button>
 
-        <button type="button" className="flex flex-col items-center gap-1 text-gray-400">
-          <span className="text-sm">♧</span>
+          <button type="button" className="flex flex-col items-center gap-1 text-gray-400">
+            <span className="text-sm">▤</span>
 
-          <span className="text-[7px]">Familias</span>
-        </button>
+            <span className="text-[7px]">Sedes</span>
+          </button>
 
-        <button type="button" className="flex flex-col items-center gap-1 text-gray-400">
-          <span className="text-sm">▤</span>
-
-          <span className="text-[7px]">Sedes</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            window.location.href = '/postulaciones';
-          }}
-          className="flex flex-col items-center gap-1 text-gray-400"
-        >
-          <span className="text-sm">▱</span>
-
-          <span className="text-[7px]">Atención</span>
-        </button>
-
-        <button type="button" className="flex flex-col items-center gap-1 text-gray-400">
-          <span className="text-sm">⚙</span>
-
-          <span className="text-[7px]">Ajustes</span>
-        </button>
-      </nav>
-
-      <Modal
-        title={
-          fechaSeleccionada ? 'Clases del ' + fechaSeleccionada.format('DD/MM/YYYY') : 'Clases'
-        }
-        open={modalVisible}
-        onCancel={() => setModalVisible(false)}
-        footer={null}
-      >
-        <List
-          dataSource={fechaSeleccionada ? obtenerClasesDelDia(fechaSeleccionada) : []}
-          renderItem={(clase) => (
-            <List.Item
-              onClick={() => {
-                setClaseSeleccionada(clase);
-              }}
-              style={{
-                cursor: 'pointer',
-
-                backgroundColor: claseSeleccionada?.id === clase.id ? '#eff6ff' : 'transparent',
-
-                borderRadius: '12px',
-
-                padding: '10px',
-              }}
-            >
-              <List.Item.Meta
-                title={<span className="font-semibold">Karate · {clase.nivel}</span>}
-                description={
-                  clase.horaInicio +
-                  ' - ' +
-                  clase.horaFin +
-                  ' · ' +
-                  clase.sede +
-                  ' · ' +
-                  clase.profesor
-                }
-              />
-            </List.Item>
-          )}
-        />
-
-        {claseSeleccionada && (
           <button
             type="button"
-            onClick={seleccionarConvocatoria}
-            className="mt-4 h-10 w-full cursor-pointer rounded-xl bg-blue-500 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-600 hover:shadow-md"
+            onClick={() => {
+              window.location.href = '/postulaciones';
+            }}
+            className="flex flex-col items-center gap-1 text-gray-400"
           >
-            Ver Convocatoria
+            <span className="text-sm">▱</span>
+
+            <span className="text-[7px]">Atención</span>
           </button>
-        )}
-      </Modal>
-    </div>
+
+          <button type="button" className="flex flex-col items-center gap-1 text-gray-400">
+            <span className="text-sm">⚙</span>
+
+            <span className="text-[7px]">Ajustes</span>
+          </button>
+        </nav>
+
+        <Modal
+          title={
+            fechaSeleccionada ? 'Clases del ' + fechaSeleccionada.format('DD/MM/YYYY') : 'Clases'
+          }
+          open={modalVisible}
+          onCancel={() => setModalVisible(false)}
+          footer={null}
+        >
+          <List
+            dataSource={fechaSeleccionada ? obtenerClasesDelDia(fechaSeleccionada) : []}
+            renderItem={(clase) => (
+              <List.Item
+                onClick={() => {
+                  setClaseSeleccionada(clase);
+                }}
+                style={{
+                  cursor: 'pointer',
+
+                  backgroundColor:
+                    claseSeleccionada?.id === clase.id ? 'var(--color-dojo-50)' : 'transparent',
+
+                  borderRadius: '12px',
+
+                  padding: '10px',
+                }}
+              >
+                <List.Item.Meta
+                  title={<span className="font-semibold">Karate · {clase.nivel}</span>}
+                  description={
+                    clase.horaInicio +
+                    ' - ' +
+                    clase.horaFin +
+                    ' · ' +
+                    clase.sede +
+                    ' · ' +
+                    clase.profesor
+                  }
+                />
+              </List.Item>
+            )}
+          />
+
+          {claseSeleccionada && (
+            <button
+              type="button"
+              onClick={seleccionarConvocatoria}
+              className="mt-4 h-10 w-full cursor-pointer rounded-xl bg-dojo-500 text-xs font-semibold text-white shadow-sm transition hover:bg-dojo-600 hover:shadow-md"
+            >
+              Ver Convocatoria
+            </button>
+          )}
+        </Modal>
+      </div>
+    </ConfigProvider>
   );
 }

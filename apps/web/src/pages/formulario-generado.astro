@@ -1,7 +1,19 @@
 ---
 import FormularioGenerado from "../components/FormularioGenerado.jsx";
 import ProtegerPagina from "../components/ProtegerPagina.astro";
+import "../styles/global.css";
 ---
 
-<ProtegerPagina />
-<FormularioGenerado client:load />
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#c62828" />
+    <title>Formulario generado | Shinken Dojo</title>
+    <ProtegerPagina />
+  </head>
+  <body class="bg-gray-100">
+    <FormularioGenerado client:load />
+  </body>
+</html>

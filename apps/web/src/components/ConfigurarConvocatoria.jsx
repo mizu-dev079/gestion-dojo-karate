@@ -42,7 +42,7 @@ export default function ConfigurarConvocatoria() {
 
   if (!clase) {
     return (
-      <div className="min-h-screen bg-[#f7f9fb] p-10 text-gray-800">
+      <div className="min-h-screen bg-[var(--color-dojo-canvas)] p-10 text-gray-800">
         <div className="text-center">
           <p className="text-sm font-semibold text-gray-700">No hay una clase seleccionada</p>
 
@@ -51,7 +51,7 @@ export default function ConfigurarConvocatoria() {
             onClick={() => {
               window.location.href = '/calendario';
             }}
-            className="mt-4 rounded-xl bg-purple-600 px-5 py-2 text-xs font-semibold text-white transition hover:bg-purple-700"
+            className="mt-4 rounded-xl bg-dojo-600 px-5 py-2 text-xs font-semibold text-white transition hover:bg-dojo-700"
           >
             Volver al calendario
           </button>
@@ -122,7 +122,7 @@ export default function ConfigurarConvocatoria() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f9fb] pb-8 text-gray-800">
+    <div className="min-h-screen bg-[var(--color-dojo-canvas)] pb-8 text-gray-800">
       {/* ENCABEZADO */}
 
       <header className="flex h-16 items-center gap-3 border-b border-gray-100 bg-white px-4">
@@ -146,7 +146,7 @@ export default function ConfigurarConvocatoria() {
 
         <section>
           <div className="mb-3 flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-600 text-xs font-bold text-white">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-dojo-600 text-xs font-bold text-white">
               1
             </span>
 
@@ -242,7 +242,7 @@ export default function ConfigurarConvocatoria() {
 
         <section>
           <div className="mb-4 flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-600 text-xs font-bold text-white">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-dojo-600 text-xs font-bold text-white">
               2
             </span>
 
@@ -257,7 +257,7 @@ export default function ConfigurarConvocatoria() {
                 onChange={(e) => {
                   setWhatsapp(e.target.checked);
                 }}
-                className="mt-0.5 h-4 w-4 cursor-pointer accent-purple-600"
+                className="mt-0.5 h-4 w-4 cursor-pointer accent-dojo-600"
               />
 
               <span className="text-[10px] leading-5 text-gray-600">
@@ -272,7 +272,7 @@ export default function ConfigurarConvocatoria() {
                 onChange={(e) => {
                   setCorreo(e.target.checked);
                 }}
-                className="mt-0.5 h-4 w-4 cursor-pointer accent-purple-600"
+                className="mt-0.5 h-4 w-4 cursor-pointer accent-dojo-600"
               />
 
               <span className="text-[10px] leading-5 text-gray-600">
@@ -288,7 +288,7 @@ export default function ConfigurarConvocatoria() {
           <button
             type="button"
             onClick={generarFormulario}
-            className="h-12 w-full rounded-xl bg-purple-600 text-sm font-bold text-white shadow-sm transition hover:bg-purple-700 hover:shadow-md"
+            className="h-12 w-full rounded-xl bg-dojo-600 text-sm font-bold text-white shadow-sm transition hover:bg-dojo-700 hover:shadow-md"
           >
             Generar formulario de convocatoria
           </button>
@@ -347,8 +347,8 @@ export default function ConfigurarConvocatoria() {
               url={enlace}
               nombreArchivo={'qr-clase-' + clase.id}
               tamano={128}
-              colorQr="#9333ea"
-              claseBoton="mx-auto mt-3 block rounded-full border border-purple-100 bg-purple-50 px-4 py-2 text-[8px] font-semibold text-purple-600"
+              colorQr="#c62828"
+              claseBoton="mx-auto mt-3 block rounded-full border border-dojo-100 bg-dojo-50 px-4 py-2 text-[8px] font-semibold text-dojo-600"
               textoBoton="↓ Descargar QR para impresión / redes"
             />
 
@@ -360,7 +360,7 @@ export default function ConfigurarConvocatoria() {
               <button
                 type="button"
                 onClick={copiarEnlace}
-                className="ml-2 shrink-0 text-[8px] font-semibold text-purple-600"
+                className="ml-2 shrink-0 text-[8px] font-semibold text-dojo-600"
               >
                 {copiado ? '¡Copiado!' : 'Copiar'}
               </button>
@@ -382,7 +382,7 @@ export default function ConfigurarConvocatoria() {
               onClick={() => {
                 window.location.href = '/formulario';
               }}
-              className="mt-2 h-10 w-full rounded-xl border border-purple-500 bg-white text-[9px] font-bold text-purple-600 transition hover:bg-purple-50"
+              className="mt-2 h-10 w-full rounded-xl border border-dojo-500 bg-white text-[9px] font-bold text-dojo-600 transition hover:bg-dojo-50"
             >
               Ver vista previa del formulario
             </button>
