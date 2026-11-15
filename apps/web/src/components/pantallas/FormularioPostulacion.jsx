@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { API_URL } from '../../lib/api.js';
 import IndicadorCupos from '../IndicadorCupos.jsx';
+import MarcaDojo from '../MarcaDojo.jsx';
 
 const fechaEnLima = () =>
   new Intl.DateTimeFormat('en-CA', {
@@ -169,7 +170,7 @@ export default function FormularioPostulacion() {
   return (
     <main className="formulario-postulacion mx-auto min-h-dvh w-full max-w-xl px-4 py-6 sm:py-10">
       <header className="mb-6">
-        <p className="text-sm font-semibold text-dojo-700">Hiroshi Shinken Dojo</p>
+        <MarcaDojo />
         <h1 className="mt-2 text-2xl font-bold text-gray-900">
           {enviado ? 'Postulación enviada' : 'Postula a tu clase'}
         </h1>

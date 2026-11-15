@@ -1,3 +1,4 @@
+import MarcaDojo from '../MarcaDojo.jsx';
 export default function Ajustes({ version }) {
   return (
     <main className="space-y-4 px-4 pb-6 pt-4">
@@ -62,7 +63,9 @@ export default function Ajustes({ version }) {
         <h2 id="acerca" className="scroll-mt-24 text-lg font-bold text-gray-900">
           Acerca del sistema
         </h2>
-        <p className="mt-3 font-semibold text-gray-800">Hiroshi Shinken Dojo</p>
+        <div className="mt-3">
+          <MarcaDojo />
+        </div>
         <p className="mt-1 text-sm text-gray-500">Versión {version}</p>
         <p className="mt-3 text-sm text-gray-600">
           Clases, profesores, convocatorias y postulaciones del dojo en un solo lugar.

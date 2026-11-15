@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { API_URL } from '../../lib/api.js';
+import MarcaDojo from '../MarcaDojo.jsx';
 
 // Solo se permite volver a rutas internas del sitio (evita redirecciones a otros dominios).
 function destinoSeguro(volver) {
@@ -48,7 +49,9 @@ export default function Login() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[var(--page-background)] px-4">
       <form onSubmit={entrar} className="w-full max-w-sm rounded-3xl bg-white p-7 shadow-sm">
-        <h1 className="text-center text-lg font-bold text-gray-900">Hiroshi Shinken Dojo</h1>
+        <h1 className="text-gray-900">
+          <MarcaDojo />
+        </h1>
         <p className="mt-1 text-center text-xs text-gray-500">Ingresa como administrador</p>
 
         <label className="mt-6 block text-xs font-semibold text-gray-700" htmlFor="usuario">
