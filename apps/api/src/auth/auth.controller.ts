@@ -4,7 +4,9 @@ import { Public } from '../common/decorators/public.decorator.js';
 import { env } from '../config/env.js';
 import { ACCESS_TOKEN_COOKIE } from './auth.constants.js';
 import { AuthService } from './auth.service.js';
+import { CuentasService } from './cuentas.service.js';
 import { LoginDto } from './dto/login.dto.js';
+import { Perfiles, type SolicitudAutenticada } from './sesion.js';
 
 function opcionesCookie(): CookieOptions {
   return {
@@ -17,9 +19,13 @@ function opcionesCookie(): CookieOptions {
   };
 }
 
+@Perfiles('administrador', 'profesor', 'alumno')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly cuentas: CuentasService,
+  ) {}
 
   /** POST /auth/login */
   @Public()
@@ -38,7 +44,7 @@ export class AuthController {
 
     response.cookie(ACCESS_TOKEN_COOKIE, token, opcionesCookie());
 
-    return { usuario: env.ADMIN_USUARIO };
+    return this.authService.verificar(token);
   }
 
   /** POST /auth/logout */
@@ -48,9 +54,20 @@ export class AuthController {
     response.clearCookie(ACCESS_TOKEN_COOKIE, { ...opcionesCookie(), maxAge: undefined });
   }
 
+  @Post('password')
+  async cambiarPassword(
+    @Req() request: SolicitudAutenticada,
+    @Body() datos: unknown,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    await this.cuentas.cambiarPassword(request.sesion, datos);
+    response.clearCookie(ACCESS_TOKEN_COOKIE, { ...opcionesCookie(), maxAge: undefined });
+    return { mensaje: 'Contraseña actualizada. Inicia sesión nuevamente.' };
+  }
+
   /** GET /auth/me: responde 200 si hay sesión (el guard responde 401 si no). */
   @Get('me')
-  me() {
-    return { usuario: env.ADMIN_USUARIO };
+  me(@Req() request: SolicitudAutenticada) {
+    return request.sesion;
   }
 }

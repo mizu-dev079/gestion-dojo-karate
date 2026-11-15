@@ -22,13 +22,21 @@
   };
 
   fetch(`${API_URL}/auth/me`, { credentials: "include", cache: "no-store" })
-    .then((respuesta) => {
-      if (respuesta.ok) {
-        mostrar();
-        return;
+    .then(async (respuesta) => {
+      if (!respuesta.ok) { irAlLogin(); return; }
+      const sesion = await respuesta.json();
+      if (!['administrador','profesor','alumno'].includes(sesion.perfil)) { irAlLogin(); return; }
+      const compartidas = ['/alumnos','/usuario','/ajustes'];
+      if (sesion.perfil !== 'administrador' && !compartidas.includes(window.location.pathname.replace(/\/$/, ''))) {
+        window.location.replace('/alumnos'); return;
       }
-
-      irAlLogin();
+      window.dojoSesion = sesion;
+      document.documentElement.dataset.perfil = sesion.perfil;
+      document.querySelectorAll('[data-solo-admin]').forEach((elemento) => { elemento.hidden = sesion.perfil !== 'administrador'; });
+      if (sesion.perfil !== 'administrador') document.querySelectorAll('a.app-back[href="/clases"]').forEach((a) => a.setAttribute('href','/alumnos'));
+      if (sesion.perfil === 'alumno') document.querySelectorAll('a[href="/alumnos"] .app-bottom-nav__label').forEach((elemento) => { elemento.textContent = 'Mi plan'; });
+      window.dispatchEvent(new Event('dojo:sesion'));
+      mostrar();
     })
     .catch(irAlLogin);
 </script>

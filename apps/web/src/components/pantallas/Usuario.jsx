@@ -3,8 +3,10 @@ import { apiFetch, leerRespuesta } from '../../lib/api.js';
 
 export default function Usuario() {
   const [usuario, setUsuario] = useState('');
+  const [perfil, setPerfil] = useState('');
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
+  const [cambiando, setCambiando] = useState(false);
   const cargar = useCallback(async () => {
     setCargando(true);
     setError('');
@@ -14,6 +16,7 @@ export default function Usuario() {
         'No se pudo consultar la cuenta. Intenta nuevamente.',
       );
       setUsuario(datos.usuario);
+      setPerfil(datos.perfil);
     } catch {
       setError('No se pudo consultar la cuenta. Comprueba tu conexión e intenta de nuevo.');
     } finally {
@@ -58,7 +61,13 @@ export default function Usuario() {
               usuario && (
                 <>
                   <h2 className="mt-1 break-all text-lg font-bold text-gray-900">{usuario}</h2>
-                  <p className="mt-1 text-sm text-gray-500">Administrador del dojo</p>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {perfil === 'administrador'
+                      ? 'Administrador del dojo'
+                      : perfil === 'profesor'
+                        ? 'Profesor'
+                        : 'Alumno'}
+                  </p>
                 </>
               )
             )}
@@ -78,10 +87,78 @@ export default function Usuario() {
           </div>
         )}
       </section>
+      {perfil && perfil !== 'administrador' && (
+        <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+          <h2 className="font-bold">Cambiar mi contraseña</h2>
+          <form
+            className="mt-3 space-y-3"
+            onSubmit={async (event) => {
+              event.preventDefault();
+              const f = new FormData(event.currentTarget);
+              setCambiando(true);
+              setError('');
+              try {
+                await leerRespuesta(
+                  await apiFetch('/auth/password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ actual: f.get('actual'), nueva: f.get('nueva') }),
+                  }),
+                  'No se pudo cambiar la contraseña.',
+                );
+                window.location.replace('/login?claveActualizada=1');
+              } catch (error) {
+                setError(error.message);
+              } finally {
+                setCambiando(false);
+              }
+            }}
+          >
+            <label className="block text-sm font-semibold">
+              Contraseña actual
+              <input
+                className="mt-1 w-full rounded-xl border border-gray-300 p-3"
+                type="password"
+                name="actual"
+                autoComplete="current-password"
+                required
+                maxLength={200}
+              />
+            </label>
+            <label className="block text-sm font-semibold">
+              Nueva contraseña
+              <input
+                className="mt-1 w-full rounded-xl border border-gray-300 p-3"
+                type="password"
+                name="nueva"
+                autoComplete="new-password"
+                required
+                minLength={12}
+                maxLength={200}
+              />
+            </label>
+            <p className="text-sm text-gray-600">
+              Usa al menos 12 caracteres. Al guardar, deberás volver a iniciar sesión.
+            </p>
+            <button
+              type="submit"
+              disabled={cambiando}
+              className="min-h-11 rounded-xl bg-dojo-600 px-4 text-white"
+            >
+              {cambiando ? 'Guardando…' : 'Cambiar contraseña'}
+            </button>
+          </form>
+        </section>
+      )}
       <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
         <h2 className="mb-3 text-base font-bold text-gray-900">Preferencias y ayuda</h2>
         <div className="divide-y divide-gray-100">
           {[
+            {
+              href: '/cuentas',
+              titulo: 'Cuentas y perfiles',
+              texto: 'Acceso de profesores y alumnos.',
+            },
             {
               href: '/profesores',
               titulo: 'Profesores',
@@ -102,32 +179,37 @@ export default function Usuario() {
               titulo: 'Acerca del sistema',
               texto: 'Información de la app y versión.',
             },
-          ].map((enlace) => (
-            <a
-              key={enlace.href}
-              href={enlace.href}
-              className="flex min-h-16 items-center justify-between gap-3 py-4"
-            >
-              <span>
-                <span className="block text-sm font-semibold text-gray-900">{enlace.titulo}</span>
-                <span className="mt-1 block text-sm text-gray-500">{enlace.texto}</span>
-              </span>
-              <svg
-                width="20"
-                height="20"
-                className="shrink-0 text-gray-400"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
+          ]
+            .filter(
+              (enlace) =>
+                perfil === 'administrador' || !['/profesores', '/cuentas'].includes(enlace.href),
+            )
+            .map((enlace) => (
+              <a
+                key={enlace.href}
+                href={enlace.href}
+                className="flex min-h-16 items-center justify-between gap-3 py-4"
               >
-                <path d="m9 5 7 7-7 7" />
-              </svg>
-            </a>
-          ))}
+                <span>
+                  <span className="block text-sm font-semibold text-gray-900">{enlace.titulo}</span>
+                  <span className="mt-1 block text-sm text-gray-500">{enlace.texto}</span>
+                </span>
+                <svg
+                  width="20"
+                  height="20"
+                  className="shrink-0 text-gray-400"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="m9 5 7 7-7 7" />
+                </svg>
+              </a>
+            ))}
         </div>
       </section>
     </div>

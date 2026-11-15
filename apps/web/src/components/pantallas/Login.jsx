@@ -3,7 +3,8 @@ import { API_URL } from '../../lib/api.js';
 import MarcaDojo from '../MarcaDojo.jsx';
 
 // Solo se permite volver a rutas internas del sitio (evita redirecciones a otros dominios).
-function destinoSeguro(volver) {
+function destinoSeguro(volver, perfil) {
+  if (perfil !== 'administrador') return '/alumnos';
   const valido = volver?.startsWith('/') && !volver.startsWith('//') && !volver.startsWith('/\\');
   return valido && volver !== '/' && !/^\/login(?:[?#]|$)/.test(volver) ? volver : '/clases';
 }
@@ -37,8 +38,9 @@ export default function Login() {
         return;
       }
 
+      const sesion = await respuesta.json();
       const volver = new URLSearchParams(window.location.search).get('volver');
-      window.location.href = destinoSeguro(volver);
+      window.location.href = destinoSeguro(volver, sesion.perfil);
     } catch {
       setError('No se pudo conectar con el servidor.');
     } finally {
@@ -52,7 +54,7 @@ export default function Login() {
         <h1 className="text-gray-900">
           <MarcaDojo />
         </h1>
-        <p className="mt-1 text-center text-xs text-gray-500">Ingresa como administrador</p>
+        <p className="mt-1 text-center text-xs text-gray-500">Ingresa con tu cuenta</p>
 
         <label className="mt-6 block text-xs font-semibold text-gray-700" htmlFor="usuario">
           Usuario

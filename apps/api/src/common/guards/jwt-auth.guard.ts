@@ -1,48 +1,47 @@
 import {
   type CanActivate,
   type ExecutionContext,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { JwtService } from '@nestjs/jwt';
-import type { Request } from 'express';
 import { ACCESS_TOKEN_COOKIE } from '../../auth/auth.constants.js';
+import { AuthService } from '../../auth/auth.service.js';
+import { PERFILES, type Perfil, type SolicitudAutenticada } from '../../auth/sesion.js';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator.js';
 
-/**
- * Guard global: todas las rutas exigen sesión de administrador,
- * salvo las marcadas con @Public().
- */
+/** Deniega por defecto: salvo permiso explícito, solo administración. */
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
-    private readonly jwtService: JwtService,
+    private readonly auth: AuthService,
   ) {}
-
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const esPublica = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+    if (
+      this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+        context.getHandler(),
+        context.getClass(),
+      ])
+    )
+      return true;
+    const request = context.switchToHttp().getRequest<SolicitudAutenticada>();
+    const token = request.cookies?.[ACCESS_TOKEN_COOKIE];
+    if (typeof token !== 'string') throw new UnauthorizedException('No has iniciado sesión');
+    try {
+      request.sesion = await this.auth.verificar(token);
+    } catch {
+      throw new UnauthorizedException(
+        'La sesión expiró o la cuenta cambió. Vuelve a iniciar sesión.',
+      );
+    }
+    const perfiles = this.reflector.getAllAndOverride<Perfil[]>(PERFILES, [
       context.getHandler(),
       context.getClass(),
-    ]);
-
-    if (esPublica) {
-      return true;
-    }
-
-    const request = context.switchToHttp().getRequest<Request>();
-    const token = request.cookies?.[ACCESS_TOKEN_COOKIE] as string | undefined;
-
-    if (!token) {
-      throw new UnauthorizedException('No has iniciado sesión');
-    }
-
-    try {
-      await this.jwtService.verifyAsync(token);
-      return true;
-    } catch {
-      throw new UnauthorizedException('La sesión expiró, vuelve a iniciar sesión');
-    }
+    ]) ?? ['administrador'];
+    if (!perfiles.includes(request.sesion.perfil))
+      throw new ForbiddenException('Tu perfil no tiene permiso para esta acción.');
+    return true;
   }
 }

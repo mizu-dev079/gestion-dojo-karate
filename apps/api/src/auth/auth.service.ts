@@ -2,6 +2,8 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { env } from '../config/env.js';
+import { CuentasService } from './cuentas.service.js';
+import type { Sesion } from './sesion.js';
 
 const MAX_INTENTOS = 5;
 const VENTANA_MS = 15 * 60 * 1000;
@@ -18,7 +20,10 @@ export class AuthService {
   // Intentos fallidos por IP. Vive en memoria: se reinicia si se reinicia la API.
   private readonly intentos = new Map<string, { cantidad: number; desde: number }>();
 
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly cuentas: CuentasService,
+  ) {}
 
   async login(usuario: string, password: string, ip: string): Promise<string> {
     this.verificarBloqueo(ip);
@@ -26,15 +31,28 @@ export class AuthService {
     const usuarioValido = iguales(usuario, env.ADMIN_USUARIO);
     const passwordValido = iguales(password, env.ADMIN_PASSWORD);
 
-    if (!usuarioValido || !passwordValido) {
+    if (usuarioValido && passwordValido) {
+      this.intentos.delete(ip);
+      return this.jwtService.signAsync({ sub: 'admin', usuario: env.ADMIN_USUARIO });
+    }
+    const cuenta = usuarioValido ? null : await this.cuentas.autenticar(usuario.trim(), password);
+    if (!cuenta) {
       this.registrarFallo(ip);
-      // Mismo mensaje en ambos casos para no revelar cuál dato falló.
       throw new UnauthorizedException('Usuario o contraseña incorrectos');
     }
-
+    await this.cuentas.sesion(cuenta.id, cuenta.revision);
     this.intentos.delete(ip);
+    return this.jwtService.signAsync({ sub: cuenta.id, revision: cuenta.revision });
+  }
 
-    return this.jwtService.signAsync({ sub: 'admin', usuario: env.ADMIN_USUARIO });
+  async verificar(token: string): Promise<Sesion> {
+    const datos = await this.jwtService.verifyAsync(token);
+    // Mantiene las sesiones del administrador ya configurado, sin confiar en un rol enviado por el cliente.
+    if (datos.sub === 'admin' && datos.usuario === env.ADMIN_USUARIO)
+      return { id: 'admin', usuario: env.ADMIN_USUARIO, perfil: 'administrador', alumnoIds: [] };
+    if (typeof datos.sub !== 'string' || !Number.isInteger(datos.revision))
+      throw new UnauthorizedException('Sesión inválida.');
+    return this.cuentas.sesion(datos.sub, datos.revision);
   }
 
   private verificarBloqueo(ip: string) {

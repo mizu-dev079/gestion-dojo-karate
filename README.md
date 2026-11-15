@@ -291,6 +291,6 @@ La configuración siguiente se encuentra sujeta a verificación en GitHub; su pr
 4. **Advanced Security**: habilitar secret scanning, push protection y CodeQL cuando estén disponibles para el repositorio.
 5. Habilitar la app **Renovate** si se desea automatizar la actualización de dependencias.
 
-## Alumnos y asistencia (primera etapa)
+## Alumnos, asistencia y perfiles
 
-Gestión de planes, pagos registrados, renovaciones con saldo conservado y congelamiento desde **Alumnos**. [Flujo, almacenamiento y reglas pendientes](docs/06-alumnos-asistencia.md). El acceso independiente de profesores y las reglas de recuperaciones quedan pendientes.
+Planes continuos de 4, 8 o 12 clases, renovaciones con saldo conservado, congelamiento y recuperaciones manuales desde **Alumnos**. [Flujo y reglas](docs/06-alumnos-asistencia.md). Acceso independiente de administrador, profesor y alumno; [crear cuentas y conocer los permisos](docs/07-cuentas-y-perfiles.md).

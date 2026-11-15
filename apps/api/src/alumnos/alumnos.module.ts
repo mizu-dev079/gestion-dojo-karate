@@ -2,46 +2,74 @@ import {
   BadRequestException,
   Body,
   Controller,
+  ForbiddenException,
   Get,
   Module,
   NotFoundException,
   Param,
   ParseIntPipe,
   Post,
+  Req,
 } from '@nestjs/common';
+import { Perfiles, type Sesion, type SolicitudAutenticada } from '../auth/sesion.js';
 import { ClasesRepository } from '../clases/repositories/clases.repository.js';
 import { PostulacionesRepository } from '../clases/repositories/postulaciones.repository.js';
+import { ProfesoresRepository } from '../profesores/repositories/profesores.repository.js';
 import { AlumnosRepository } from './alumnos.repository.js';
-import { aplicarComando, comandoSchema, resumir, vacio } from './seguimiento.js';
+import { aplicarComando, comandoSchema, hoyLima, resumir, vacio } from './seguimiento.js';
 
+@Perfiles('administrador', 'profesor', 'alumno')
 @Controller('alumnos')
 export class AlumnosController {
   constructor(
     private readonly alumnos: AlumnosRepository,
     private readonly postulaciones: PostulacionesRepository,
     private readonly clases: ClasesRepository,
+    private readonly profesores: ProfesoresRepository,
   ) {}
 
+  private async filtro(sesion: Sesion) {
+    if (sesion.perfil === 'administrador')
+      return (_id: number, _profesor: string | undefined) => true;
+    if (sesion.perfil === 'alumno')
+      return (id: number, _profesor: string | undefined) => sesion.alumnoIds.includes(id);
+    const todos = await this.profesores.obtenerTodos();
+    const p = todos.find((p) => p.id === sesion.profesorId && p.estado === 'activo');
+    return (_id: number, profesor: string | undefined) =>
+      !!p && todos.filter((item) => item.nombre === p.nombre).length === 1 && p.nombre === profesor;
+  }
+
   @Get()
-  async listar() {
+  async listar(@Req() request: SolicitudAutenticada) {
     const [postulaciones, estados, clases] = await Promise.all([
       this.postulaciones.obtenerTodas(),
       this.alumnos.obtenerTodos(),
       this.clases.obtenerTodas(),
     ]);
-    return postulaciones
-      .filter((p) => ['aceptado', 'aprobado'].includes(p.estado))
-      .map((p) => ({
-        id: p.id,
-        nombre: p.nombre,
-        claseId: p.claseId,
-        clase: clases.find((c) => c.id === p.claseId) ?? null,
-        seguimiento: resumir(estados.get(p.id) ?? vacio()),
-      }));
+    const puedeVer = await this.filtro(request.sesion);
+    const visibles = [];
+    for (const p of postulaciones.filter((item) =>
+      ['aceptado', 'aprobado'].includes(item.estado),
+    )) {
+      const clase = clases.find((c) => c.id === p.claseId) ?? null;
+      if (puedeVer(p.id, clase?.profesor))
+        visibles.push({
+          id: p.id,
+          nombre: p.nombre,
+          claseId: p.claseId,
+          clase,
+          seguimiento: resumir(estados.get(p.id) ?? vacio()),
+        });
+    }
+    return visibles;
   }
 
   @Post(':id')
-  async actualizar(@Param('id', ParseIntPipe) id: number, @Body() datos: unknown) {
+  async actualizar(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() datos: unknown,
+    @Req() request: SolicitudAutenticada,
+  ) {
     const resultado = comandoSchema.safeParse(datos);
     if (!resultado.success)
       throw new BadRequestException(resultado.error.issues.map((i) => i.message).join('. '));
@@ -51,13 +79,37 @@ export class AlumnosController {
     if (!postulacion) throw new NotFoundException('No se encontró un alumno aceptado.');
     const clase = (await this.clases.obtenerTodas()).find((c) => c.id === postulacion.claseId);
     if (!clase) throw new NotFoundException('La clase del alumno ya no existe.');
+    if (!(await this.filtro(request.sesion))(id, clase.profesor))
+      throw new ForbiddenException('No tienes acceso a este alumno.');
+    const comando = resultado.data;
+    if (
+      request.sesion.perfil === 'profesor' &&
+      ['iniciar', 'renovar', 'configurar'].includes(comando.accion)
+    )
+      throw new ForbiddenException('Los planes y pagos los registra administración.');
+    if (
+      request.sesion.perfil === 'alumno' &&
+      comando.accion !== 'solicitarCongelamiento' &&
+      comando.accion !== 'retirarAviso' &&
+      !(comando.accion === 'asistencia' && comando.estado === 'avisada')
+    )
+      throw new ForbiddenException('Solo puedes avisar ausencias o solicitar congelamiento.');
     return resumir(
-      await this.alumnos.actualizar(id, (s) => aplicarComando(s, resultado.data, clase.frecuencia)),
+      await this.alumnos.actualizar(id, (s) => {
+        if (request.sesion.perfil === 'alumno' && comando.accion === 'asistencia') {
+          const hoy = hoyLima();
+          if (comando.fecha < hoy || s.asistencias.some((a) => a.fecha === comando.fecha))
+            throw new ForbiddenException(
+              'No puedes cambiar asistencias registradas ni avisar una falta pasada.',
+            );
+        }
+        return aplicarComando(s, comando, clase.frecuencia, hoyLima(), request.sesion.usuario);
+      }),
     );
   }
 }
 @Module({
   controllers: [AlumnosController],
-  providers: [AlumnosRepository, PostulacionesRepository, ClasesRepository],
+  providers: [AlumnosRepository, PostulacionesRepository, ClasesRepository, ProfesoresRepository],
 })
 export class AlumnosModule {}

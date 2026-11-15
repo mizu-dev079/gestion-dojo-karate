@@ -9,6 +9,7 @@ Las rutas están en `apps/web/src/pages/`. El contenido interactivo de cada pant
 | Nueva clase | `/nueva-clase` | `nueva-clase.astro` | `NuevaClase.jsx` |
 | Postulaciones | `/postulaciones` | `postulaciones.astro` | `Postulaciones.jsx` |
 | Calendario | `/calendario` | `calendario.astro` | `Calendario.jsx` |
+| Cuentas y perfiles | `/cuentas` | `cuentas.astro` | `Cuentas.jsx` |
 | Alumnos | `/alumnos` | `alumnos.astro` | `Alumnos.jsx` |
 | Profesores | `/profesores` | `profesores.astro` | `Profesores.jsx` |
 | Usuario | `/usuario` | `usuario.astro` | `Usuario.jsx` |
@@ -44,4 +45,4 @@ La dirección pública `/formulario?clase=ID` se conserva para que sigan funcion
 
 La API conserva la convención de NestJS por módulo: `apps/api/src/clases/`, `profesores/` y `auth/`. Dentro de cada módulo, los sufijos `.controller.ts`, `.service.ts`, `.module.ts`, `.dto.ts` y `.repository.ts` indican la función del archivo. Los tipos y estados comunes están en `packages/shared/src/`.
 
-La navegación inferior incluye **Alumnos**. La gestión de **Profesores** sigue disponible desde **Usuario → Profesores**. Consulta [planes y asistencia](06-alumnos-asistencia.md) para conocer la primera etapa y las reglas pendientes.
+La navegación inferior incluye **Alumnos**. La gestión de **Profesores** sigue disponible desde **Usuario → Profesores**. Consulta [planes y asistencia](06-alumnos-asistencia.md) para conocer los planes, recuperaciones y permisos.

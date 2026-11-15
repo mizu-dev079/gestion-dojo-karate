@@ -39,7 +39,7 @@ describe('Regla de horarios (HTTP, repositorio simulado)', () => {
     app = modulo.createNestApplication();
     app.use(cookieParser());
     await app.init();
-    cookie = `${ACCESS_TOKEN_COOKIE}=${app.get(JwtService).sign({ sub: 'admin' })}`;
+    cookie = `${ACCESS_TOKEN_COOKIE}=${app.get(JwtService).sign({ sub: 'admin', usuario: 'admin' })}`;
   });
   afterEach(async () => {
     await app?.close();

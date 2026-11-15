@@ -12,7 +12,7 @@ const enlaces = [
 <nav class="app-bottom-nav" aria-label="Navegación principal">
   <div class="app-bottom-nav__items">
     {enlaces.map((enlace) => (
-      <a href={enlace.href} class="app-bottom-nav__link" aria-current={active === enlace.id ? 'page' : undefined}>
+      <a data-solo-admin={['inicio', 'postulaciones', 'calendario'].includes(enlace.id) || undefined} href={enlace.href} class="app-bottom-nav__link" aria-current={active === enlace.id ? 'page' : undefined}>
         <span class="app-bottom-nav__icon">
           <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             {enlace.paths.map((d) => <path d={d} />)}
