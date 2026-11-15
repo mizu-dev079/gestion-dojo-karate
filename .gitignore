@@ -31,3 +31,16 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
+
+# Material personal de preparación de reuniones
+/docs/entrega/apoyo/
+Guion-de-puesta-en-marcha.*
+Archivos-de-apoyo-para-la-reunion.zip
+
+# Documentación de entrega y portafolio conservada fuera del proyecto
+/docs/entrega/
+/docs/portafolio/
+/scripts/generar-documentos-entrega.py
+
+# Transferencias temporales fuera del código de la aplicación
+/descarga-temporal/

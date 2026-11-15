@@ -1,17 +1,18 @@
 ---
-import Formulario from "../components/Formulario";
+import InicializarTema from "../components/InicializarTema.astro";
+import FormularioPostulacion from "../components/pantallas/FormularioPostulacion.jsx";
 import "../styles/global.css";
 ---
 
 <html lang="es">
     <head>
-    <meta name="color-scheme" content="light" />
-    <meta name="theme-color" content="#c62828" />
         <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale-1" />
-        <title>Formulario de clase de prueba</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#ffffff" />
+    <InicializarTema />
+    <title>Postulación a clase | Mi Dojo</title>
     </head>
     <body class="bg-gray-100">
-        <Formulario client:load/>
+        <FormularioPostulacion client:load/>
     </body>
 </html>

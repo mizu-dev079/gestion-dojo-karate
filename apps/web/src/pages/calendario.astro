@@ -1,20 +1,7 @@
 ---
-import Calendario from "../components/Calendario";
-import "../styles/global.css";
-import ProtegerPagina from "../components/ProtegerPagina.astro";
+import LayoutAdministracion from "../layouts/LayoutAdministracion.astro";
+import Calendario from "../components/pantallas/Calendario.jsx";
 ---
-
-<html lang="es">
-  <head>
-    <meta name="color-scheme" content="light" />
-    <meta name="theme-color" content="#c62828" />
-    <ProtegerPagina />
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Calendario</title>
-  </head>
-
-  <body class="bg-gray-100">
-    <Calendario client:load />
-  </body>
-</html>
+<LayoutAdministracion title="Calendario" active="calendario" backHref="/clases">
+  <Calendario client:load />
+</LayoutAdministracion>

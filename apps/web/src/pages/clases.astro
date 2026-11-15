@@ -1,20 +1,7 @@
 ---
-import GestionarClases from "../components/GestionarClases";
-import "../styles/global.css";
-import ProtegerPagina from "../components/ProtegerPagina.astro";
+import LayoutAdministracion from "../layouts/LayoutAdministracion.astro";
+import Clases from "../components/pantallas/Clases.jsx";
 ---
-
-<html lang="es">
-  <head>
-    <meta name="color-scheme" content="light" />
-    <meta name="theme-color" content="#c62828" />
-    <ProtegerPagina />
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Clases</title>
-  </head>
-
-  <body class="bg-gray-100">
-    <GestionarClases client:load />
-  </body>
-</html>
+<LayoutAdministracion title="Clases" active="inicio">
+  <Clases client:load />
+</LayoutAdministracion>

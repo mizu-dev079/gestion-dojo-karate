@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { API_URL } from '../lib/api.js';
+import { API_URL } from '../../lib/api.js';
 
 // Solo se permite volver a rutas internas del sitio (evita redirecciones a otros dominios).
 function destinoSeguro(volver) {
   const valido = volver?.startsWith('/') && !volver.startsWith('//') && !volver.startsWith('/\\');
-  return valido ? volver : '/';
+  return valido && volver !== '/' && !/^\/login(?:[?#]|$)/.test(volver) ? volver : '/clases';
 }
 
 export default function Login() {
@@ -46,9 +46,9 @@ export default function Login() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[var(--color-dojo-canvas)] px-4">
+    <main className="flex min-h-screen items-center justify-center bg-[#f5f3f8] px-4">
       <form onSubmit={entrar} className="w-full max-w-sm rounded-3xl bg-white p-7 shadow-sm">
-        <h1 className="text-center text-lg font-bold text-gray-900">Dojo Karate</h1>
+        <h1 className="text-center text-lg font-bold text-gray-900">Mi Dojo</h1>
         <p className="mt-1 text-center text-xs text-gray-500">Ingresa como administrador</p>
 
         <label className="mt-6 block text-xs font-semibold text-gray-700" htmlFor="usuario">
@@ -60,7 +60,7 @@ export default function Login() {
           onChange={(e) => setUsuario(e.target.value)}
           autoComplete="username"
           required
-          className="mt-1 h-10 w-full rounded-xl border border-gray-200 px-3 text-sm outline-none focus:border-dojo-500"
+          className="mt-1 h-10 w-full rounded-xl border border-gray-200 px-3 text-sm outline-none focus:border-purple-500"
         />
 
         <label className="mt-4 block text-xs font-semibold text-gray-700" htmlFor="password">
@@ -73,7 +73,7 @@ export default function Login() {
           onChange={(e) => setPassword(e.target.value)}
           autoComplete="current-password"
           required
-          className="mt-1 h-10 w-full rounded-xl border border-gray-200 px-3 text-sm outline-none focus:border-dojo-500"
+          className="mt-1 h-10 w-full rounded-xl border border-gray-200 px-3 text-sm outline-none focus:border-purple-500"
         />
 
         {error && <p className="mt-4 text-xs font-semibold text-red-600">{error}</p>}
@@ -81,7 +81,7 @@ export default function Login() {
         <button
           type="submit"
           disabled={cargando}
-          className="mt-6 h-11 w-full rounded-xl bg-dojo-600 text-sm font-semibold text-white transition hover:bg-dojo-700 disabled:opacity-60"
+          className="mt-6 h-11 w-full rounded-xl bg-purple-600 text-sm font-semibold text-white transition hover:bg-purple-700 disabled:opacity-60"
         >
           {cargando ? 'Entrando...' : 'Entrar'}
         </button>
