@@ -83,6 +83,11 @@ export default function Usuario() {
         <div className="divide-y divide-gray-100">
           {[
             {
+              href: '/profesores',
+              titulo: 'Profesores',
+              texto: 'Registrar y administrar profesores.',
+            },
+            {
               href: '/ajustes',
               titulo: 'Ajustes',
               texto: 'Guía rápida e información del sistema.',

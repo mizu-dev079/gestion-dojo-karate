@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import { AlumnosModule } from './alumnos/alumnos.module.js';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { AuthModule } from './auth/auth.module.js';
@@ -8,7 +9,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
 import { ProfesoresModule } from './profesores/profesores.module.js';
 
 @Module({
-  imports: [AuthModule, ClasesModule, ProfesoresModule],
+  imports: [AuthModule, ClasesModule, ProfesoresModule, AlumnosModule],
   controllers: [AppController],
   providers: [
     AppService,

@@ -290,3 +290,7 @@ La configuración siguiente se encuentra sujeta a verificación en GitHub; su pr
 3. **General > Pull Requests**: habilitar *Allow squash merging* para `feature` → `develop` y *Allow merge commits* para `release` y `hotfix` → `main`, de acuerdo con la guía de Gitflow.
 4. **Advanced Security**: habilitar secret scanning, push protection y CodeQL cuando estén disponibles para el repositorio.
 5. Habilitar la app **Renovate** si se desea automatizar la actualización de dependencias.
+
+## Alumnos y asistencia (primera etapa)
+
+Gestión de planes, pagos registrados, renovaciones con saldo conservado y congelamiento desde **Alumnos**. [Flujo, almacenamiento y reglas pendientes](docs/06-alumnos-asistencia.md). El acceso independiente de profesores y las reglas de recuperaciones quedan pendientes.
