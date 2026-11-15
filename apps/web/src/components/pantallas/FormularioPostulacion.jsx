@@ -169,7 +169,7 @@ export default function FormularioPostulacion() {
   return (
     <main className="formulario-postulacion mx-auto min-h-dvh w-full max-w-xl px-4 py-6 sm:py-10">
       <header className="mb-6">
-        <p className="text-sm font-semibold text-dojo-700">Mi Dojo</p>
+        <p className="text-sm font-semibold text-dojo-700">Hiroshi Shinken Dojo</p>
         <h1 className="mt-2 text-2xl font-bold text-gray-900">
           {enviado ? 'Postulación enviada' : 'Postula a tu clase'}
         </h1>

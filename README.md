@@ -1,8 +1,8 @@
-# Gestión Dojo Karate
+# Hiroshi Shinken Dojo
 
 Sistema web adaptable a celulares para gestionar un dojo de karate: crear y administrar **clases**, registrar **profesores**, compartir **convocatorias** y recibir **postulaciones** de alumnos con control de cupos.
 
-El nombre provisional que aparece en la aplicación es **Mi Dojo**. El nombre definitivo y la identidad visual quedan a elección del cliente. Actualmente existe una **versión funcional en desarrollo para demostración local**; la publicación en internet y la aceptación de entrega deben validarse por separado.
+El nombre de la aplicación es **Hiroshi Shinken Dojo**. La identidad visual usa blanco, negro y rojo. Actualmente existe una **versión funcional en desarrollo para demostración local**; la publicación en internet y la aceptación de entrega deben validarse por separado.
 
 Es un **monorepo**: un solo repositorio con varios proyectos que se administran con **pnpm workspaces + Turborepo**.
 
