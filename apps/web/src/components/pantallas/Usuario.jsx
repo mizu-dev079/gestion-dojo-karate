@@ -31,7 +31,7 @@ export default function Usuario() {
       >
         <div className="flex items-center gap-3">
           <span
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-700"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-dojo-50 text-dojo-700"
             aria-hidden="true"
           >
             <svg
@@ -82,7 +82,11 @@ export default function Usuario() {
         <h2 className="mb-3 text-base font-bold text-gray-900">Preferencias y ayuda</h2>
         <div className="divide-y divide-gray-100">
           {[
-            { href: '/ajustes', titulo: 'Ajustes', texto: 'Tema claro, oscuro o automático.' },
+            {
+              href: '/ajustes',
+              titulo: 'Ajustes',
+              texto: 'Guía rápida e información del sistema.',
+            },
             {
               href: '/ajustes#guia',
               titulo: 'Guía rápida',

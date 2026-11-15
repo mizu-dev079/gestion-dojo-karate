@@ -121,7 +121,7 @@ export default function QrFormulario({
             href={imagenActual.src}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-3 flex min-h-11 items-center justify-center font-semibold text-blue-700"
+            className="mt-3 flex min-h-11 items-center justify-center font-semibold text-dojo-700"
           >
             Abrir imagen del QR
           </a>

@@ -1,7 +1,6 @@
 import { Calendar, ConfigProvider, List, Modal, theme as temaAnt } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
-import { useTema } from '../../hooks/useTema.js';
 import { apiFetch } from '../../lib/api.js';
 import Mensaje from '../Mensaje.jsx';
 import 'dayjs/locale/es';
@@ -10,7 +9,6 @@ import locale from 'antd/locale/es_ES';
 dayjs.locale('es');
 
 export default function Calendario() {
-  const { oscuro } = useTema();
   const [aviso, setAviso] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [clases, setClases] = useState([]);
@@ -254,20 +252,20 @@ export default function Calendario() {
     <ConfigProvider
       locale={locale}
       theme={{
-        algorithm: oscuro ? temaAnt.darkAlgorithm : temaAnt.defaultAlgorithm,
+        algorithm: temaAnt.defaultAlgorithm,
         token: {
-          colorBgContainer: oscuro ? '#151f2e' : '#ffffff',
-          colorBgElevated: oscuro ? '#151f2e' : '#ffffff',
-          colorText: oscuro ? '#eef2f7' : '#172033',
-          colorTextSecondary: oscuro ? '#cbd5e1' : '#334155',
-          colorTextTertiary: oscuro ? '#a1b1c6' : '#64748b',
-          colorBorder: oscuro ? '#475569' : '#cbd5e1',
-          colorBorderSecondary: oscuro ? '#334155' : '#e2e8f0',
-          colorPrimary: oscuro ? '#93c5fd' : '#2563eb',
+          colorBgContainer: '#ffffff',
+          colorBgElevated: '#ffffff',
+          colorText: '#171717',
+          colorTextSecondary: '#404040',
+          colorTextTertiary: '#666666',
+          colorBorder: '#d4d4d4',
+          colorBorderSecondary: '#e5e5e5',
+          colorPrimary: '#c62828',
         },
       }}
     >
-      <div className="dojo-calendar min-h-0 bg-[#f7f9fb] pb-6 text-gray-800">
+      <div className="dojo-calendar min-h-0 bg-[var(--page-background)] pb-6 text-gray-800">
         <main className="mx-auto max-w-full space-y-4 px-4 pt-4" aria-busy={cargando}>
           <Mensaje aviso={aviso} />
           {cargando && (
@@ -348,7 +346,7 @@ export default function Calendario() {
               onClick={() => {
                 window.location.href = '/clases';
               }}
-              className="mt-3 h-9 w-full rounded-xl bg-blue-600 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+              className="mt-3 h-9 w-full rounded-xl bg-dojo-600 text-sm font-semibold text-white shadow-sm hover:bg-dojo-700"
             >
               Ver clases
             </button>
@@ -405,7 +403,7 @@ export default function Calendario() {
             <button
               type="button"
               onClick={seleccionarConvocatoria}
-              className="mt-4 h-10 w-full cursor-pointer rounded-xl bg-blue-600 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md"
+              className="mt-4 h-10 w-full cursor-pointer rounded-xl bg-dojo-600 text-xs font-semibold text-white shadow-sm transition hover:bg-dojo-700 hover:shadow-md"
             >
               Ver Convocatoria
             </button>

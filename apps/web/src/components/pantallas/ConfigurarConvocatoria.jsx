@@ -44,7 +44,7 @@ export default function ConfigurarConvocatoria() {
 
   if (!clase) {
     return (
-      <div className="min-h-0 bg-[#f7f9fb] p-10 text-gray-800">
+      <div className="min-h-0 bg-[var(--page-background)] p-10 text-gray-800">
         <div className="text-center">
           <p className="text-sm font-semibold text-gray-700">No hay una clase seleccionada</p>
 
@@ -53,7 +53,7 @@ export default function ConfigurarConvocatoria() {
             onClick={() => {
               window.location.href = '/calendario';
             }}
-            className="mt-4 rounded-xl bg-purple-600 px-5 py-2 text-xs font-semibold text-white transition hover:bg-purple-700"
+            className="mt-4 rounded-xl bg-dojo-600 px-5 py-2 text-xs font-semibold text-white transition hover:bg-dojo-700"
           >
             Volver al calendario
           </button>
@@ -106,7 +106,7 @@ export default function ConfigurarConvocatoria() {
   };
 
   return (
-    <div className="min-h-0 bg-[#f7f9fb] pb-8 text-gray-800">
+    <div className="min-h-0 bg-[var(--page-background)] pb-8 text-gray-800">
       {/* ENCABEZADO */}
 
       {/* CONTENIDO */}
@@ -194,7 +194,7 @@ export default function ConfigurarConvocatoria() {
           <button
             type="button"
             onClick={generarFormulario}
-            className="h-12 w-full rounded-xl bg-purple-600 text-sm font-bold text-white shadow-sm transition hover:bg-purple-700 hover:shadow-md"
+            className="h-12 w-full rounded-xl bg-dojo-600 text-sm font-bold text-white shadow-sm transition hover:bg-dojo-700 hover:shadow-md"
           >
             Ver opciones para compartir
           </button>
@@ -251,7 +251,7 @@ export default function ConfigurarConvocatoria() {
               url={enlace}
               nombreArchivo={'qr-clase-' + clase.id}
               tamano={128}
-              claseBoton="mx-auto mt-3 block rounded-full border border-purple-100 bg-purple-50 px-4 py-2 text-xs font-semibold text-purple-600"
+              claseBoton="mx-auto mt-3 block rounded-full border border-dojo-100 bg-dojo-50 px-4 py-2 text-xs font-semibold text-dojo-600"
               textoBoton="↓ Descargar QR para impresión / redes"
             />
 
@@ -282,7 +282,7 @@ export default function ConfigurarConvocatoria() {
               onClick={() => {
                 window.location.href = enlace;
               }}
-              className="mt-2 h-10 w-full rounded-xl border border-purple-500 bg-white text-sm font-bold text-purple-600 transition hover:bg-purple-50"
+              className="mt-2 h-10 w-full rounded-xl border border-dojo-500 bg-white text-sm font-bold text-dojo-600 transition hover:bg-dojo-50"
             >
               Ver vista previa del formulario
             </button>

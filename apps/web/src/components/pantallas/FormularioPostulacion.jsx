@@ -10,7 +10,7 @@ const fechaEnLima = () =>
     day: '2-digit',
   }).format(new Date());
 const campo =
-  'mt-2 block box-border min-h-12 w-full min-w-0 max-w-full rounded-xl border border-purple-100 bg-white px-3 py-2 text-base text-gray-900 outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-200 disabled:bg-gray-100';
+  'mt-2 block box-border min-h-12 w-full min-w-0 max-w-full rounded-xl border border-dojo-100 bg-white px-3 py-2 text-base text-gray-900 outline-none focus:border-dojo-600 focus:ring-2 focus:ring-dojo-200 disabled:bg-gray-100';
 
 const fechaEnEspanol = (fecha) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha ?? '')) return 'fecha por confirmar';
@@ -145,18 +145,18 @@ export default function FormularioPostulacion() {
   }
 
   const resumenClase = clase && (
-    <section className="rounded-2xl bg-purple-50 p-5" aria-label="Clase seleccionada">
-      <h2 className="break-words text-lg font-bold text-purple-900">
+    <section className="rounded-2xl bg-dojo-50 p-5" aria-label="Clase seleccionada">
+      <h2 className="break-words text-lg font-bold text-dojo-900">
         {clase.nivel} · Sede {clase.sede}
       </h2>
-      <p className="mt-2 text-sm text-purple-900">Prof. {clase.profesor}</p>
-      <p className="mt-2 text-sm text-purple-900">
+      <p className="mt-2 text-sm text-dojo-900">Prof. {clase.profesor}</p>
+      <p className="mt-2 text-sm text-dojo-900">
         {Array.isArray(clase.frecuencia) ? clase.frecuencia.join(', ') : clase.frecuencia}
       </p>
-      <p className="mt-1 text-sm text-purple-900">
+      <p className="mt-1 text-sm text-dojo-900">
         {clase.horaInicio} – {clase.horaFin}
       </p>
-      <p className="mt-2 text-sm text-purple-900">
+      <p className="mt-2 text-sm text-dojo-900">
         Fechas de la clase: del {fechaEnEspanol(clase.fechaInicio)} al{' '}
         {fechaEnEspanol(clase.fechaFin)}
       </p>
@@ -169,7 +169,7 @@ export default function FormularioPostulacion() {
   return (
     <main className="formulario-postulacion mx-auto min-h-dvh w-full max-w-xl px-4 py-6 sm:py-10">
       <header className="mb-6">
-        <p className="text-sm font-semibold text-purple-700">Mi Dojo</p>
+        <p className="text-sm font-semibold text-dojo-700">Mi Dojo</p>
         <h1 className="mt-2 text-2xl font-bold text-gray-900">
           {enviado ? 'Postulación enviada' : 'Postula a tu clase'}
         </h1>
@@ -234,7 +234,7 @@ export default function FormularioPostulacion() {
             </p>
           )}
           {convocatoriaAbierta && hoy < clase.fechaInicio && (
-            <p className="rounded-xl bg-blue-50 p-4 text-sm text-blue-900">
+            <p className="rounded-xl bg-dojo-50 p-4 text-sm text-dojo-900">
               La clase empieza el {fechaEnEspanol(clase.fechaInicio)}. Ya puedes enviar tu
               postulación.
             </p>
@@ -307,7 +307,7 @@ export default function FormularioPostulacion() {
             {fechaNacimiento && <p className="text-sm text-gray-600">Edad: {edad} años</p>}
             {esMenor && (
               <section
-                className="space-y-5 border-t border-purple-100 pt-5"
+                className="space-y-5 border-t border-dojo-100 pt-5"
                 aria-label="Datos del apoderado"
               >
                 <h2 className="text-lg font-bold text-gray-900">Datos del apoderado</h2>
@@ -354,7 +354,7 @@ export default function FormularioPostulacion() {
               </section>
             )}
             <section
-              className="rounded-xl bg-purple-50 p-4 text-sm leading-6 text-gray-700"
+              className="rounded-xl bg-dojo-50 p-4 text-sm leading-6 text-gray-700"
               aria-label="Uso de datos personales"
             >
               <h2 className="font-bold text-gray-900">Uso de tus datos</h2>
@@ -369,7 +369,7 @@ export default function FormularioPostulacion() {
               </p>
               <label className="mt-4 flex min-h-11 cursor-pointer items-start gap-3">
                 <input
-                  className="mt-1 h-5 w-5 shrink-0 accent-purple-700"
+                  className="mt-1 h-5 w-5 shrink-0 accent-dojo-700"
                   type="checkbox"
                   name="consentimiento"
                   required
@@ -396,7 +396,7 @@ export default function FormularioPostulacion() {
           <button
             type="submit"
             disabled={!habilitado || enviando}
-            className="min-h-12 w-full rounded-xl bg-purple-700 px-4 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-purple-800 disabled:cursor-not-allowed disabled:bg-gray-400"
+            className="min-h-12 w-full rounded-xl bg-dojo-700 px-4 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-dojo-800 disabled:cursor-not-allowed disabled:bg-gray-400"
           >
             {enviando ? 'Enviando…' : 'Enviar postulación'}
           </button>

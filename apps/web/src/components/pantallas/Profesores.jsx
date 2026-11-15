@@ -114,7 +114,7 @@ export default function Profesores() {
         <button
           type="submit"
           disabled={ocupado || cargando}
-          className="mt-3 w-full rounded-xl bg-blue-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          className="mt-3 w-full rounded-xl bg-dojo-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
         >
           {ocupado ? 'Guardando…' : 'Agregar profesor'}
         </button>
@@ -135,7 +135,7 @@ export default function Profesores() {
               type="button"
               onClick={cargar}
               disabled={ocupado}
-              className="mt-2 font-semibold text-blue-700"
+              className="mt-2 font-semibold text-dojo-700"
             >
               Actualizar lista
             </button>
@@ -166,7 +166,7 @@ export default function Profesores() {
                         ? confirmarAccion(profesor, 'desactivar')
                         : cambiarEstado(profesor.id, 'activo')
                     }
-                    className="shrink-0 rounded-xl border border-gray-200 px-3 text-sm font-semibold text-blue-700 disabled:opacity-50"
+                    className="shrink-0 rounded-xl border border-gray-200 px-3 text-sm font-semibold text-dojo-700 disabled:opacity-50"
                   >
                     {profesor.estado === 'activo' ? 'Desactivar' : 'Activar'}
                   </button>

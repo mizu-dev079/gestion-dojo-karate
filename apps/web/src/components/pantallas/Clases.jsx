@@ -325,13 +325,13 @@ export default function Clases() {
   );
 
   return (
-    <div className="min-h-0 bg-[#f7f9fb] text-gray-800">
+    <div className="min-h-0 bg-[var(--page-background)] text-gray-800">
       <main className="space-y-4 px-4 pb-10 pt-4" aria-busy={ocupado}>
         <Mensaje aviso={aviso} />
         {editandoId !== null && (
-          <section className="relative z-10 rounded-2xl border-2 border-blue-100 bg-white p-4 shadow-sm">
+          <section className="relative z-10 rounded-2xl border-2 border-dojo-100 bg-white p-4 shadow-sm">
             <div className="mb-4">
-              <p className="text-sm font-semibold text-blue-500">EDITANDO CLASE</p>
+              <p className="text-sm font-semibold text-dojo-500">EDITANDO CLASE</p>
 
               <h2 className="mt-1 text-[13px] font-bold text-gray-900">
                 Modificar datos de la clase
@@ -529,7 +529,7 @@ export default function Clases() {
                   <button
                     type="button"
                     onClick={aceptarEdicion}
-                    className="h-9 rounded-xl border border-blue-200 bg-white text-sm font-semibold text-blue-500 hover:bg-blue-50"
+                    className="h-9 rounded-xl border border-dojo-200 bg-white text-sm font-semibold text-dojo-500 hover:bg-dojo-50"
                   >
                     {ocupado ? 'Guardando…' : 'Aceptar'}
                   </button>
@@ -548,7 +548,7 @@ export default function Clases() {
         )}
 
         <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Tu dojo hoy</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-dojo-600">Tu dojo hoy</p>
           <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="text-lg font-bold text-gray-900">Clases vigentes</h2>
@@ -558,7 +558,7 @@ export default function Clases() {
             </div>
             <a
               href="/nueva-clase"
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-dojo-600 px-4 py-3 text-sm font-semibold text-white hover:bg-dojo-700"
             >
               <span aria-hidden="true">+</span> Nueva clase
             </a>
@@ -570,7 +570,7 @@ export default function Clases() {
             type="button"
             aria-pressed={vista === 'vigentes'}
             onClick={() => setVista('vigentes')}
-            className={`flex-1 rounded-xl border px-3 py-2 text-sm font-semibold ${vista === 'vigentes' ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-gray-200 bg-white text-gray-600'}`}
+            className={`flex-1 rounded-xl border px-3 py-2 text-sm font-semibold ${vista === 'vigentes' ? 'border-dojo-200 bg-dojo-50 text-dojo-700' : 'border-gray-200 bg-white text-gray-600'}`}
           >
             Vigentes{!cargando && !errorCarga ? ` (${vigentes.length})` : ''}
           </button>
@@ -578,7 +578,7 @@ export default function Clases() {
             type="button"
             aria-pressed={vista === 'todas'}
             onClick={() => setVista('todas')}
-            className={`flex-1 rounded-xl border px-3 py-2 text-sm font-semibold ${vista === 'todas' ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-gray-200 bg-white text-gray-600'}`}
+            className={`flex-1 rounded-xl border px-3 py-2 text-sm font-semibold ${vista === 'todas' ? 'border-dojo-200 bg-dojo-50 text-dojo-700' : 'border-gray-200 bg-white text-gray-600'}`}
           >
             Todas{!cargando && !errorCarga ? ` (${clases.length})` : ''}
           </button>
@@ -614,7 +614,7 @@ export default function Clases() {
             </p>
             <a
               href="/nueva-clase"
-              className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700"
+              className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-dojo-600 px-4 py-3 text-sm font-semibold text-white hover:bg-dojo-700"
             >
               {clases.length === 0 ? 'Crear mi primera clase' : 'Crear una nueva clase'}
             </a>
@@ -622,7 +622,7 @@ export default function Clases() {
               <button
                 type="button"
                 onClick={() => setVista('todas')}
-                className="mt-2 block w-full rounded-xl px-4 py-2 text-sm font-semibold text-blue-700"
+                className="mt-2 block w-full rounded-xl px-4 py-2 text-sm font-semibold text-dojo-700"
               >
                 Ver todas las clases
               </button>

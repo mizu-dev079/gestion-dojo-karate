@@ -68,7 +68,7 @@ export default function CopiarEnlace({ enlace }) {
           type="button"
           onClick={copiar}
           disabled={!enlace}
-          className="min-h-11 shrink-0 rounded-lg bg-white px-3 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50 disabled:opacity-50"
+          className="min-h-11 shrink-0 rounded-lg bg-white px-3 text-sm font-semibold text-dojo-700 shadow-sm transition hover:bg-dojo-50 disabled:opacity-50"
         >
           {estado === 'copiado' ? '¡Copiado!' : 'Copiar'}
         </button>

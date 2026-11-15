@@ -22,7 +22,7 @@ export default function IndicadorCupos({ disponibles, total }) {
       ? 'bg-red-50 text-red-800'
       : cantidad <= 2
         ? 'bg-amber-50 text-amber-900'
-        : 'bg-blue-50 text-blue-800';
+        : 'bg-dojo-50 text-dojo-800';
   return (
     <p className={`rounded-xl px-3 py-2 text-sm ${estilo}`}>
       <span className="block font-semibold">{texto}</span>

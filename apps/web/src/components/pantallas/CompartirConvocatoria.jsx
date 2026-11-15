@@ -61,7 +61,7 @@ export default function CompartirConvocatoria() {
         </p>
         <a
           href="/clases"
-          className="mt-4 inline-flex min-h-11 items-center text-sm font-semibold text-blue-700"
+          className="mt-4 inline-flex min-h-11 items-center text-sm font-semibold text-dojo-700"
         >
           Volver a clases
         </a>
@@ -69,7 +69,7 @@ export default function CompartirConvocatoria() {
     );
 
   return (
-    <main className="min-h-0 bg-[#f5f3f8] px-4 py-6">
+    <main className="min-h-0 bg-[var(--page-background)] px-4 py-6">
       <div className="mx-auto max-w-full">
         <section className="rounded-3xl bg-white px-5 py-7 shadow-sm">
           <div className="text-center">
@@ -86,8 +86,8 @@ export default function CompartirConvocatoria() {
             </p>
 
             {clase && (
-              <div className="mt-4 rounded-2xl bg-[#f4edff] px-4 py-3">
-                <p className="text-sm font-semibold text-[#673ab7]">
+              <div className="mt-4 rounded-2xl bg-[var(--accent-soft)] px-4 py-3">
+                <p className="text-sm font-semibold text-[var(--accent)]">
                   {clase.nivel || clase.nombre || 'Clase'}
                 </p>
 
@@ -103,7 +103,7 @@ export default function CompartirConvocatoria() {
               tamano={160}
               claseContenedor="mt-7 flex justify-center"
               claseMarco="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
-              claseBoton="mx-auto mt-4 block rounded-full border border-[#d9c5f5] bg-[#f8f3ff] px-4 py-2 text-sm font-semibold text-[#673ab7] transition hover:bg-[#f0e7ff]"
+              claseBoton="mx-auto mt-4 block rounded-full border border-[var(--color-dojo-200)] bg-[var(--accent-soft)] px-4 py-2 text-sm font-semibold text-[var(--accent)] transition hover:bg-[var(--color-dojo-100)]"
               textoBoton="↓ Descargar QR"
             />
           )}
@@ -131,7 +131,7 @@ export default function CompartirConvocatoria() {
             onClick={() => {
               window.location.href = enlace;
             }}
-            className="mt-3 h-11 w-full rounded-xl border border-[#673ab7] bg-white text-xs font-semibold text-[#673ab7] transition hover:bg-[#f8f3ff]"
+            className="mt-3 h-11 w-full rounded-xl border border-[var(--accent)] bg-white text-xs font-semibold text-[var(--accent)] transition hover:bg-[var(--accent-soft)]"
           >
             Ver vista previa del formulario
           </button>

@@ -1,59 +1,6 @@
-import { useState } from 'react';
-import { useTema } from '../../hooks/useTema.js';
-import Mensaje from '../Mensaje.jsx';
-
-const opciones = [
-  { valor: 'claro', nombre: 'Claro', descripcion: 'Fondos claros y texto oscuro.' },
-  { valor: 'oscuro', nombre: 'Oscuro', descripcion: 'Fondos oscuros para ambientes con poca luz.' },
-  {
-    valor: 'automatico',
-    nombre: 'Automático',
-    descripcion: 'Sigue el tema de tu celular o computadora.',
-  },
-];
 export default function Ajustes({ version }) {
-  const { preferencia, listo } = useTema();
-  const [aviso, setAviso] = useState(null);
-  function cambiar(valor) {
-    const guardado = window.dojoTema.cambiar(valor);
-    setAviso({
-      tipo: guardado ? 'exito' : 'aviso',
-      texto: guardado
-        ? 'Preferencia de tema guardada en este navegador.'
-        : 'Tema aplicado. El navegador no permite guardar la preferencia; se perderá al salir de esta página.',
-    });
-  }
   return (
-    <main className="space-y-4 px-4 pb-6 pt-4" aria-busy={!listo}>
-      <Mensaje aviso={aviso} />
-      <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-        <h2 className="text-lg font-bold text-gray-900">Apariencia</h2>
-        <p className="mt-2 text-sm text-gray-500">
-          Elige cómo quieres ver la app. Esta preferencia se guarda en este navegador.
-        </p>
-        <fieldset disabled={!listo} className="mt-4 space-y-3">
-          <legend className="sr-only">Tema de la aplicación</legend>
-          {opciones.map((opcion) => (
-            <label
-              key={opcion.valor}
-              className={`flex min-h-16 cursor-pointer items-center gap-3 rounded-xl border p-3 ${preferencia === opcion.valor ? 'border-blue-300 bg-blue-50' : 'border-gray-200'}`}
-            >
-              <input
-                type="radio"
-                name="tema"
-                value={opcion.valor}
-                checked={preferencia === opcion.valor}
-                onChange={() => cambiar(opcion.valor)}
-                className="h-5 w-5 shrink-0 accent-blue-600"
-              />
-              <span>
-                <span className="block font-semibold text-gray-900">{opcion.nombre}</span>
-                <span className="mt-1 block text-sm text-gray-500">{opcion.descripcion}</span>
-              </span>
-            </label>
-          ))}
-        </fieldset>
-      </section>
+    <main className="space-y-4 px-4 pb-6 pt-4">
       <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
         <h2 id="guia" className="scroll-mt-24 text-lg font-bold text-gray-900">
           Guía rápida

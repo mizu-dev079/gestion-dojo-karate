@@ -1,6 +1,30 @@
 @import "tailwindcss";
 @import "./tema.css";
 
+/* Paleta única de Shinken Dojo: blanco, negro y rojo. */
+@theme {
+  --color-dojo-50: #fff1f0;
+  --color-dojo-100: #ffe0de;
+  --color-dojo-200: #ffb9b3;
+  --color-dojo-300: #f58b82;
+  --color-dojo-400: #e65b51;
+  --color-dojo-500: #c62828;
+  --color-dojo-600: #c62828;
+  --color-dojo-700: #a61b1b;
+  --color-dojo-800: #8b1818;
+  --color-dojo-900: #701414;
+  --color-gray-50: #fafafa;
+  --color-gray-100: #f5f5f5;
+  --color-gray-200: #e5e5e5;
+  --color-gray-300: #d4d4d4;
+  --color-gray-400: #737373;
+  --color-gray-500: #666666;
+  --color-gray-600: #525252;
+  --color-gray-700: #404040;
+  --color-gray-800: #262626;
+  --color-gray-900: #171717;
+}
+
 /* El campo nativo de fecha de iOS también debe encajar en el formulario público. */
 .formulario-postulacion input[type="date"] {
   display: block;
@@ -350,13 +374,7 @@
   line-height: 1.25rem;
 }
 .dojo-calendar .ant-picker-cell:not(.ant-picker-cell-in-view) .dojo-calendar__number {
-  color: #475569;
-}
-html[data-tema="oscuro"]
-  .dojo-calendar
-  .ant-picker-cell:not(.ant-picker-cell-in-view)
-  .dojo-calendar__number {
-  color: #a1b1c6;
+  color: var(--text-muted);
 }
 .dojo-calendar__day.is-today {
   border-color: var(--accent);
@@ -365,7 +383,7 @@ html[data-tema="oscuro"]
 }
 .dojo-calendar__day.is-selected {
   border-color: var(--accent);
-  background: #1d4ed8;
+  background: var(--accent);
   color: #ffffff;
 }
 .dojo-calendar .ant-picker-cell .dojo-calendar__day.is-selected .dojo-calendar__number {
@@ -383,12 +401,8 @@ html[data-tema="oscuro"]
   font-weight: 600;
   line-height: 1rem;
 }
-html[data-tema="oscuro"] .dojo-calendar__count {
-  background: #14372f;
-  color: #86efac;
-}
 .dojo-calendar__day.is-selected .dojo-calendar__count {
-  background: #1e40af;
+  background: var(--color-dojo-800);
   color: #ffffff;
 }
 .dojo-calendar__dot {

@@ -143,7 +143,7 @@ export default function NuevaClase() {
   };
 
   return (
-    <div className="min-h-0 bg-[#f7f9fb] text-gray-800">
+    <div className="min-h-0 bg-[var(--page-background)] text-gray-800">
       <main className="space-y-4 px-4 pb-6 pt-4" aria-busy={ocupado}>
         <Mensaje aviso={aviso} />
         {cargandoProfesores && (
@@ -211,7 +211,7 @@ export default function NuevaClase() {
               <button
                 type="button"
                 onClick={() => irA('/')}
-                className="h-9 w-full rounded-xl border border-blue-200 bg-white text-sm font-semibold text-blue-500 hover:bg-blue-50"
+                className="h-9 w-full rounded-xl border border-dojo-200 bg-white text-sm font-semibold text-dojo-500 hover:bg-dojo-50"
               >
                 Gestionar clases
               </button>
@@ -244,7 +244,7 @@ export default function NuevaClase() {
                   value={fechaInicio}
                   min={obtenerFechaHoy()}
                   onChange={(e) => setFechaInicio(e.target.value)}
-                  className="block h-9 w-full min-w-0 rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700 outline-none focus:border-blue-500"
+                  className="block h-9 w-full min-w-0 rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700 outline-none focus:border-dojo-500"
                 />
               </div>
 
@@ -258,7 +258,7 @@ export default function NuevaClase() {
                     id="duracion-clase"
                     value={duracion}
                     onChange={(e) => setDuracion(e.target.value)}
-                    className="block h-9 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700 outline-none focus:border-blue-500"
+                    className="block h-9 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700 outline-none focus:border-dojo-500"
                   >
                     <option value="" disabled hidden />
 
@@ -301,7 +301,7 @@ export default function NuevaClase() {
                   className={
                     'h-8 rounded-full border text-xs transition ' +
                     (sede === item
-                      ? 'border-blue-500 bg-blue-50 font-semibold text-blue-600'
+                      ? 'border-dojo-500 bg-dojo-50 font-semibold text-dojo-600'
                       : 'border-gray-200 bg-white text-gray-500')
                   }
                 >
@@ -325,7 +325,7 @@ export default function NuevaClase() {
                   className={
                     'h-8 rounded-full border text-xs transition ' +
                     (nivel === item
-                      ? 'border-blue-500 bg-blue-50 font-semibold text-blue-600'
+                      ? 'border-dojo-500 bg-dojo-50 font-semibold text-dojo-600'
                       : 'border-gray-200 bg-white text-gray-500')
                   }
                 >
@@ -348,7 +348,7 @@ export default function NuevaClase() {
                   type="time"
                   value={horaInicio}
                   onChange={(e) => setHoraInicio(e.target.value)}
-                  className="block h-9 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700 outline-none focus:border-blue-500"
+                  className="block h-9 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700 outline-none focus:border-dojo-500"
                 />
               </div>
 
@@ -359,7 +359,7 @@ export default function NuevaClase() {
                   type="time"
                   value={horaFin}
                   onChange={(e) => setHoraFin(e.target.value)}
-                  className="block h-9 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700 outline-none focus:border-blue-500"
+                  className="block h-9 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700 outline-none focus:border-dojo-500"
                 />
               </div>
             </div>
@@ -382,7 +382,7 @@ export default function NuevaClase() {
                   className={
                     'h-8 rounded-full border text-xs font-semibold transition ' +
                     (frecuencia.includes(dia)
-                      ? 'border-blue-500 bg-blue-50 text-blue-600'
+                      ? 'border-dojo-500 bg-dojo-50 text-dojo-600'
                       : 'border-gray-200 bg-white text-gray-400')
                   }
                 >
@@ -450,7 +450,7 @@ export default function NuevaClase() {
                   className={
                     'h-8 rounded-full border text-sm font-semibold ' +
                     (tarifa === precio
-                      ? 'border-blue-500 bg-blue-50 text-blue-600'
+                      ? 'border-dojo-500 bg-dojo-50 text-dojo-600'
                       : 'border-gray-200 text-gray-500')
                   }
                 >
@@ -473,7 +473,7 @@ export default function NuevaClase() {
               value={cupos}
               onChange={(e) => setCupos(e.target.value)}
               placeholder="Ej. 10"
-              className="h-9 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700 outline-none focus:border-blue-500"
+              className="h-9 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700 outline-none focus:border-dojo-500"
             />
           </div>
 
@@ -483,7 +483,7 @@ export default function NuevaClase() {
             type="button"
             onClick={crearClase}
             disabled={ocupado || cargandoProfesores}
-            className="mt-5 h-9 w-full rounded-xl bg-blue-500 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-600"
+            className="mt-5 h-9 w-full rounded-xl bg-dojo-500 text-sm font-semibold text-white shadow-sm transition hover:bg-dojo-600"
           >
             {ocupado ? 'Guardando…' : 'Guardar clase'}
           </button>

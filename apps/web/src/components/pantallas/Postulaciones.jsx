@@ -266,7 +266,7 @@ export default function Postulaciones() {
               setEstado('todas');
               setSeleccionados([]);
             }}
-            className="text-sm font-semibold text-blue-700"
+            className="text-sm font-semibold text-dojo-700"
           >
             Limpiar filtros
           </button>
@@ -372,7 +372,7 @@ export default function Postulaciones() {
                   <p className="text-xs text-gray-500">
                     {fechaTexto(postulacion.fechaPostulacion)}
                   </p>
-                  <p className="rounded-xl bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-800">
+                  <p className="rounded-xl bg-dojo-50 px-3 py-2 text-sm font-semibold text-dojo-800">
                     {postulacion.nivel} · {postulacion.sede}
                   </p>
                   <details>
@@ -400,7 +400,7 @@ export default function Postulaciones() {
                         type="button"
                         disabled={bloqueado || Number(clasePostulacion?.cuposDisponibles ?? 0) <= 0}
                         onClick={() => cambiarEstado(postulacion, 'aceptado')}
-                        className="rounded-xl bg-blue-600 px-2 py-2 text-sm font-semibold text-white disabled:opacity-40"
+                        className="rounded-xl bg-dojo-600 px-2 py-2 text-sm font-semibold text-white disabled:opacity-40"
                       >
                         {ocupado ? 'Procesando…' : 'Aceptar'}
                       </button>
@@ -423,7 +423,7 @@ export default function Postulaciones() {
       <div className="grid gap-2">
         <a
           href="/clases"
-          className="inline-flex min-h-11 items-center justify-center rounded-xl border border-gray-200 bg-white px-3 text-sm font-semibold text-blue-700"
+          className="inline-flex min-h-11 items-center justify-center rounded-xl border border-gray-200 bg-white px-3 text-sm font-semibold text-dojo-700"
         >
           Ver clases
         </a>

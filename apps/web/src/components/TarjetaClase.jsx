@@ -110,13 +110,13 @@ export default function TarjetaClase({
       <div className="mt-3 grid grid-cols-2 gap-2">
         <a
           href={`/postulaciones?clase=${encodeURIComponent(clase.id)}`}
-          className="inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-600 px-2 py-2 text-center text-sm font-semibold text-white hover:bg-blue-700"
+          className="inline-flex min-h-11 items-center justify-center rounded-xl bg-dojo-600 px-2 py-2 text-center text-sm font-semibold text-white hover:bg-dojo-700"
         >
           Ver postulaciones
         </a>
         <a
           href={`/compartir-convocatoria?clase=${encodeURIComponent(clase.id)}`}
-          className="inline-flex min-h-11 items-center justify-center rounded-xl border border-blue-200 px-2 py-2 text-center text-sm font-semibold text-blue-700 hover:bg-blue-50"
+          className="inline-flex min-h-11 items-center justify-center rounded-xl border border-dojo-200 px-2 py-2 text-center text-sm font-semibold text-dojo-700 hover:bg-dojo-50"
         >
           Compartir QR
         </a>

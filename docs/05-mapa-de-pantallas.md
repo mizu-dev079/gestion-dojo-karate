@@ -24,7 +24,7 @@ En `apps/web/src/components/` quedan las piezas que pueden usarse en varias pant
 - `NavegacionInferior.astro`: barra inferior.
 - `ProtegerPagina.astro`: comprobación de sesión de las páginas privadas.
 - `CerrarSesion.astro`: botón para cerrar sesión.
-- `InicializarTema.astro`: aplica el tema guardado antes de mostrar la página.
+- `styles/tema.css`: define el único tema claro con los colores del dojo.
 - `TarjetaClase.jsx` e `IndicadorCupos.jsx`: resumen de una clase y disponibilidad.
 - `QrFormulario.jsx` y `CopiarEnlace.jsx`: QR y copia de enlaces.
 - `Mensaje.jsx`: avisos de éxito y error.

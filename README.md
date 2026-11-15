@@ -24,7 +24,7 @@ Los datos se guardan en una hoja de cálculo de Google. La estructura del almace
 - Convocatorias disponibles desde la creación de la clase, con enlace, código QR negro sobre fondo blanco, descarga PNG y alternativa para guardar la imagen en móvil.
 - Formulario público con validaciones, consentimiento, datos del apoderado para menores de edad y número de solicitud al completar el envío.
 - Búsqueda y filtros de postulaciones por clase y estado, aceptación, rechazo y eliminación de solicitudes. Las pendientes no reservan vacante; las aceptadas o aprobadas consumen cupos.
-- Navegación móvil compartida, avisos dentro de la app y temas claro, oscuro o automático.
+- Navegación móvil compartida, avisos dentro de la app y un único tema claro con los colores del dojo.
 - Guía rápida de uso y preferencias de apariencia desde **Usuario > Ajustes**.
 
 ## Guías del proyecto
@@ -172,9 +172,9 @@ apps/
       components/pantallas/  contenido React de cada pantalla
       components/            navegación, tarjetas, confirmaciones, QR y mensajes
       layouts/               encabezado, navegación y protección de páginas privadas
-      hooks/                 estado de operaciones y tema
+      hooks/                 estado de operaciones
       lib/                   acceso a la API y enlaces de formularios
-      styles/                estilos globales y temas
+      styles/                estilos globales y paleta del dojo
 packages/shared/src/
   enums/                     estados, duraciones y reglas compartidas
   types/api.ts               contratos de datos entre web y API
