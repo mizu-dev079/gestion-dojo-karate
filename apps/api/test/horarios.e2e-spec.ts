@@ -34,7 +34,11 @@ describe('Regla de horarios (HTTP, repositorio simulado)', () => {
     actualizar.mockImplementation(async (clase: ClaseDto) => clase);
     const modulo = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(ClasesRepository)
-      .useValue({ obtenerTodas: async () => [{ ...base }], guardar, actualizar })
+      .useValue({
+        obtenerTodas: async () => [{ ...base }, { ...base, id: 2, profesor: 'Otro profesor' }],
+        guardar,
+        actualizar,
+      })
       .compile();
     app = modulo.createNestApplication();
     app.use(cookieParser());
@@ -50,9 +54,13 @@ describe('Regla de horarios (HTTP, repositorio simulado)', () => {
     expect(guardar).not.toHaveBeenCalled();
     expect(actualizar).not.toHaveBeenCalled();
   });
+  it('no permite crear clases ni con sesión de administrador', async () => {
+    await request(app.getHttpServer()).post('/clases').set('Cookie', cookie).send(base).expect(405);
+    expect(guardar).not.toHaveBeenCalled();
+  });
   it('devuelve 409 con el profesor, sede y horario ocupado sin guardar', async () => {
     const r = await request(app.getHttpServer())
-      .post('/clases')
+      .post('/clases/2')
       .set('Cookie', cookie)
       .send({ ...base, sede: 'Ventanilla' })
       .expect(409);
@@ -63,12 +71,13 @@ describe('Regla de horarios (HTTP, repositorio simulado)', () => {
   });
   it('permite clases consecutivas y conserva la fecha final calculada', async () => {
     const r = await request(app.getHttpServer())
-      .post('/clases')
+      .post('/clases/2')
       .set('Cookie', cookie)
       .send({ ...base, horaInicio: '17:30', horaFin: '19:00' })
       .expect(201);
     expect(r.body.fechaFin).toBe('2026-12-16');
-    expect(guardar).toHaveBeenCalledOnce();
+    expect(actualizar).toHaveBeenCalledOnce();
+    expect(guardar).not.toHaveBeenCalled();
   });
   it('permite editar la propia clase sin un falso conflicto', async () => {
     await request(app.getHttpServer())
@@ -85,7 +94,7 @@ describe('Regla de horarios (HTTP, repositorio simulado)', () => {
       { fechaInicio: '2026-02-30' },
     ]) {
       await request(app.getHttpServer())
-        .post('/clases')
+        .post('/clases/1')
         .set('Cookie', cookie)
         .send({ ...base, ...cambio })
         .expect(400);

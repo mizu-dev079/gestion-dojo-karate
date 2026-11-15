@@ -7,7 +7,7 @@ import { Profesor } from '../interfaces/profesor.interface.js';
 export class ProfesoresRepository {
   private readonly spreadsheetId = env.GOOGLE_SPREADSHEET_ID;
 
-  private readonly range = 'Profesores!A:C';
+  private readonly range = 'Profesores!A:E';
   private colaEscrituras: Promise<unknown> = Promise.resolve();
 
   // Una eliminación desplaza las filas: serializar también los cambios de estado
@@ -36,6 +36,8 @@ export class ProfesoresRepository {
       id: Number(fila[0]),
       nombre: fila[1],
       estado: fila[2],
+      telefono: fila[3] ?? '',
+      correo: fila[4] ?? '',
     }));
   }
 
@@ -45,9 +47,17 @@ export class ProfesoresRepository {
     await sheets.spreadsheets.values.append({
       spreadsheetId: this.spreadsheetId,
       range: this.range,
-      valueInputOption: 'USER_ENTERED',
+      valueInputOption: 'RAW',
       requestBody: {
-        values: [[profesor.id, profesor.nombre, profesor.estado]],
+        values: [
+          [
+            profesor.id,
+            profesor.nombre,
+            profesor.estado,
+            profesor.telefono ?? '',
+            profesor.correo ?? '',
+          ],
+        ],
       },
     });
 
@@ -77,7 +87,7 @@ export class ProfesoresRepository {
     await sheets.spreadsheets.values.update({
       spreadsheetId: this.spreadsheetId,
       range: 'Profesores!C' + (indiceFila + 1),
-      valueInputOption: 'USER_ENTERED',
+      valueInputOption: 'RAW',
       requestBody: {
         values: [[estado]],
       },

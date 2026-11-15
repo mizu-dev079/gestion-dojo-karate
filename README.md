@@ -1,6 +1,6 @@
 # Shinken Dojo - Hiroshi
 
-Sistema web adaptable a celulares para gestionar un dojo de karate: crear y administrar **clases**, registrar **profesores**, compartir **convocatorias** y recibir **postulaciones** de alumnos con control de cupos.
+Sistema web adaptable a celulares para gestionar un dojo de karate: consultar y administrar las **clases oficiales**, registrar **profesores**, compartir **convocatorias** y recibir **postulaciones** de alumnos con control de cupos.
 
 El nombre de la aplicación es **Shinken Dojo - Hiroshi**. La identidad visual usa blanco, negro y rojo. Actualmente existe una **versión funcional en desarrollo para demostración local**; la publicación en internet y la aceptación de entrega deben validarse por separado.
 
@@ -18,7 +18,7 @@ Los datos se guardan en una hoja de cálculo de Google. La estructura del almace
 
 - Inicio de sesión del administrador con JWT en cookies HTTP-only. La dirección principal abre el login; después se accede a Clases.
 - Creación, edición y eliminación de clases, con fechas, sede, nivel, profesor, días, horario, tarifa y cupos.
-- Detección de horarios superpuestos del mismo profesor, incluso entre sedes, al crear o editar clases. Las clases consecutivas están permitidas.
+- Detección de horarios superpuestos del mismo profesor, incluso entre sedes, al editar clases. Las clases consecutivas están permitidas.
 - Vista de clases vigentes, próximas y finalizadas, y calendario de entrenamiento.
 - Registro, activación, desactivación y eliminación de profesores. Las clases y solicitudes existentes conservan el nombre guardado del profesor.
 - Convocatorias disponibles desde la creación de la clase, con enlace, código QR negro sobre fondo blanco, descarga PNG y alternativa para guardar la imagen en móvil.
@@ -294,3 +294,9 @@ La configuración siguiente se encuentra sujeta a verificación en GitHub; su pr
 ## Alumnos, asistencia y perfiles
 
 Planes continuos de 4, 8 o 12 clases, renovaciones con saldo conservado, congelamiento y recuperaciones manuales desde **Alumnos**. [Flujo y reglas](docs/06-alumnos-asistencia.md). Acceso independiente de administrador, profesor y alumno; [crear cuentas y conocer los permisos](docs/07-cuentas-y-perfiles.md).
+
+## Clases oficiales y alta de profesores
+
+La creación de clases desde la app está deshabilitada. Se utilizan las filas de la pestaña `Clases` de Google Sheets; los horarios oficiales y los campos que faltan se completan allí. No se han cargado filas de demostración ni borrado profesores reales. [Preparar las clases oficiales](docs/08-clases-oficiales.md).
+
+Desde **Usuario → Cuentas y perfiles**, al elegir Profesor, se puede crear su registro y su cuenta en un solo paso. Nombre obligatorio; teléfono y correo opcionales (cualquier proveedor). Las columnas A–C de `Profesores` se conservan y se añaden D `telefono` y E `correo`.

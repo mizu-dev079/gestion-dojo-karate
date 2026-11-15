@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import type { ProfesorDto } from '@dojo/shared';
 import type { INestApplication } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
@@ -17,6 +18,7 @@ import { type Cuenta, CuentasRepository, cuentaPublica } from '../src/auth/cuent
 import { hashPassword } from '../src/auth/cuentas.service.js';
 import { ClasesRepository } from '../src/clases/repositories/clases.repository.js';
 import { PostulacionesRepository } from '../src/clases/repositories/postulaciones.repository.js';
+import type { ProfesorNuevo } from '../src/profesores/dto/profesor.schema.js';
 import { ProfesoresRepository } from '../src/profesores/repositories/profesores.repository.js';
 
 const PASSWORD = 'password-publica-de-pruebas';
@@ -25,12 +27,17 @@ const profesorId = randomUUID(),
 describe('Perfiles y aislamiento de acceso (HTTP)', () => {
   let app: INestApplication;
   let cuentas: Cuenta[], estados: Map<number, Seguimiento>;
+  let profesores: ProfesorDto[];
   let claves: Awaited<ReturnType<typeof hashPassword>>;
   const cookies: Record<string, string> = {};
   beforeAll(async () => {
     claves = await hashPassword(PASSWORD);
   });
   beforeEach(async () => {
+    profesores = [
+      { id: 10, nombre: 'Hiroshi', estado: 'activo' },
+      { id: 20, nombre: 'Otro profesor', estado: 'activo' },
+    ];
     cuentas = [
       {
         id: profesorId,
@@ -80,6 +87,21 @@ describe('Perfiles y aislamiento de acceso (HTTP)', () => {
           cuentas.push(c);
           return cuentaPublica(c);
         },
+        guardarConProfesor: async (
+          datos: Omit<Cuenta, 'id' | 'revision' | 'profesorId'>,
+          nuevoProfesor: ProfesorNuevo,
+        ) => {
+          const profesorCreado = { ...nuevoProfesor, id: 30, estado: 'activo' };
+          profesores.push(profesorCreado);
+          const cuenta: Cuenta = {
+            ...datos,
+            id: randomUUID(),
+            revision: 1,
+            profesorId: profesorCreado.id,
+          };
+          cuentas.push(cuenta);
+          return { ...cuentaPublica(cuenta), profesorCreado };
+        },
         actualizar: async (id: string, cambiar: (c: Cuenta) => Cuenta) => {
           const i = cuentas.findIndex((c) => c.id === id);
           const anterior = cuentas[i];
@@ -105,12 +127,7 @@ describe('Perfiles y aislamiento de acceso (HTTP)', () => {
         ],
       })
       .overrideProvider(ProfesoresRepository)
-      .useValue({
-        obtenerTodos: async () => [
-          { id: 10, nombre: 'Hiroshi', estado: 'activo' },
-          { id: 20, nombre: 'Otro profesor', estado: 'activo' },
-        ],
-      })
+      .useValue({ obtenerTodos: async () => profesores })
       .overrideProvider(AlumnosRepository)
       .useValue({
         obtenerTodos: async () => estados,
@@ -139,7 +156,6 @@ describe('Perfiles y aislamiento de acceso (HTTP)', () => {
   afterEach(async () => {
     await app.close();
   });
-  const cuerpo = (s: Seguimiento, datos: object) => ({ version: s.version, ...datos });
   it('devuelve el perfil real, sin aceptar uno elegido al iniciar sesión', async () => {
     for (const [usuario, perfil] of [
       ['admin', 'administrador'],
@@ -337,6 +353,83 @@ describe('Perfiles y aislamiento de acceso (HTTP)', () => {
       .set('Cookie', cookies.admin)
       .expect(200);
     expect(JSON.stringify(lista.body)).not.toContain('"hash"');
+  });
+  it('crea profesor y su cuenta sin exigir teléfono ni correo, y permite iniciar sesión', async () => {
+    const r = await request(app.getHttpServer())
+      .post('/cuentas')
+      .set('Cookie', cookies.admin)
+      .send({
+        usuario: 'sensei.mayor',
+        password: PASSWORD,
+        perfil: 'profesor',
+        nuevoProfesor: { nombre: 'Sensei mayor' },
+      })
+      .expect(201);
+    expect(r.body.profesorCreado).toMatchObject({
+      nombre: 'Sensei mayor',
+      telefono: '',
+      correo: '',
+    });
+    expect(r.body.profesorId).toBe(r.body.profesorCreado.id);
+    expect(r.body).not.toHaveProperty('hash');
+    const login = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ usuario: 'sensei.mayor', password: PASSWORD })
+      .expect(200);
+    expect(login.body.perfil).toBe('profesor');
+    const opciones = await request(app.getHttpServer())
+      .get('/cuentas/opciones')
+      .set('Cookie', cookies.admin)
+      .expect(200);
+    expect(
+      opciones.body.profesores.some((p: { nombre: string }) => p.nombre === 'Sensei mayor'),
+    ).toBe(true);
+  });
+  it('permite teléfono y correo de otro proveedor y rechaza datos de contacto inválidos', async () => {
+    const base = {
+      usuario: 'nuevo.sensei',
+      password: PASSWORD,
+      perfil: 'profesor',
+      nuevoProfesor: {
+        nombre: 'Sensei nuevo',
+        telefono: '+51 999 123 456',
+        correo: 'maestro@example.org',
+      },
+    };
+    await request(app.getHttpServer())
+      .post('/cuentas')
+      .set('Cookie', cookies.admin)
+      .send({ ...base, nuevoProfesor: { ...base.nuevoProfesor, correo: 'invalido' } })
+      .expect(400);
+    await request(app.getHttpServer())
+      .post('/cuentas')
+      .set('Cookie', cookies.admin)
+      .send({ ...base, profesorId: 10 })
+      .expect(400);
+    expect(profesores).toHaveLength(2);
+    const r = await request(app.getHttpServer())
+      .post('/cuentas')
+      .set('Cookie', cookies.admin)
+      .send(base)
+      .expect(201);
+    expect(r.body.profesorCreado).toMatchObject({
+      telefono: '+51 999 123 456',
+      correo: 'maestro@example.org',
+    });
+  });
+  it('rechaza vincular un profesor existente y exige un registro nuevo', async () => {
+    await request(app.getHttpServer())
+      .post('/cuentas')
+      .set('Cookie', cookies.admin)
+      .send({
+        usuario: 'vinculo.prohibido',
+        password: PASSWORD,
+        perfil: 'profesor',
+        profesorId: 10,
+      })
+      .expect(400);
+    expect(cuentas).toHaveLength(2);
+    expect(profesores).toHaveLength(2);
   });
   it('cambio propio de contraseña exige la actual e invalida la sesión anterior', async () => {
     await request(app.getHttpServer())

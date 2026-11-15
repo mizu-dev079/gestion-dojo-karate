@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { profesorNuevoSchema } from './dto/profesor.schema.js';
 import { Profesor } from './interfaces/profesor.interface.js';
 import { ProfesoresRepository } from './repositories/profesores.repository.js';
 
@@ -10,7 +11,11 @@ export class ProfesoresService {
     return this.profesoresRepository.obtenerTodos();
   }
 
-  async crearProfesor(nombre: string) {
+  async crearProfesor(nombre: string, telefono = '', correo = '') {
+    const r = profesorNuevoSchema.safeParse({ nombre, telefono, correo });
+    if (!r.success)
+      throw new BadRequestException('Revisa el nombre y los datos de contacto del profesor.');
+    nombre = r.data.nombre;
     if (!nombre || !nombre.trim()) {
       throw new Error('El nombre del profesor es obligatorio');
     }
@@ -31,6 +36,8 @@ export class ProfesoresService {
       id: Date.now(),
       nombre: nombre.trim(),
       estado: 'activo',
+      telefono: r.data.telefono,
+      correo: r.data.correo,
     };
 
     await this.profesoresRepository.guardar(nuevoProfesor);

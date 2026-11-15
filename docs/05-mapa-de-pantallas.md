@@ -6,7 +6,7 @@ Las rutas están en `apps/web/src/pages/`. El contenido interactivo de cada pant
 | --- | --- | --- | --- |
 | Entrada al login | `/` | `index.astro` | Redirige a `/login` |
 | Clases | `/clases` | `clases.astro` | `Clases.jsx` |
-| Nueva clase | `/nueva-clase` | `nueva-clase.astro` | `NuevaClase.jsx` |
+| Ruta antigua de alta | `/nueva-clase` → `/clases` | `nueva-clase.astro` | Redirección, sin formulario |
 | Postulaciones | `/postulaciones` | `postulaciones.astro` | `Postulaciones.jsx` |
 | Calendario | `/calendario` | `calendario.astro` | `Calendario.jsx` |
 | Cuentas y perfiles | `/cuentas` | `cuentas.astro` | `Cuentas.jsx` |
@@ -37,7 +37,7 @@ En `apps/web/src/components/` quedan las piezas que pueden usarse en varias pant
 
 `pages/formulario-generado.astro` es un alias de compatibilidad: renderiza `compartir-convocatoria.astro`, sin duplicar su contenido ni perder parámetros como `?clase=ID`.
 
-La ruta principal `/` lleva siempre al login. Al iniciar sesión se abre `/clases`, salvo que haya una pantalla privada pendiente en `?volver=...`. Las páginas privadas solo se muestran después de comprobar la sesión; si la comprobación falla, llevan al login. La creación de clases está en `/nueva-clase`.
+La ruta principal `/` lleva siempre al login. Al iniciar sesión se abre `/clases`, salvo que haya una pantalla privada pendiente en `?volver=...`. Las páginas privadas solo se muestran después de comprobar la sesión; si la comprobación falla, llevan al login. Las clases oficiales se cargan en Google Sheets. La ruta antigua `/nueva-clase` redirige a `/clases` y no permite altas.
 
 La dirección pública `/formulario?clase=ID` se conserva para que sigan funcionando los QR compartidos.
 

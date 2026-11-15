@@ -4,6 +4,7 @@ import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/
 import { z } from 'zod';
 import { PostulacionesRepository } from '../clases/repositories/postulaciones.repository.js';
 import { env } from '../config/env.js';
+import { profesorNuevoSchema } from '../profesores/dto/profesor.schema.js';
 import { ProfesoresRepository } from '../profesores/repositories/profesores.repository.js';
 import { type Cuenta, CuentasRepository, cuentaPublica } from './cuentas.repository.js';
 import type { Sesion } from './sesion.js';
@@ -21,7 +22,7 @@ const crearSchema = z.discriminatedUnion('perfil', [
       usuario: usuarioSchema,
       password: passwordSchema,
       perfil: z.literal('profesor'),
-      profesorId: z.number().int().positive(),
+      nuevoProfesor: profesorNuevoSchema,
     })
     .strict(),
   z
@@ -84,11 +85,18 @@ export class CuentasService {
     if (d.usuario === env.ADMIN_USUARIO.toLowerCase())
       throw new BadRequestException('Ese usuario está reservado para administración.');
     if (d.perfil === 'profesor') {
-      const profesores = await this.profesores.obtenerTodos();
-      const profesor = profesores.find((p) => p.id === d.profesorId && p.estado === 'activo');
-      if (!profesor || profesores.filter((p) => p.nombre === profesor.nombre).length !== 1)
-        throw new BadRequestException('Selecciona un profesor activo con nombre único.');
-    } else {
+      return this.cuentas.guardarConProfesor(
+        {
+          usuario: d.usuario,
+          perfil: 'profesor',
+          alumnoIds: [],
+          activo: true,
+          ...(await hashPassword(d.password)),
+        },
+        d.nuevoProfesor,
+      );
+    }
+    {
       const alumnos = await this.postulaciones.obtenerTodas();
       if (
         !d.alumnoIds.every((id) =>
@@ -100,8 +108,8 @@ export class CuentasService {
     return this.cuentas.guardar({
       usuario: d.usuario,
       perfil: d.perfil,
-      profesorId: d.perfil === 'profesor' ? d.profesorId : null,
-      alumnoIds: d.perfil === 'alumno' ? d.alumnoIds : [],
+      profesorId: null,
+      alumnoIds: d.alumnoIds,
       activo: true,
       ...(await hashPassword(d.password)),
     });

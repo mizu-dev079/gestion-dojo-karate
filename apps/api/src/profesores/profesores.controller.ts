@@ -12,8 +12,8 @@ export class ProfesoresController {
   }
 
   @Post()
-  crearProfesor(@Body() datos: { nombre: string }) {
-    return this.profesoresService.crearProfesor(datos.nombre);
+  crearProfesor(@Body() datos: { nombre: string; telefono?: string; correo?: string }) {
+    return this.profesoresService.crearProfesor(datos.nombre, datos.telefono, datos.correo);
   }
 
   @Post('estado')

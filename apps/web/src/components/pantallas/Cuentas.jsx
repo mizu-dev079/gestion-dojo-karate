@@ -12,7 +12,9 @@ export default function Cuentas() {
   const [usuario, setUsuario] = useState('');
   const [password, setPassword] = useState('');
   const [perfil, setPerfil] = useState('profesor');
-  const [profesorId, setProfesorId] = useState('');
+  const [nombreProfesor, setNombreProfesor] = useState('');
+  const [telefono, setTelefono] = useState('');
+  const [correo, setCorreo] = useState('');
   const [alumnoIds, setAlumnoIds] = useState([]);
   const [cargando, setCargando] = useState(true);
   const { ocupado, aviso, setAviso, ejecutar } = useOperacion();
@@ -44,7 +46,9 @@ export default function Cuentas() {
         usuario,
         password,
         perfil,
-        ...(perfil === 'profesor' ? { profesorId: Number(profesorId) } : { alumnoIds }),
+        ...(perfil === 'profesor'
+          ? { nuevoProfesor: { nombre: nombreProfesor, telefono, correo } }
+          : { alumnoIds }),
       };
       const nueva = await leerRespuesta(
         await apiFetch('/cuentas', {
@@ -55,10 +59,17 @@ export default function Cuentas() {
         'No se pudo crear la cuenta.',
       );
       setCuentas((previas) => [...previas, nueva]);
+      if (nueva.profesorCreado)
+        setOpciones((previas) => ({
+          ...previas,
+          profesores: [...previas.profesores, nueva.profesorCreado],
+        }));
+      setNombreProfesor('');
+      setTelefono('');
+      setCorreo('');
       setUsuario('');
       setPassword('');
       setAlumnoIds([]);
-      setProfesorId('');
       return 'Cuenta creada. Entrega la contraseña a su titular por un medio privado.';
     });
   }
@@ -123,22 +134,45 @@ export default function Cuentas() {
             />
           </label>
           {perfil === 'profesor' ? (
-            <label className="block font-semibold">
-              Profesor asignado
-              <select
-                required
-                className={campo}
-                value={profesorId}
-                onChange={(e) => setProfesorId(e.target.value)}
-              >
-                <option value="">Selecciona un profesor activo</option>
-                {opciones.profesores.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.nombre}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="space-y-4">
+              <label className="block font-semibold">
+                Nombre del profesor
+                <input
+                  required
+                  maxLength={120}
+                  autoComplete="name"
+                  value={nombreProfesor}
+                  onChange={(e) => setNombreProfesor(e.target.value)}
+                  className={campo}
+                />
+              </label>
+              <label className="block font-semibold">
+                Teléfono (opcional)
+                <input
+                  type="tel"
+                  maxLength={30}
+                  autoComplete="tel"
+                  value={telefono}
+                  onChange={(e) => setTelefono(e.target.value)}
+                  className={campo}
+                />
+              </label>
+              <label className="block font-semibold">
+                Correo (opcional)
+                <input
+                  type="email"
+                  maxLength={254}
+                  autoComplete="email"
+                  value={correo}
+                  onChange={(e) => setCorreo(e.target.value)}
+                  className={campo}
+                />
+              </label>
+              <p className="text-sm text-gray-600">
+                No necesita teléfono ni correo para tener una cuenta. Usará el usuario y la
+                contraseña que definas.
+              </p>
+            </div>
           ) : (
             <fieldset>
               <legend className="font-semibold">Inscripciones de este alumno</legend>
@@ -167,7 +201,7 @@ export default function Cuentas() {
             </fieldset>
           )}
           <button type="submit" className={boton}>
-            Crear cuenta
+            {perfil === 'profesor' ? 'Crear profesor y cuenta' : 'Crear cuenta'}
           </button>
         </fieldset>
       </form>

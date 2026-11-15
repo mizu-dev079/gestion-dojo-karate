@@ -5,14 +5,14 @@ Hay tres perfiles: **administrador, profesor y alumno**. El rol no se elige en e
 ## Activación
 
 1. El administrador continúa ingresando con `ADMIN_USUARIO` y `ADMIN_PASSWORD` configurados en el entorno. Las sesiones de ese administrador mantienen compatibilidad.
-2. Entrar a **Usuario → Cuentas y perfiles**. Registrar antes los profesores y aceptar las postulaciones de los alumnos.
-3. Crear la cuenta de profesor, vinculada a su registro activo; o la cuenta de alumno, vinculada a sus inscripciones aceptadas/aprobadas. Si un alumno tiene varios grupos, seleccionar solo sus propias inscripciones.
+2. Entrar a **Usuario → Cuentas y perfiles**. Aceptar primero las postulaciones de los alumnos que necesitarán una cuenta. Los profesores pueden crearse en el mismo formulario de cuenta.
+3. Para Profesor, elegir **Crear profesor nuevo y su cuenta**: nombre obligatorio, teléfono y correo opcionales. Se guardan juntos mediante una operación atómica de Google Sheets; no se deja uno creado sin el otro si el lote falla. Todos los profesores oficiales se crean desde cero junto con su cuenta; no se permite vincular registros existentes. Para Alumno, vincular sus inscripciones aceptadas/aprobadas. Si un alumno tiene varios grupos, seleccionar solo sus propias inscripciones.
 4. Entregar usuario y contraseña inicial por un medio privado. El titular puede cambiar su contraseña desde **Usuario**. Las contraseñas requieren al menos 12 caracteres. No hay registro público ni contraseñas compartidas predeterminadas.
 5. Desactivar acceso o restablecer contraseña desde la cuenta. Ambas acciones invalidan sesiones existentes inmediatamente; el usuario debe volver a ingresar.
 
 El administrador configurado en el entorno no se desactiva ni cambia de contraseña mediante esta pantalla. La gestión permite crear cuentas de profesor y alumno; no crea administradores adicionales.
 
-Las asignaciones de una cuenta se fijan al crearla. Para sustituir una asignación, desactivar la cuenta anterior y crear una nueva con otro usuario. No reutilizar una cuenta de otra persona. Una futura gestión de reasignaciones debe preservar auditoría y revocar sesiones.
+Cada cuenta de profesor queda asociada al registro nuevo creado en esa misma operación. No existe la opción de vincular profesores anteriores ni de reasignar la cuenta a otra persona. Para recuperar el acceso de un profesor ya creado se restablece su contraseña, sin duplicar su perfil. Las cuentas de alumno conservan las inscripciones elegidas al crearlas.
 
 ## Permisos
 
@@ -39,3 +39,5 @@ El JWT guarda el identificador de cuenta y su revisión. En cada petición se co
 Las escrituras de cuentas, como el seguimiento, requieren una sola instancia de la API y no edición manual simultánea de las pestañas. Consultar no crea hojas, y las cabeceras o datos inválidos provocan un error sin sobrescribir el contenido.
 
 No se han creado cuentas reales ni modificado datos privados durante las pruebas. Se verifican login por perfil, acceso a objetos ajenos, contraseñas, revocación de sesiones y denegación de rutas administrativas usando repositorios simulados.
+
+El contacto del profesor no se usa como usuario de acceso: no necesita teléfono ni correo para iniciar sesión. La lectura de Profesores admite registros anteriores de tres columnas; el alta combinada añade D `telefono` y E `correo` respetando A–C. Para que el profesor vea sus grupos, el nombre en la columna E de `Clases` debe coincidir con su nombre registrado.

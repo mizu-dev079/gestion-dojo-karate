@@ -75,6 +75,20 @@ describe('Postulaciones y cupos', () => {
       consentimientoFecha: '2026-10-27T17:00:00.000Z',
     });
   });
+  it('admite postulaciones de un grupo permanente sin fechas de inicio ni fin', async () => {
+    clase.fechaInicio = '';
+    clase.fechaFin = '';
+    clase.duracion = '';
+    await expect(service.crearPostulacion(datos)).resolves.toMatchObject({ estado: 'pendiente' });
+    expect(guardar).toHaveBeenCalledTimes(1);
+  });
+  it('conserva el control de cupos en grupos permanentes', async () => {
+    clase.fechaInicio = '';
+    clase.fechaFin = '';
+    clase.cupos = 0;
+    await expect(service.crearPostulacion(datos)).rejects.toThrow('cupos');
+    expect(guardar).not.toHaveBeenCalled();
+  });
   it('rechaza clases inexistentes', async () => {
     await expect(service.crearPostulacion({ ...datos, claseId: 2 })).rejects.toMatchObject({
       status: 404,

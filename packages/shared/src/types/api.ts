@@ -60,6 +60,8 @@ export interface PostulacionDto {
 }
 
 export interface ProfesorDto {
+  telefono?: string;
+  correo?: string;
   id: number;
   nombre: string;
   estado: string;

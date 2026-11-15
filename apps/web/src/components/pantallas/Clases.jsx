@@ -556,12 +556,6 @@ export default function Clases() {
                 Consulta los horarios, profesores y cupos disponibles.
               </p>
             </div>
-            <a
-              href="/nueva-clase"
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-dojo-600 px-4 py-3 text-sm font-semibold text-white hover:bg-dojo-700"
-            >
-              <span aria-hidden="true">+</span> Nueva clase
-            </a>
           </div>
         </section>
 
@@ -609,15 +603,9 @@ export default function Clases() {
             </h2>
             <p className="mt-2 text-sm text-gray-500">
               {clases.length === 0
-                ? 'Crea tu primera clase para comenzar a organizar tu dojo.'
-                : 'Puedes consultar las clases próximas y finalizadas, o crear una nueva.'}
+                ? 'Los horarios oficiales del dojo se registran en Google Sheets.'
+                : 'Puedes consultar todos los horarios registrados del dojo.'}
             </p>
-            <a
-              href="/nueva-clase"
-              className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-dojo-600 px-4 py-3 text-sm font-semibold text-white hover:bg-dojo-700"
-            >
-              {clases.length === 0 ? 'Crear mi primera clase' : 'Crear una nueva clase'}
-            </a>
             {clases.length > 0 && (
               <button
                 type="button"

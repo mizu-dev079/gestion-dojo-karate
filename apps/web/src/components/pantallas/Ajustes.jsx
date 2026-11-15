@@ -9,13 +9,13 @@ export default function Ajustes({ version }) {
         <div className="mt-3 divide-y divide-gray-100 text-sm text-gray-600">
           <details className="py-2">
             <summary className="flex min-h-11 cursor-pointer items-center font-semibold text-gray-800">
-              Crear y consultar clases
+              Consultar clases
             </summary>
             <p className="pb-3 leading-6">
-              En Clases verás las vigentes. Usa Todas para ver las próximas y finalizadas. Pulsa
-              Nueva clase para registrar horario, profesor, fechas y cupos. El menú de tres puntos
-              permite editar o eliminar. El sistema avisa si el profesor tiene otra clase que
-              coincide en fecha, día y hora.
+              En Clases verás los horarios registrados del dojo en Google Sheets. Usa Todas para
+              consultar también las próximas y finalizadas. El menú de tres puntos permite editar o
+              eliminar. El sistema avisa si el profesor tiene otra clase que coincide en fecha, día
+              y hora.
             </p>
           </details>
           <details className="py-2">
@@ -23,9 +23,11 @@ export default function Ajustes({ version }) {
               Administrar profesores
             </summary>
             <p className="pb-3 leading-6">
-              En Profesores puedes registrar, activar, desactivar o eliminar. Desactivar permite
-              conservar el registro para usarlo después; eliminar lo quita definitivamente de la
-              lista. Las clases ya registradas conservan el nombre del profesor.
+              Desde Cuentas y perfiles puedes crear un profesor y su acceso al mismo tiempo, con
+              nombre obligatorio y teléfono y correo opcionales. En Profesores puedes activar,
+              desactivar o eliminar. Desactivar permite conservar el registro para usarlo después;
+              eliminar lo quita definitivamente de la lista. Las clases ya registradas conservan el
+              nombre del profesor.
             </p>
           </details>
           <details className="py-2">

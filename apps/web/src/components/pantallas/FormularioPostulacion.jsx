@@ -47,11 +47,13 @@ export default function FormularioPostulacion() {
   let edad = Number(hoy.slice(0, 4)) - Number(fechaNacimiento.slice(0, 4));
   if (hoy.slice(5) < fechaNacimiento.slice(5)) edad -= 1;
   const esMenor = Boolean(fechaNacimiento) && edad < 18;
+  const permanente = clase && !clase.fechaInicio && !clase.fechaFin;
   const convocatoriaAbierta =
-    clase?.fechaInicio &&
-    clase.fechaFin &&
-    clase.fechaInicio <= clase.fechaFin &&
-    hoy <= clase.fechaFin;
+    permanente ||
+    (clase?.fechaInicio &&
+      clase.fechaFin &&
+      clase.fechaInicio <= clase.fechaFin &&
+      hoy <= clase.fechaFin);
   const sinCupos = clase && clase.cuposDisponibles <= 0;
   const habilitado = Boolean(convocatoriaAbierta && !sinCupos && !cargando);
 
@@ -158,8 +160,14 @@ export default function FormularioPostulacion() {
         {clase.horaInicio} – {clase.horaFin}
       </p>
       <p className="mt-2 text-sm text-dojo-900">
-        Fechas de la clase: del {fechaEnEspanol(clase.fechaInicio)} al{' '}
-        {fechaEnEspanol(clase.fechaFin)}
+        {permanente ? (
+          'Grupo permanente: clases en los días y horarios indicados.'
+        ) : (
+          <>
+            Fechas de la clase: del {fechaEnEspanol(clase.fechaInicio)} al{' '}
+            {fechaEnEspanol(clase.fechaFin)}
+          </>
+        )}
       </p>
       <div className="mt-3">
         <IndicadorCupos disponibles={clase.cuposDisponibles} total={clase.cupos} />

@@ -51,7 +51,7 @@ describe('Eliminación de profesores en Sheets', () => {
       await expect(repositorio.eliminar(id)).resolves.toEqual({
         mensaje: 'Profesor eliminado correctamente',
       });
-      expect(getValores).toHaveBeenCalledWith(expect.objectContaining({ range: 'Profesores!A:C' }));
+      expect(getValores).toHaveBeenCalledWith(expect.objectContaining({ range: 'Profesores!A:E' }));
       expect(batchUpdate).toHaveBeenCalledWith(
         expect.objectContaining({
           requestBody: {
@@ -100,6 +100,23 @@ describe('Eliminación de profesores en Sheets', () => {
     expect(filas.find((fila) => fila[0] === 102)).toEqual([102, 'Luis', 'inactivo']);
   });
 
+  it('lee contacto opcional sin romper filas antiguas de tres columnas', async () => {
+    filas = [
+      ['id', 'nombre', 'estado', 'telefono', 'correo'],
+      [101, 'Ana', 'activo'],
+      [102, 'Luis', 'activo', '+51 999 123 456', 'maestro@example.org'],
+    ];
+    expect(await repositorio.obtenerTodos()).toEqual([
+      { id: 101, nombre: 'Ana', estado: 'activo', telefono: '', correo: '' },
+      {
+        id: 102,
+        nombre: 'Luis',
+        estado: 'activo',
+        telefono: '+51 999 123 456',
+        correo: 'maestro@example.org',
+      },
+    ]);
+  });
   it('propaga errores de Sheets y permite reintentar sin bloquear la cola', async () => {
     batchUpdate.mockRejectedValueOnce(new Error('Sheets no disponible'));
     await expect(repositorio.eliminar(101)).rejects.toThrow('Sheets no disponible');

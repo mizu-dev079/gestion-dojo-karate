@@ -45,13 +45,15 @@ La **fila 1 de cada pestaña son los encabezados**; el código la omite al leer.
 
 Las postulaciones con estado `aceptado` o `aprobado` descuentan un cupo de la clase.
 
-### `Profesores` (columnas A a C)
+### `Profesores` (columnas A a E)
 
 | Col | Campo | Notas |
 |---|---|---|
 | A | `id` | |
 | B | `nombre` | |
 | C | `estado` | `activo` o `inactivo` |
+| D | `telefono` | Opcional; se conserva como texto |
+| E | `correo` | Opcional; no necesita ser Gmail |
 
 Los valores de los estados y las duraciones están definidos en `packages/shared/src/enums`, y la forma de cada registro en `packages/shared/src/types/api.ts`.
 
@@ -83,3 +85,5 @@ Las postulaciones pendientes no reservan vacante. Aceptar o aprobar consume cupo
 El formulario público admite 5 intentos por IP cada 15 minutos, incluidos los inválidos. El límite vive en memoria y se reinicia con el proceso. No habilites confianza indiscriminada en encabezados de proxy; si se despliega detrás de un proxy, configura sus direcciones de confianza y un almacén compartido de límites antes de usar varias instancias.
 
 El aviso del formulario es un texto inicial para la demo. Antes de usar datos reales, el cliente debe confirmar responsable, contacto para ejercer derechos y plazos de conservación. No representa una validación legal del aviso.
+
+Las filas antiguas de Profesores con solo tres columnas siguen siendo compatibles. El alta combinada desde Cuentas y perfiles agrega el contacto y la cuenta mediante un único lote atómico de Google Sheets. Si D/E ya contienen otros datos, rechaza el alta sin sobrescribirlos. Consultar [clases oficiales](08-clases-oficiales.md) antes de preparar los datos reales.

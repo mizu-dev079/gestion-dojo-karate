@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  MethodNotAllowedException,
   Param,
   Post,
   UseGuards,
@@ -43,11 +44,10 @@ export class ClasesController {
   }
 
   @Post()
-  crearClase(
-    @Body()
-    datos: CrearClaseDto,
-  ) {
-    return this.clasesService.crearClase(datos);
+  crearClase() {
+    throw new MethodNotAllowedException(
+      'Las clases del dojo se registran directamente en Google Sheets.',
+    );
   }
 
   // Pública: es el envío del formulario del QR.
