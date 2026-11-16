@@ -293,8 +293,8 @@ export default function Cuentas({ vista = 'menu' }) {
   const [clases, setClases] = useState([]);
   const [busquedaProfesores, setBusquedaProfesores] = useState('');
   const [busquedaAlumnos, setBusquedaAlumnos] = useState('');
-  const [cargando, setCargando] = useState(true);
-  const [listo, setListo] = useState(false);
+  const [cargando, setCargando] = useState(vista !== 'menu');
+  const [listo, setListo] = useState(vista === 'menu');
   const [registro, setRegistro] = useState(null);
   const [pendiente, setPendiente] = useState(null);
   const { ocupado, aviso, setAviso, ejecutar } = useOperacion();
@@ -324,7 +324,7 @@ export default function Cuentas({ vista = 'menu' }) {
       setCargando(false);
     }
   }, []);
-  useActualizacionesCuentas(cargar, ocupado);
+  useActualizacionesCuentas(cargar, ocupado, vista !== 'menu');
   function abrir(perfil) {
     setAviso(null);
     setRegistro({ perfil });
@@ -440,9 +440,9 @@ export default function Cuentas({ vista = 'menu' }) {
           >
             ← Volver a{' '}
             {vista === 'profesores'
-              ? 'profesores registrados'
+              ? 'profesores'
               : vista === 'alumnos'
-                ? 'alumnos registrados'
+                ? 'alumnos'
                 : 'profesores y alumnos'}
           </button>
           <Registro
@@ -459,44 +459,37 @@ export default function Cuentas({ vista = 'menu' }) {
         <>
           {vista === 'menu' ? (
             <>
-              <section className={tarjeta}>
-                <h2 className="font-bold">Registrar profesor</h2>
-                <p className="text-sm text-gray-600">
-                  Crea su perfil y su cuenta de acceso en un solo paso. Teléfono y correo son
-                  opcionales.
+              <a
+                href="/profesores"
+                aria-label="Profesores"
+                aria-describedby="descripcion-profesores"
+                className={`${tarjeta} block transition-colors hover:border-dojo-300 focus-visible:outline-2 focus-visible:outline-dojo-600`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="font-bold">Profesores</h2>
+                  <span className="text-dojo-700" aria-hidden="true">
+                    →
+                  </span>
+                </div>
+                <p id="descripcion-profesores" className="text-sm text-gray-600">
+                  Consulta los profesores, administra sus accesos y crea nuevas cuentas.
                 </p>
-                <button
-                  type="button"
-                  disabled={ocupado || cargando || !listo}
-                  onClick={() => abrir('profesor')}
-                  className={boton}
-                >
-                  Crear cuenta de profesor
-                </button>
-              </section>
-              <section className={tarjeta}>
-                <h2 className="font-bold">Registrar alumno</h2>
-                <p className="text-sm text-gray-600">
-                  Registra sus datos, asígnale una clase y crea su cuenta para consultar su plan,
-                  asistencia y recuperaciones.
-                </p>
-                <button
-                  type="button"
-                  disabled={ocupado || cargando || !listo}
-                  onClick={() => abrir('alumno')}
-                  className={boton}
-                >
-                  Crear cuenta de alumno
-                </button>
-              </section>
-              <a href="/profesores" className={`${boton} flex items-center justify-between gap-3`}>
-                Mostrar profesores registrados <span aria-hidden="true">→</span>
               </a>
               <a
                 href="/cuentas/alumnos"
-                className={`${boton} flex items-center justify-between gap-3`}
+                aria-label="Alumnos"
+                aria-describedby="descripcion-alumnos"
+                className={`${tarjeta} block transition-colors hover:border-dojo-300 focus-visible:outline-2 focus-visible:outline-dojo-600`}
               >
-                Mostrar alumnos registrados <span aria-hidden="true">→</span>
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="font-bold">Alumnos</h2>
+                  <span className="text-dojo-700" aria-hidden="true">
+                    →
+                  </span>
+                </div>
+                <p id="descripcion-alumnos" className="text-sm text-gray-600">
+                  Consulta los alumnos, administra sus accesos y crea nuevas cuentas.
+                </p>
               </a>
             </>
           ) : (

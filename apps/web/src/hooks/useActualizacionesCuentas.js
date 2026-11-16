@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { API_URL } from '../lib/api.js';
 
 /** SSE para cambios de la app; comprobación periódica para reconexiones y cambios en Sheets. */
-export function useActualizacionesCuentas(cargar, ocupado) {
+export function useActualizacionesCuentas(cargar, ocupado, habilitado = true) {
   const ocupadoActual = useRef(ocupado);
   const solicitar = useRef(() => {});
   useEffect(() => {
@@ -10,6 +10,7 @@ export function useActualizacionesCuentas(cargar, ocupado) {
     if (!ocupado) solicitar.current();
   }, [ocupado]);
   useEffect(() => {
+    if (!habilitado) return;
     let terminado = false;
     let leyendo = false;
     let pendiente = false;
@@ -58,5 +59,5 @@ export function useActualizacionesCuentas(cargar, ocupado) {
       window.removeEventListener('online', programar);
       document.removeEventListener('visibilitychange', visibilidad);
     };
-  }, [cargar]);
+  }, [cargar, habilitado]);
 }

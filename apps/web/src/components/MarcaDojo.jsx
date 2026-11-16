@@ -1,6 +1,6 @@
 export const NOMBRE_DOJO = 'Shinken Dojo - Hiroshi';
 
-const LOGO_DOJO = '/logo-dojo.jpg';
+const LOGO_DOJO = '/logo-dojo.png';
 
 export default function MarcaDojo({ compacta = false }) {
   return (
