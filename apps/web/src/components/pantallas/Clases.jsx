@@ -12,7 +12,6 @@ export default function Clases() {
   const [preparado, setPreparado] = useState(false);
   const [grupoSeleccionado, setGrupoSeleccionado] = useState(null);
   const [confirmarTurnos, setConfirmarTurnos] = useState(false);
-  const [vista, setVista] = useState('vigentes');
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState('');
   const [profesores, setProfesores] = useState([]);
@@ -322,16 +321,8 @@ export default function Clases() {
     if (eliminado) setClasePorEliminar(null);
   };
 
-  const vigentes = clases.filter((clase) => obtenerEstadoClase(clase).texto === 'Vigente');
-  const prioridad = { Vigente: 0, 'Por iniciar': 1, Finalizada: 2, Inactiva: 3 };
-  const visibles = (vista === 'vigentes' ? vigentes : [...clases]).sort(
-    (a, b) =>
-      prioridad[obtenerEstadoClase(a).texto] - prioridad[obtenerEstadoClase(b).texto] ||
-      (b.fechaInicio || '').localeCompare(a.fechaInicio || ''),
-  );
-
+  const visibles = clases;
   const grupos = agruparClases(visibles);
-  const totalGrupos = agruparClases(clases).length;
   const grupoActual = grupos.find((g) => g.id === grupoSeleccionado);
   const turnosVisibles = grupoActual?.turnos ?? [];
   const estructuraNueva = clases.some((c) => c.estado !== undefined);
@@ -579,18 +570,6 @@ export default function Clases() {
           </section>
         )}
 
-        <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wide text-dojo-600">Tu dojo hoy</p>
-          <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-bold text-gray-900">Clases vigentes</h2>
-              <p className="mt-1 text-sm text-gray-500">
-                Consulta los horarios, profesores y cupos disponibles.
-              </p>
-            </div>
-          </div>
-        </section>
-
         {!preparado && !cargando && !errorCarga && (
           <section className="space-y-3 rounded-2xl border border-dojo-200 bg-white p-4">
             <h2 className="font-bold">Clases con turnos</h2>
@@ -609,25 +588,6 @@ export default function Clases() {
             </button>
           </section>
         )}
-        <fieldset className="flex gap-2" aria-label="Filtrar clases">
-          <button
-            type="button"
-            aria-pressed={vista === 'vigentes'}
-            onClick={() => setVista('vigentes')}
-            className={`flex-1 rounded-xl border px-3 py-2 text-sm font-semibold ${vista === 'vigentes' ? 'border-dojo-200 bg-dojo-50 text-dojo-700' : 'border-gray-200 bg-white text-gray-600'}`}
-          >
-            Vigentes{!cargando && !errorCarga ? ` (${agruparClases(vigentes).length})` : ''}
-          </button>
-          <button
-            type="button"
-            aria-pressed={vista === 'todas'}
-            onClick={() => setVista('todas')}
-            className={`flex-1 rounded-xl border px-3 py-2 text-sm font-semibold ${vista === 'todas' ? 'border-dojo-200 bg-dojo-50 text-dojo-700' : 'border-gray-200 bg-white text-gray-600'}`}
-          >
-            Todas{!cargando && !errorCarga ? ` (${totalGrupos})` : ''}
-          </button>
-        </fieldset>
-
         {cargando ? (
           <p role="status" className="rounded-2xl bg-white p-5 text-sm text-gray-600">
             Cargando clases…
@@ -649,22 +609,11 @@ export default function Clases() {
         ) : visibles.length === 0 ? (
           <section className="rounded-2xl border border-dashed border-gray-300 bg-white p-6 text-center">
             <h2 className="text-base font-semibold text-gray-800">
-              {clases.length === 0 ? 'Todavía no hay clases registradas' : 'No hay clases vigentes'}
+              Todavía no hay clases registradas
             </h2>
             <p className="mt-2 text-sm text-gray-500">
-              {clases.length === 0
-                ? 'Los horarios oficiales del dojo se registran en Google Sheets.'
-                : 'Puedes consultar todos los horarios registrados del dojo.'}
+              Los horarios oficiales del dojo se registran en Google Sheets.
             </p>
-            {clases.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setVista('todas')}
-                className="mt-2 block w-full rounded-xl px-4 py-2 text-sm font-semibold text-dojo-700"
-              >
-                Ver todas las clases
-              </button>
-            )}
           </section>
         ) : (
           <div className="space-y-3">
