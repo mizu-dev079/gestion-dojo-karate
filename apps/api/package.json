@@ -1,7 +1,7 @@
 {
   "name": "api",
-  "version": "0.1.0",
-  "description": "API REST del sistema de gestión del dojo de karate (NestJS + Google Sheets)",
+  "version": "0.2.0",
+  "description": "API REST del portal de alumnos de Shinken Dojo - Hiroshi (NestJS + Google Sheets)",
   "author": "",
   "private": true,
   "license": "UNLICENSED",

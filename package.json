@@ -1,7 +1,7 @@
 {
   "name": "gestion-dojo-karate",
   "private": true,
-  "description": "Sistema de gestión de dojo de karate: clases, profesores y postulaciones",
+  "description": "Portal de Shinken Dojo - Hiroshi: alumnos, inscripción, asistencia, planes y recuperaciones",
   "packageManager": "pnpm@12.6.0",
   "engines": {
     "node": ">=22.22.0"

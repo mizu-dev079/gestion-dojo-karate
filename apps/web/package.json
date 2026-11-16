@@ -2,8 +2,8 @@
   "name": "web",
   "type": "module",
   "private": true,
-  "version": "0.1.0",
-  "description": "Frontend del sistema de gestión del dojo de karate (Astro + React)",
+  "version": "0.2.0",
+  "description": "Portal de alumnos, inscripción, asistencia y seguimiento de Shinken Dojo - Hiroshi (Astro + React)",
   "engines": {
     "node": ">=22.12.0"
   },

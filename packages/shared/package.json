@@ -1,6 +1,6 @@
 {
   "name": "@dojo/shared",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Enums, reglas y tipos compartidos entre web y api",
   "type": "module",

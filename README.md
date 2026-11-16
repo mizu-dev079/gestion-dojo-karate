@@ -1,5 +1,7 @@
 # Shinken Dojo - Hiroshi
 
+**Versión actual: 0.2.0 — en desarrollo.** Esta versión reúne el portal de alumnos, los tres perfiles de acceso y el seguimiento de planes, asistencia, recuperaciones y congelamientos. El número de versión se muestra en Usuario → Ajustes y se mantiene alineado en web, API y contratos compartidos.
+
 Portal web para centralizar la inscripción y el seguimiento de los alumnos de Shinken Dojo - Hiroshi. La plataforma integra la consulta de horarios y planes, el registro de asistencia, la renovación de inscripciones y la gestión de recuperaciones y congelamientos.
 
 El sistema contempla accesos diferenciados para administración, profesores y alumnos. Desde cada perfil se dispone de las funciones correspondientes para organizar la actividad del dojo, consultar el avance de las clases contratadas y dar seguimiento a las solicitudes de los alumnos.
