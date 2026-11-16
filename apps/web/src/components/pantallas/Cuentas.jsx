@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { useActualizacionesCuentas } from '../../hooks/useActualizacionesCuentas.js';
 import { useOperacion } from '../../hooks/useOperacion.js';
 import { apiFetch, leerRespuesta } from '../../lib/api.js';
+import CampoContrasena from '../CampoContrasena.jsx';
 import ConfirmarAccion from '../ConfirmarAccion.jsx';
 import Mensaje from '../Mensaje.jsx';
 
@@ -19,47 +20,23 @@ const normalizarNombre = (valor) =>
     .toLocaleLowerCase('es')
     .trim();
 
-function ApartadoPersonas({ tipo, busqueda, buscar, children }) {
-  const [abierto, setAbierto] = useState(false);
-  const etiqueta = tipo === 'profesores' ? 'profesores registrados' : 'alumnos registrados';
+function ListadoPersonas({ tipo, busqueda, buscar, children }) {
   return (
     <section className={tarjeta}>
-      <h2>
-        <button
-          type="button"
-          className="flex min-h-11 w-full items-center justify-between gap-3 text-left font-bold text-dojo-700"
-          aria-expanded={abierto}
-          aria-controls={`lista-${tipo}`}
-          onClick={() => setAbierto(!abierto)}
-        >
-          {abierto ? 'Ocultar' : 'Mostrar'} {etiqueta}
-          <svg
-            className={`shrink-0 transition-transform ${abierto ? 'rotate-180' : ''}`}
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            aria-hidden="true"
-          >
-            <path d="m6 9 6 6 6-6" />
-          </svg>
-        </button>
+      <h2 className="font-bold">
+        {tipo === 'profesores' ? 'Profesores registrados' : 'Alumnos registrados'}
       </h2>
-      <div id={`lista-${tipo}`} hidden={!abierto} className="space-y-3">
-        <label className="block text-sm font-semibold">
-          Buscar {tipo === 'profesores' ? 'profesor' : 'alumno'} por nombre
-          <input
-            type="search"
-            value={busqueda}
-            onChange={(e) => buscar(e.target.value)}
-            className={campo}
-            placeholder="Escribe un nombre"
-          />
-        </label>
-        {children}
-      </div>
+      <label className="block text-sm font-semibold">
+        Buscar {tipo === 'profesores' ? 'profesor' : 'alumno'} por nombre
+        <input
+          type="search"
+          value={busqueda}
+          onChange={(e) => buscar(e.target.value)}
+          className={campo}
+          placeholder="Escribe un nombre"
+        />
+      </label>
+      {children}
     </section>
   );
 }
@@ -215,10 +192,12 @@ function Registro({ perfil, clases, ocupado, crear, cancelar, inscripcion }) {
             Letras minúsculas, números, punto, guion o guion bajo.
           </span>
         </label>
-        <label className="block text-sm font-semibold">
-          Contraseña inicial
-          <input
-            type="password"
+        <div>
+          <label htmlFor="password-inicial" className="block text-sm font-semibold">
+            Contraseña inicial
+          </label>
+          <CampoContrasena
+            id="password-inicial"
             required
             minLength={8}
             maxLength={200}
@@ -227,7 +206,7 @@ function Registro({ perfil, clases, ocupado, crear, cancelar, inscripcion }) {
             onChange={(e) => setPassword(e.target.value)}
             className={campo}
           />
-        </label>
+        </div>
         <div className="flex flex-wrap gap-2">
           <button
             type="submit"
@@ -306,7 +285,7 @@ function Acceso({ cuenta, bloqueada = false, ocupado, editar }) {
   );
 }
 
-export default function Cuentas() {
+export default function Cuentas({ vista = 'menu' }) {
   const [cuentas, setCuentas] = useState([]);
   const [profesores, setProfesores] = useState([]);
   const [alumnos, setAlumnos] = useState([]);
@@ -459,7 +438,12 @@ export default function Cuentas() {
             onClick={() => setRegistro(null)}
             className="min-h-11 font-semibold text-dojo-700"
           >
-            ← Volver a profesores y alumnos
+            ← Volver a{' '}
+            {vista === 'profesores'
+              ? 'profesores registrados'
+              : vista === 'alumnos'
+                ? 'alumnos registrados'
+                : 'profesores y alumnos'}
           </button>
           <Registro
             key={registro.perfil}
@@ -473,176 +457,205 @@ export default function Cuentas() {
         </>
       ) : (
         <>
-          <section className={tarjeta}>
-            <h2 className="font-bold">Registrar profesor</h2>
-            <p className="text-sm text-gray-600">
-              Crea su perfil y su cuenta de acceso en un solo paso. Teléfono y correo son
-              opcionales.
-            </p>
-            <button
-              type="button"
-              disabled={ocupado || cargando || !listo}
-              onClick={() => abrir('profesor')}
-              className={boton}
-            >
-              Crear cuenta de profesor
-            </button>
-          </section>
-          <section className={tarjeta}>
-            <h2 className="font-bold">Registrar alumno</h2>
-            <p className="text-sm text-gray-600">
-              Registra sus datos, asígnale una clase y crea su cuenta para consultar su plan,
-              asistencia y recuperaciones.
-            </p>
-            <button
-              type="button"
-              disabled={ocupado || cargando || !listo}
-              onClick={() => abrir('alumno')}
-              className={boton}
-            >
-              Crear cuenta de alumno
-            </button>
-          </section>
-          {listo && (
+          {vista === 'menu' ? (
             <>
-              <ApartadoPersonas
-                tipo="profesores"
-                busqueda={busquedaProfesores}
-                buscar={setBusquedaProfesores}
+              <section className={tarjeta}>
+                <h2 className="font-bold">Registrar profesor</h2>
+                <p className="text-sm text-gray-600">
+                  Crea su perfil y su cuenta de acceso en un solo paso. Teléfono y correo son
+                  opcionales.
+                </p>
+                <button
+                  type="button"
+                  disabled={ocupado || cargando || !listo}
+                  onClick={() => abrir('profesor')}
+                  className={boton}
+                >
+                  Crear cuenta de profesor
+                </button>
+              </section>
+              <section className={tarjeta}>
+                <h2 className="font-bold">Registrar alumno</h2>
+                <p className="text-sm text-gray-600">
+                  Registra sus datos, asígnale una clase y crea su cuenta para consultar su plan,
+                  asistencia y recuperaciones.
+                </p>
+                <button
+                  type="button"
+                  disabled={ocupado || cargando || !listo}
+                  onClick={() => abrir('alumno')}
+                  className={boton}
+                >
+                  Crear cuenta de alumno
+                </button>
+              </section>
+              <a href="/profesores" className={`${boton} flex items-center justify-between gap-3`}>
+                Mostrar profesores registrados <span aria-hidden="true">→</span>
+              </a>
+              <a
+                href="/cuentas/alumnos"
+                className={`${boton} flex items-center justify-between gap-3`}
               >
-                {!profesores.length && (
-                  <p className="text-sm text-gray-600">No hay profesores para mostrar.</p>
-                )}
-                {profesores.length > 0 && !profesoresVisibles.length && (
-                  <p className="text-sm text-gray-600" role="status">
-                    No se encontraron profesores con ese nombre.
-                  </p>
-                )}
-                {profesoresVisibles.map((p) => (
-                  <FichaPersona key={p.id} nombre={p.nombre}>
-                    <p className="text-sm text-gray-600">
-                      {p.estado === 'activo' ? 'Profesor activo' : 'Profesor inactivo'}
-                    </p>
-                    {p.telefono && <p className="text-sm text-gray-600">Teléfono: {p.telefono}</p>}
-                    {p.correo && (
-                      <p className="break-all text-sm text-gray-600">Correo: {p.correo}</p>
-                    )}
-                    {cuentas
-                      .filter((c) => c.perfil === 'profesor' && c.profesorId === p.id)
-                      .map((c) => (
-                        <Acceso
-                          key={c.id}
-                          cuenta={c}
-                          bloqueada={p.estado !== 'activo'}
-                          ocupado={ocupado}
-                          editar={editar}
-                        />
-                      ))}
-                    {!cuentas.some((c) => c.perfil === 'profesor' && c.profesorId === p.id) && (
-                      <p className="text-sm text-gray-600">Sin cuenta de acceso.</p>
-                    )}
-                    <details>
-                      <summary className="min-h-11 cursor-pointer py-2 text-sm font-semibold">
-                        Administrar profesor
-                      </summary>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          disabled={ocupado}
-                          onClick={() => setPendiente({ profesor: p, tipo: 'estado' })}
-                          className={secundario}
-                        >
-                          {p.estado === 'activo' ? 'Desactivar profesor' : 'Activar profesor'}
-                        </button>
-                        <button
-                          type="button"
-                          disabled={ocupado}
-                          onClick={() => setPendiente({ profesor: p, tipo: 'eliminar' })}
-                          className="min-h-11 rounded-xl border border-red-200 px-3 text-sm font-semibold text-red-700"
-                        >
-                          Eliminar profesor
-                        </button>
-                      </div>
-                    </details>
-                  </FichaPersona>
-                ))}
-              </ApartadoPersonas>
-              <ApartadoPersonas
-                tipo="alumnos"
-                busqueda={busquedaAlumnos}
-                buscar={setBusquedaAlumnos}
-              >
-                {aceptadosVisibles.length > 0 && (
-                  <section className="space-y-3 rounded-xl border border-gray-200 p-3">
-                    <h2 className="font-bold">Alumnos aceptados sin acceso</h2>
-                    <p className="text-sm text-gray-600">
-                      Ya están inscritos y aparecen en la clase del profesor. Crea su acceso sin
-                      volver a registrar sus datos ni ocupar otro cupo.
-                    </p>
-                    {aceptadosVisibles.map((a) => (
-                      <FichaPersona key={a.id} nombre={a.nombre}>
-                        <p className="text-sm text-gray-600">
-                          {clases.find((c) => c.id === a.claseId)?.nivel ?? 'Clase asignada'}
-                        </p>
-                        <button
-                          type="button"
-                          className={boton}
-                          disabled={ocupado}
-                          onClick={() => setRegistro({ perfil: 'alumno', inscripcion: a })}
-                        >
-                          Crear acceso del alumno
-                        </button>
-                      </FichaPersona>
-                    ))}
-                  </section>
-                )}
-
-                {!cuentasAlumno.length && !aceptados.length && (
-                  <p className="text-sm text-gray-600">
-                    No hay alumnos registrados. Usa Crear cuenta de alumno para añadir uno
-                    manualmente.
-                  </p>
-                )}
-                {(cuentasAlumno.length > 0 || aceptados.length > 0) &&
-                  !alumnosVisibles.length &&
-                  !aceptadosVisibles.length && (
+                Mostrar alumnos registrados <span aria-hidden="true">→</span>
+              </a>
+            </>
+          ) : (
+            <button
+              type="button"
+              disabled={ocupado || cargando || !listo}
+              className={boton}
+              onClick={() => abrir(vista === 'profesores' ? 'profesor' : 'alumno')}
+            >
+              {vista === 'profesores' ? 'Crear cuenta de profesor' : 'Crear cuenta de alumno'}
+            </button>
+          )}
+          {listo && vista !== 'menu' && (
+            <>
+              {vista === 'profesores' && (
+                <ListadoPersonas
+                  tipo="profesores"
+                  busqueda={busquedaProfesores}
+                  buscar={setBusquedaProfesores}
+                >
+                  {!profesores.length && (
+                    <p className="text-sm text-gray-600">No hay profesores para mostrar.</p>
+                  )}
+                  {profesores.length > 0 && !profesoresVisibles.length && (
                     <p className="text-sm text-gray-600" role="status">
-                      No se encontraron alumnos con ese nombre.
+                      No se encontraron profesores con ese nombre.
                     </p>
                   )}
-                {alumnosVisibles.map((c) => (
-                  <FichaPersona key={c.id} nombre={nombreAlumno(c)}>
-                    <p className="text-sm text-gray-600">
-                      {c.alumnoIds
-                        .map((id) => {
-                          const a = alumnos.find((a) => a.id === id);
-                          return a ? `Clase #${a.claseId}` : `Inscripción #${id} no activa`;
-                        })
-                        .join(' · ')}
-                    </p>
-                    {(c.telefono || alumnos.find((a) => c.alumnoIds.includes(a.id))?.telefono) && (
+                  {profesoresVisibles.map((p) => (
+                    <FichaPersona key={p.id} nombre={p.nombre}>
                       <p className="text-sm text-gray-600">
-                        Teléfono:{' '}
-                        {c.telefono || alumnos.find((a) => c.alumnoIds.includes(a.id))?.telefono}
+                        {p.estado === 'activo' ? 'Profesor activo' : 'Profesor inactivo'}
                       </p>
-                    )}
-                    {(c.correo || alumnos.find((a) => c.alumnoIds.includes(a.id))?.correo) && (
-                      <p className="break-all text-sm text-gray-600">
-                        Correo:{' '}
-                        {c.correo || alumnos.find((a) => c.alumnoIds.includes(a.id))?.correo}
-                      </p>
-                    )}
-                    <Acceso cuenta={c} ocupado={ocupado} editar={editar} />
-                  </FichaPersona>
-                ))}
-                <a
-                  href="/alumnos"
-                  className="inline-flex min-h-11 items-center font-semibold text-dojo-700"
+                      {p.telefono && (
+                        <p className="text-sm text-gray-600">Teléfono: {p.telefono}</p>
+                      )}
+                      {p.correo && (
+                        <p className="break-all text-sm text-gray-600">Correo: {p.correo}</p>
+                      )}
+                      {cuentas
+                        .filter((c) => c.perfil === 'profesor' && c.profesorId === p.id)
+                        .map((c) => (
+                          <Acceso
+                            key={c.id}
+                            cuenta={c}
+                            bloqueada={p.estado !== 'activo'}
+                            ocupado={ocupado}
+                            editar={editar}
+                          />
+                        ))}
+                      {!cuentas.some((c) => c.perfil === 'profesor' && c.profesorId === p.id) && (
+                        <p className="text-sm text-gray-600">Sin cuenta de acceso.</p>
+                      )}
+                      <details>
+                        <summary className="min-h-11 cursor-pointer py-2 text-sm font-semibold">
+                          Administrar profesor
+                        </summary>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            disabled={ocupado}
+                            onClick={() => setPendiente({ profesor: p, tipo: 'estado' })}
+                            className={secundario}
+                          >
+                            {p.estado === 'activo' ? 'Desactivar profesor' : 'Activar profesor'}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={ocupado}
+                            onClick={() => setPendiente({ profesor: p, tipo: 'eliminar' })}
+                            className="min-h-11 rounded-xl border border-red-200 px-3 text-sm font-semibold text-red-700"
+                          >
+                            Eliminar profesor
+                          </button>
+                        </div>
+                      </details>
+                    </FichaPersona>
+                  ))}
+                </ListadoPersonas>
+              )}
+              {vista === 'alumnos' && (
+                <ListadoPersonas
+                  tipo="alumnos"
+                  busqueda={busquedaAlumnos}
+                  buscar={setBusquedaAlumnos}
                 >
-                  Ver planes y asistencia
-                </a>
-              </ApartadoPersonas>
-              {!!cuentasSinProfesor.length && (
+                  {aceptadosVisibles.length > 0 && (
+                    <section className="space-y-3 rounded-xl border border-gray-200 p-3">
+                      <h2 className="font-bold">Alumnos aceptados sin acceso</h2>
+                      <p className="text-sm text-gray-600">
+                        Ya están inscritos y aparecen en la clase del profesor. Crea su acceso sin
+                        volver a registrar sus datos ni ocupar otro cupo.
+                      </p>
+                      {aceptadosVisibles.map((a) => (
+                        <FichaPersona key={a.id} nombre={a.nombre}>
+                          <p className="text-sm text-gray-600">
+                            {clases.find((c) => c.id === a.claseId)?.nivel ?? 'Clase asignada'}
+                          </p>
+                          <button
+                            type="button"
+                            className={boton}
+                            disabled={ocupado}
+                            onClick={() => setRegistro({ perfil: 'alumno', inscripcion: a })}
+                          >
+                            Crear acceso del alumno
+                          </button>
+                        </FichaPersona>
+                      ))}
+                    </section>
+                  )}
+
+                  {!cuentasAlumno.length && !aceptados.length && (
+                    <p className="text-sm text-gray-600">
+                      No hay alumnos registrados. Usa Crear cuenta de alumno para añadir uno
+                      manualmente.
+                    </p>
+                  )}
+                  {(cuentasAlumno.length > 0 || aceptados.length > 0) &&
+                    !alumnosVisibles.length &&
+                    !aceptadosVisibles.length && (
+                      <p className="text-sm text-gray-600" role="status">
+                        No se encontraron alumnos con ese nombre.
+                      </p>
+                    )}
+                  {alumnosVisibles.map((c) => (
+                    <FichaPersona key={c.id} nombre={nombreAlumno(c)}>
+                      <p className="text-sm text-gray-600">
+                        {c.alumnoIds
+                          .map((id) => {
+                            const a = alumnos.find((a) => a.id === id);
+                            return a ? `Clase #${a.claseId}` : `Inscripción #${id} no activa`;
+                          })
+                          .join(' · ')}
+                      </p>
+                      {(c.telefono ||
+                        alumnos.find((a) => c.alumnoIds.includes(a.id))?.telefono) && (
+                        <p className="text-sm text-gray-600">
+                          Teléfono:{' '}
+                          {c.telefono || alumnos.find((a) => c.alumnoIds.includes(a.id))?.telefono}
+                        </p>
+                      )}
+                      {(c.correo || alumnos.find((a) => c.alumnoIds.includes(a.id))?.correo) && (
+                        <p className="break-all text-sm text-gray-600">
+                          Correo:{' '}
+                          {c.correo || alumnos.find((a) => c.alumnoIds.includes(a.id))?.correo}
+                        </p>
+                      )}
+                      <Acceso cuenta={c} ocupado={ocupado} editar={editar} />
+                    </FichaPersona>
+                  ))}
+                  <a
+                    href="/alumnos"
+                    className="inline-flex min-h-11 items-center font-semibold text-dojo-700"
+                  >
+                    Ver planes y asistencia
+                  </a>
+                </ListadoPersonas>
+              )}
+              {vista === 'profesores' && !!cuentasSinProfesor.length && (
                 <section className={tarjeta}>
                   <h2 className="font-bold">Accesos sin profesor registrado</h2>
                   <p className="text-sm text-gray-600">

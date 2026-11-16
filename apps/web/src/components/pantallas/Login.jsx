@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { API_URL } from '../../lib/api.js';
+import CampoContrasena from '../CampoContrasena.jsx';
 import MarcaDojo from '../MarcaDojo.jsx';
 
 // Solo se permite volver a rutas internas del sitio (evita redirecciones a otros dominios).
@@ -71,9 +72,8 @@ export default function Login() {
         <label className="mt-4 block text-xs font-semibold text-gray-700" htmlFor="password">
           Contraseña
         </label>
-        <input
+        <CampoContrasena
           id="password"
-          type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           autoComplete="current-password"
