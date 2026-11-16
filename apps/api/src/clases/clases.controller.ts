@@ -6,10 +6,12 @@ import {
   MethodNotAllowedException,
   Param,
   Post,
+  Req,
   UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
 
+import type { SolicitudAutenticada } from '../auth/sesion.js';
 import { Public } from '../common/decorators/public.decorator.js';
 
 import { ClasesService } from './clases.service.js';
@@ -67,8 +69,13 @@ export class ClasesController {
   actualizarEstadoPostulacion(
     @Body()
     datos: { id: number; estado: string },
+    @Req() request: SolicitudAutenticada,
   ) {
-    return this.clasesService.actualizarEstadoPostulacion(datos.id, datos.estado);
+    return this.clasesService.actualizarEstadoPostulacion(
+      datos.id,
+      datos.estado,
+      request?.sesion?.usuario,
+    );
   }
 
   @Post(':id')

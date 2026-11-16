@@ -1,6 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { env } from '../../config/env.js';
 import { crearClienteSheets } from '../../google/sheets.client.js';
+import { libroNuevo, numero } from '../../portal/libro.js';
+import {
+  aceptarPostulacion,
+  guardarPostulacion,
+  leerPostulaciones,
+} from '../../portal/registros.js';
 import { Postulacion } from '../interfaces/postulacion.interface.js';
 
 @Injectable()
@@ -14,6 +20,8 @@ export class PostulacionesRepository {
   }
 
   async obtenerTodas() {
+    const libro = await libroNuevo();
+    if (libro) return leerPostulaciones(await libro.leer());
     const sheets = await this.obtenerSheets();
 
     const respuesta = await sheets.spreadsheets.values.get({
@@ -48,6 +56,12 @@ export class PostulacionesRepository {
   }
 
   async guardar(postulacion: Postulacion) {
+    const libro = await libroNuevo();
+    if (libro)
+      return libro.modificar((l) => {
+        guardarPostulacion(l, postulacion);
+        return postulacion;
+      });
     const sheets = await this.obtenerSheets();
 
     await sheets.spreadsheets.values.append({
@@ -86,7 +100,13 @@ export class PostulacionesRepository {
     return postulacion;
   }
 
-  async actualizarEstado(id: number, estado: string) {
+  async actualizarEstado(id: number, estado: string, usuario = 'administrador') {
+    const libro = await libroNuevo();
+    if (libro)
+      return libro.modificar((l) => {
+        aceptarPostulacion(l, id, estado, usuario);
+        return { mensaje: 'Estado actualizado correctamente' };
+      });
     const sheets = await this.obtenerSheets();
 
     const respuesta = await sheets.spreadsheets.values.get({
@@ -104,7 +124,7 @@ export class PostulacionesRepository {
 
     await sheets.spreadsheets.values.update({
       spreadsheetId: this.spreadsheetId,
-      range: 'Postulaciones!P' + (indiceFila + 1),
+      range: `Postulaciones!P${indiceFila + 1}`,
       valueInputOption: 'USER_ENTERED',
       requestBody: {
         values: [[estado]],
@@ -117,6 +137,16 @@ export class PostulacionesRepository {
   }
 
   async eliminar(id: number) {
+    const libro = await libroNuevo();
+    if (libro)
+      return libro.modificar((l) => {
+        if (l.Inscripciones.some((i) => numero(i[0]) === id))
+          throw new ConflictException(
+            'La postulación tiene una inscripción; se conserva su historial.',
+          );
+        l.Postulaciones = l.Postulaciones.filter((p) => numero(p[0]) !== id);
+        return { mensaje: 'Postulación eliminada correctamente' };
+      });
     const sheets = await this.obtenerSheets();
 
     const respuesta = await sheets.spreadsheets.values.get({

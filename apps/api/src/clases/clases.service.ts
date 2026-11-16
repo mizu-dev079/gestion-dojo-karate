@@ -36,7 +36,7 @@ export class ClasesService {
   ) {}
 
   private calcularFechaFin(fechaInicio: string, duracion: string) {
-    const fecha = new Date(fechaInicio + 'T00:00:00Z');
+    const fecha = new Date(`${fechaInicio}T00:00:00Z`);
 
     if (duracion === '1 semana') {
       fecha.setUTCDate(fecha.getUTCDate() + 7);
@@ -60,7 +60,7 @@ export class ClasesService {
 
     const dia = String(fecha.getUTCDate()).padStart(2, '0');
 
-    return año + '-' + mes + '-' + dia;
+    return `${año}-${mes}-${dia}`;
   }
 
   async obtenerClases() {
@@ -87,7 +87,7 @@ export class ClasesService {
     const clases = await this.obtenerClases();
     const clase = clases.find((item) => Number(item.id) === id);
 
-    if (!clase) {
+    if (!clase || clase.estado === 'Inactiva') {
       throw new NotFoundException('Clase no encontrada');
     }
 
@@ -95,7 +95,7 @@ export class ClasesService {
   }
 
   async obtenerPostulaciones() {
-    return this.postulacionesRepository.obtenerTodas();
+    return (await this.postulacionesRepository.obtenerTodas()).filter((p) => p.origen !== 'manual');
   }
 
   async crearClase(datos: CrearClaseDto) {
@@ -186,7 +186,11 @@ export class ClasesService {
         throw new ConflictException('Este correo ya tiene una postulación para esta clase.');
       }
 
-      this.ultimoId = Math.max(Date.now(), this.ultimoId + 1);
+      this.ultimoId = Math.max(
+        Date.now(),
+        this.ultimoId + 1,
+        ...postulaciones.map((p) => p.id + 1),
+      );
       const postulacion = {
         id: this.ultimoId,
         nombre: datos.nombre,
@@ -219,7 +223,7 @@ export class ClasesService {
     });
   }
 
-  async actualizarEstadoPostulacion(id: number, estado: string) {
+  async actualizarEstadoPostulacion(id: number, estado: string, usuario?: string) {
     if (!(ESTADOS_POSTULACION as readonly string[]).includes(estado)) {
       throw new BadRequestException('Estado de postulación no válido.');
     }
@@ -237,7 +241,8 @@ export class ClasesService {
           throw new ConflictException('Esta clase ya no tiene cupos disponibles.');
         }
       }
-      await this.postulacionesRepository.actualizarEstado(id, estado);
+      if (usuario) await this.postulacionesRepository.actualizarEstado(id, estado, usuario);
+      else await this.postulacionesRepository.actualizarEstado(id, estado);
       await this.actualizarCuposClase(actual.claseId);
       return { mensaje: 'Estado actualizado correctamente' };
     });
@@ -287,7 +292,6 @@ export class ClasesService {
 
   async actualizarClase(id: number, datos: CrearClaseDto) {
     return this.enClase(0, async () => {
-      validarHorarioClase(datos);
       const clases = await this.clasesRepository.obtenerTodas();
 
       const claseActual = clases.find((item) => item.id === id);
@@ -296,9 +300,15 @@ export class ClasesService {
         throw new NotFoundException('Clase no encontrada');
       }
 
-      const fechaFin = this.calcularFechaFin(datos.fechaInicio, datos.duracion);
+      const permanente = claseActual.estado !== undefined;
+      validarHorarioClase(datos, permanente);
+      const fechaFin = permanente ? '' : this.calcularFechaFin(datos.fechaInicio, datos.duracion);
 
-      comprobarDisponibilidad({ ...datos, fechaFin }, clases, id);
+      comprobarDisponibilidad(
+        { ...datos, fechaInicio: permanente ? '' : datos.fechaInicio, fechaFin },
+        clases.filter((c) => c.estado !== 'Inactiva'),
+        id,
+      );
 
       const claseActualizada = {
         ...claseActual,

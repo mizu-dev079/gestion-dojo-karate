@@ -41,6 +41,8 @@ export class SesionesController {
     clase: Clase,
     profesores: Awaited<ReturnType<ProfesoresRepository['obtenerTodos']>>,
   ) {
+    if (clase.profesorId !== undefined)
+      return profesores.find((p) => p.id === clase.profesorId && p.estado === 'activo')?.id ?? null;
     const coincidencias = profesores.filter((p) => p.nombre === clase.profesor);
     return coincidencias.length === 1 && coincidencias[0].estado === 'activo'
       ? coincidencias[0].id
@@ -61,6 +63,7 @@ export class SesionesController {
     const resultado = [];
     for (const clase of clases) {
       const guardada = sesiones.find((s) => s.claseId === clase.id && s.fecha === fecha);
+      if (clase.estado === 'Inactiva' && !guardada) continue;
       if (!guardada) {
         try {
           validarFechaClase(clase, fecha);

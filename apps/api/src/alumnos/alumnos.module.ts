@@ -16,6 +16,7 @@ import { ClasesRepository } from '../clases/repositories/clases.repository.js';
 import { PostulacionesRepository } from '../clases/repositories/postulaciones.repository.js';
 import { ProfesoresRepository } from '../profesores/repositories/profesores.repository.js';
 import { AlumnosRepository } from './alumnos.repository.js';
+import { PlanesController } from './planes.controller.js';
 import { aplicarComando, comandoSchema, hoyLima, resumir, vacio } from './seguimiento.js';
 import { SesionesController } from './sesiones.controller.js';
 import { validarFechaClase } from './sesiones.js';
@@ -32,13 +33,17 @@ export class AlumnosController {
 
   private async filtro(sesion: Sesion) {
     if (sesion.perfil === 'administrador')
-      return (_id: number, _profesor: string | undefined) => true;
+      return (_id: number, _profesor: string | undefined, _profesorId?: number) => true;
     if (sesion.perfil === 'alumno')
-      return (id: number, _profesor: string | undefined) => sesion.alumnoIds.includes(id);
+      return (id: number, _profesor: string | undefined, _profesorId?: number) =>
+        sesion.alumnoIds.includes(id);
     const todos = await this.profesores.obtenerTodos();
     const p = todos.find((p) => p.id === sesion.profesorId && p.estado === 'activo');
-    return (_id: number, profesor: string | undefined) =>
-      !!p && todos.filter((item) => item.nombre === p.nombre).length === 1 && p.nombre === profesor;
+    return (_id: number, profesor: string | undefined, profesorId?: number) =>
+      !!p &&
+      (profesorId !== undefined
+        ? p.id === profesorId
+        : todos.filter((item) => item.nombre === p.nombre).length === 1 && p.nombre === profesor);
   }
 
   @Get()
@@ -54,7 +59,7 @@ export class AlumnosController {
       ['aceptado', 'aprobado'].includes(item.estado),
     )) {
       const clase = clases.find((c) => c.id === p.claseId) ?? null;
-      if (puedeVer(p.id, clase?.profesor))
+      if (puedeVer(p.id, clase?.profesor, clase?.profesorId))
         visibles.push({
           id: p.id,
           nombre: p.nombre,
@@ -92,7 +97,7 @@ export class AlumnosController {
     if (
       sesionFecha && request.sesion.perfil === 'profesor'
         ? sesionFecha.profesorId !== request.sesion.profesorId
-        : !(await this.filtro(request.sesion))(id, clase.profesor)
+        : !(await this.filtro(request.sesion))(id, clase.profesor, clase.profesorId)
     )
       throw new ForbiddenException('No tienes acceso a este alumno.');
     if (
@@ -133,7 +138,7 @@ export class AlumnosController {
   }
 }
 @Module({
-  controllers: [AlumnosController, SesionesController],
+  controllers: [AlumnosController, SesionesController, PlanesController],
   providers: [AlumnosRepository, PostulacionesRepository, ClasesRepository, ProfesoresRepository],
 })
 export class AlumnosModule {}

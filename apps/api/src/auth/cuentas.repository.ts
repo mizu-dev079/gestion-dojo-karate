@@ -7,27 +7,103 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type { sheets_v4 } from 'googleapis';
-import { z } from 'zod';
 import type { AlumnoNuevo } from '../alumnos/dto/alumno.schema.js';
 import { enClaseCompartida } from '../clases/cola-clases.js';
 import { env } from '../config/env.js';
 import { crearClienteSheets } from '../google/sheets.client.js';
+import {
+  alumnoConCuenta,
+  cuentaInscripcion,
+  guardarCuenta,
+  leerCuentas,
+  profesorConCuenta,
+} from '../portal/cuentas.js';
+import { libroNuevo } from '../portal/libro.js';
 import type { ProfesorNuevo } from '../profesores/dto/profesor.schema.js';
+import { type Cuenta, cuentaPublica, cuentaSchema } from './cuenta.js';
 
-const cuentaSchema = z.object({
-  id: z.string().uuid(),
-  usuario: z.string(),
-  perfil: z.enum(['profesor', 'alumno']),
-  profesorId: z.number().int().positive().nullable(),
-  alumnoIds: z.array(z.number().int().positive()),
-  activo: z.boolean(),
-  revision: z.number().int().positive(),
-  salt: z.string().regex(/^[a-f0-9]{32}$/),
-  hash: z.string().regex(/^[a-f0-9]{128}$/),
-});
-export type Cuenta = z.infer<typeof cuentaSchema>;
-export const cuentaPublica = ({ salt: _salt, hash: _hash, ...cuenta }: Cuenta) => cuenta;
+export { type Cuenta, cuentaPublica } from './cuenta.js';
+
 const HOJA = 'CuentasDojo';
+const cabeceraCuentas = [
+  'id',
+  'cuentaJson',
+  'Nombre',
+  'Correo',
+  'Celular',
+  'Usuario',
+  'Perfil',
+  'Estado',
+];
+const filaCuenta = (c: Cuenta) => [
+  c.id,
+  JSON.stringify(c),
+  c.nombre ?? '',
+  c.correo ?? '',
+  c.telefono ?? '',
+  c.usuario,
+  c.perfil === 'profesor' ? 'Profesor' : 'Alumno',
+  c.activo ? 'Activo' : 'Inactivo',
+];
+function vistaCuentas(sheetId: number, columnas = 26): sheets_v4.Schema$Request[] {
+  return [
+    ...(columnas < 8
+      ? [
+          {
+            updateSheetProperties: {
+              properties: { sheetId, gridProperties: { columnCount: 8 } },
+              fields: 'gridProperties.columnCount',
+            },
+          },
+        ]
+      : []),
+    {
+      updateCells: {
+        start: { sheetId, rowIndex: 0, columnIndex: 0 },
+        rows: [{ values: cabeceraCuentas.map((s) => ({ userEnteredValue: { stringValue: s } })) }],
+        fields: 'userEnteredValue',
+      },
+    },
+    {
+      updateSheetProperties: {
+        properties: { sheetId, gridProperties: { frozenRowCount: 1 } },
+        fields: 'gridProperties.frozenRowCount',
+      },
+    },
+    {
+      repeatCell: {
+        range: { sheetId, startColumnIndex: 0, endColumnIndex: 8 },
+        cell: { userEnteredFormat: { wrapStrategy: 'CLIP' } },
+        fields: 'userEnteredFormat.wrapStrategy',
+      },
+    },
+    {
+      repeatCell: {
+        range: {
+          sheetId,
+          startRowIndex: 0,
+          endRowIndex: 1,
+          startColumnIndex: 0,
+          endColumnIndex: 8,
+        },
+        cell: {
+          userEnteredFormat: {
+            backgroundColor: { red: 0.776, green: 0.157, blue: 0.157 },
+            textFormat: { bold: true, foregroundColor: { red: 1, green: 1, blue: 1 } },
+          },
+        },
+        fields: 'userEnteredFormat.backgroundColor,userEnteredFormat.textFormat',
+      },
+    },
+    ...[100, 110, 210, 230, 145, 160, 115, 110].map((pixelSize, i) => ({
+      updateDimensionProperties: {
+        range: { sheetId, dimension: 'COLUMNS', startIndex: i, endIndex: i + 1 },
+        properties: { pixelSize },
+        fields: 'pixelSize',
+      },
+    })),
+  ];
+}
 const fechaValida = (valor: string) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(valor)) return false;
   const d = new Date(`${valor}T00:00:00Z`);
@@ -47,12 +123,19 @@ export class CuentasRepository {
     const respuesta = existe
       ? await sheets.spreadsheets.values.get({
           spreadsheetId: env.GOOGLE_SPREADSHEET_ID,
-          range: `${HOJA}!A:B`,
+          range: `${HOJA}!A:H`,
         })
       : null;
     const filas = respuesta?.data.values ?? [];
     if (filas.length && (filas[0][0] !== 'id' || filas[0][1] !== 'cuentaJson'))
       throw new InternalServerErrorException('La cabecera de CuentasDojo no es válida.');
+    if (
+      filas.length &&
+      filas[0].slice(2).some((valor, i) => valor && valor !== cabeceraCuentas[i + 2])
+    )
+      throw new ConflictException(
+        'Las columnas C:H de CuentasDojo contienen otros datos. No se han sobrescrito.',
+      );
     let cuentas: Cuenta[];
     try {
       cuentas = filas.slice(1).map((f) => {
@@ -73,11 +156,20 @@ export class CuentasRepository {
     return { sheets, existe, filas, cuentas, hojas: info.data.sheets ?? [] };
   }
   async obtenerTodas() {
+    const libro = await libroNuevo();
+    if (libro) return leerCuentas(await libro.leer());
     return (await this.leer()).cuentas;
   }
 
   guardar(nueva: Omit<Cuenta, 'id' | 'revision'>) {
     return this.enOrden(async () => {
+      const libro = await libroNuevo();
+      if (libro)
+        return libro.modificar((l) => {
+          const c: Cuenta = { ...nueva, id: randomUUID(), revision: 1 };
+          guardarCuenta(l, c);
+          return cuentaPublica(c);
+        });
       const { sheets, existe, filas, cuentas } = await this.leer();
       if (cuentas.some((c) => c.usuario === nueva.usuario))
         throw new ConflictException('Ese nombre de usuario ya está registrado.');
@@ -90,15 +182,15 @@ export class CuentasRepository {
       if (!filas.length)
         await sheets.spreadsheets.values.update({
           spreadsheetId: env.GOOGLE_SPREADSHEET_ID,
-          range: `${HOJA}!A1:B1`,
+          range: `${HOJA}!A1:H1`,
           valueInputOption: 'RAW',
-          requestBody: { values: [['id', 'cuentaJson']] },
+          requestBody: { values: [cabeceraCuentas] },
         });
       await sheets.spreadsheets.values.append({
         spreadsheetId: env.GOOGLE_SPREADSHEET_ID,
-        range: `${HOJA}!A:B`,
+        range: `${HOJA}!A:H`,
         valueInputOption: 'RAW',
-        requestBody: { values: [[cuenta.id, JSON.stringify(cuenta)]] },
+        requestBody: { values: [filaCuenta(cuenta)] },
       });
       return cuentaPublica(cuenta);
     });
@@ -106,6 +198,12 @@ export class CuentasRepository {
   /** Google aplica este lote de manera atómica: profesor y credenciales se crean juntos. */
   guardarConProfesor(nueva: Omit<Cuenta, 'id' | 'revision' | 'profesorId'>, datos: ProfesorNuevo) {
     return this.enOrden(async () => {
+      const libro = await libroNuevo();
+      if (libro)
+        return libro.modificar((l) => {
+          const { profesorCreado, ...c } = profesorConCuenta(l, nueva, datos);
+          return { ...cuentaPublica(c), profesorCreado };
+        });
       const { sheets, existe, filas, cuentas, hojas } = await this.leer();
       if (cuentas.some((c) => c.usuario === nueva.usuario))
         throw new ConflictException('Ese nombre de usuario ya está registrado.');
@@ -144,7 +242,15 @@ export class CuentasRepository {
       if (!Number.isSafeInteger(profesorId))
         throw new ConflictException('No se pudo generar el identificador del profesor.');
       const profesorCreado = { id: profesorId, ...datos, estado: 'activo' };
-      const cuenta: Cuenta = { ...nueva, id: randomUUID(), revision: 1, profesorId };
+      const cuenta: Cuenta = {
+        ...nueva,
+        id: randomUUID(),
+        revision: 1,
+        profesorId,
+        nombre: datos.nombre,
+        telefono: datos.telefono,
+        correo: datos.correo,
+      };
       const usados = new Set(hojas.map((h) => h.properties?.sheetId));
       const nuevoId = () => {
         let id: number;
@@ -164,6 +270,13 @@ export class CuentasRepository {
         })),
       });
       if (!existe) requests.push({ addSheet: { properties: { title: HOJA, sheetId: cuentaId } } });
+      requests.push(
+        ...vistaCuentas(
+          cuentaId,
+          hojas.find((h) => h.properties?.title === HOJA)?.properties?.gridProperties
+            ?.columnCount ?? 26,
+        ),
+      );
       if (!hojaProfesores)
         requests.push({ addSheet: { properties: { title: 'Profesores', sheetId: profesoresId } } });
       if (
@@ -180,7 +293,7 @@ export class CuentasRepository {
         requests.push({
           updateCells: {
             start: { sheetId: cuentaId, rowIndex: 0, columnIndex: 0 },
-            rows: [fila(['id', 'cuentaJson'])],
+            rows: [fila(cabeceraCuentas)],
             fields: 'userEnteredValue',
           },
         });
@@ -210,7 +323,7 @@ export class CuentasRepository {
       requests.push({
         appendCells: {
           sheetId: cuentaId,
-          rows: [fila([cuenta.id, JSON.stringify(cuenta)])],
+          rows: [fila(filaCuenta(cuenta))],
           fields: 'userEnteredValue',
         },
       });
@@ -229,6 +342,12 @@ export class CuentasRepository {
   ) {
     return this.enOrden(() =>
       enClaseCompartida(datos.claseId, async () => {
+        const libro = await libroNuevo();
+        if (libro)
+          return libro.modificar((l) => {
+            const { alumnoCreado, ...c } = alumnoConCuenta(l, nueva, datos);
+            return { ...cuentaPublica(c), alumnoCreado };
+          });
         const { sheets, existe, filas, cuentas, hojas } = await this.leer();
         if (cuentas.some((c) => c.usuario === nueva.usuario))
           throw new ConflictException('Ese nombre de usuario ya está registrado.');
@@ -314,6 +433,9 @@ export class CuentasRepository {
           revision: 1,
           profesorId: null,
           alumnoIds: [id],
+          nombre: datos.nombre,
+          telefono: datos.telefono,
+          correo: datos.correo,
         };
         const usados = new Set(hojas.map((h) => h.properties?.sheetId));
         const nuevoId = () => {
@@ -335,6 +457,13 @@ export class CuentasRepository {
         });
         if (!existe)
           requests.push({ addSheet: { properties: { title: HOJA, sheetId: cuentaId } } });
+        requests.push(
+          ...vistaCuentas(
+            cuentaId,
+            hojas.find((h) => h.properties?.title === HOJA)?.properties?.gridProperties
+              ?.columnCount ?? 26,
+          ),
+        );
         if (!hojaPost)
           requests.push({ addSheet: { properties: { title: 'Postulaciones', sheetId: postId } } });
         if (
@@ -351,7 +480,7 @@ export class CuentasRepository {
           requests.push({
             updateCells: {
               start: { sheetId: cuentaId, rowIndex: 0, columnIndex: 0 },
-              rows: [fila(['id', 'cuentaJson'])],
+              rows: [fila(cabeceraCuentas)],
               fields: 'userEnteredValue',
             },
           });
@@ -427,7 +556,7 @@ export class CuentasRepository {
         requests.push({
           appendCells: {
             sheetId: cuentaId,
-            rows: [fila([cuenta.id, JSON.stringify(cuenta)])],
+            rows: [fila(filaCuenta(cuenta))],
             fields: 'userEnteredValue',
           },
         });
@@ -449,6 +578,16 @@ export class CuentasRepository {
 
   actualizar(id: string, cambiar: (cuenta: Cuenta) => Cuenta) {
     return this.enOrden(async () => {
+      const libro = await libroNuevo();
+      if (libro)
+        return libro.modificar((l) => {
+          const actual = leerCuentas(l).find((c) => c.id === id);
+          if (!actual) throw new NotFoundException('Cuenta no encontrada.');
+          const siguiente = cambiar(actual);
+          siguiente.revision = actual.revision + 1;
+          guardarCuenta(l, siguiente);
+          return cuentaPublica(siguiente);
+        });
       const { sheets, cuentas } = await this.leer();
       const indice = cuentas.findIndex((c) => c.id === id);
       if (indice < 0) throw new NotFoundException('Cuenta no encontrada.');
@@ -456,12 +595,20 @@ export class CuentasRepository {
       cuenta.revision = cuentas[indice].revision + 1;
       await sheets.spreadsheets.values.update({
         spreadsheetId: env.GOOGLE_SPREADSHEET_ID,
-        range: `${HOJA}!A${indice + 2}:B${indice + 2}`,
+        range: `${HOJA}!A${indice + 2}:H${indice + 2}`,
         valueInputOption: 'RAW',
-        requestBody: { values: [[id, JSON.stringify(cuenta)]] },
+        requestBody: { values: [filaCuenta(cuenta)] },
       });
       return cuentaPublica(cuenta);
     });
+  }
+  async guardarDesdeInscripcion(
+    id: number,
+    nueva: Omit<Cuenta, 'id' | 'revision' | 'profesorId' | 'alumnoIds'>,
+  ) {
+    const libro = await libroNuevo();
+    if (!libro) throw new ConflictException('Esta acción requiere la nueva estructura de la hoja.');
+    return libro.modificar((l) => cuentaPublica(cuentaInscripcion(l, id, nueva)));
   }
   private enOrden<T>(accion: () => Promise<T>): Promise<T> {
     const resultado = this.cola.then(accion);

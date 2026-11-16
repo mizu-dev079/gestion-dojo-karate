@@ -34,7 +34,7 @@ Solo administración cancela una sesión, con motivo. La cancelación **no consu
 
 El estado de la sesión y los saldos afectados se escriben en un único `spreadsheets.batchUpdate` atómico. Las cancelaciones y los cambios de seguimiento comparten una cola dentro de la instancia de API. Una sesión cancelada bloquea nuevas asistencias y recuperaciones para esa fecha, incluso desde la ficha individual. La sesión queda cerrada; si se reprograma, se utiliza otra fecha válida del horario del grupo.
 
-Los datos de la sesión se guardan en **SesionesDojo**, columnas `sesionId` y `sesionJson`, creada automáticamente en la primera escritura válida. La clave combina grupo y fecha (`claseId:AAAA-MM-DD`). Se conservan versión, profesor responsable, horario y auditoría. Los alumnos consultan su saldo y asistencia desde Mi plan; el panel de sesiones se reserva a profesores y administración.
+En la estructura profesional los datos de la sesión se guardan en **Sesiones**, con columnas legibles, y su versión y auditoría en ControlSistema. En la estructura anterior se utiliza **SesionesDojo**, con `sesionId` y `sesionJson`. La clave combina grupo y fecha (`claseId:AAAA-MM-DD`). Se conservan versión, profesor responsable, horario y auditoría. Los alumnos consultan su saldo y asistencia desde Mi plan; el panel de sesiones se reserva a profesores y administración.
 
 ## Asistencia y recuperación
 
@@ -76,11 +76,11 @@ El alumno puede **Solicitar congelamiento**. La solicitud no congela nada hasta 
 - Profesor: solo alumnos de grupos asignados a su registro de profesor; asistencia, recuperaciones, ajuste de límites, solicitudes, congelamiento y reactivación. No registra pagos ni cambia el formato económico del plan.
 - Alumno: solo sus inscripciones asignadas; consulta horario, saldo, pagos e historial, avisa o retira una ausencia actual/futura y solicita congelamiento. No cambia saldo, asistencia de terceros ni autorizaciones.
 
-Ver [cuentas y perfiles](07-cuentas-y-perfiles.md). La cancelación de una inscripción conserva el flujo existente de estado de la postulación. La liquidación de saldos de una cancelación no se automatiza sin una regla acordada.
+Ver [cuentas y perfiles](07-cuentas-y-perfiles.md). En la estructura profesional se protege la postulación ya inscrita frente a rechazo o eliminación. La gestión completa de bajas y la liquidación de saldos no se automatizan sin una regla acordada.
 
 ## Persistencia y límites de operación
 
-`SeguimientoAlumnos` conserva dos columnas: `postulacionId` y `seguimientoJson`. Consultar no crea hojas. La primera escritura válida crea solo esta pestaña si falta, con valores `RAW`. Incluye pagos, asistencia, congelamientos, recuperaciones, solicitudes y auditoría. Las otras pestañas no cambian.
+En la estructura profesional se utilizan las pestañas legibles de movimientos descritas en [Datos en Sheets](03-google-sheets.md); no se crea SeguimientoAlumnos. En la estructura anterior, `SeguimientoAlumnos` conserva dos columnas: `postulacionId` y `seguimientoJson`. Consultar no crea hojas. La primera escritura válida crea solo esta pestaña si falta, con valores `RAW`. Incluye pagos, asistencia, congelamientos, recuperaciones, solicitudes y auditoría. Las otras pestañas no cambian.
 
 Las escrituras se serializan y exigen `version` para evitar dobles renovaciones/autorizaciones en **una sola instancia de API**. No se proporciona bloqueo distribuido para varias instancias ni ediciones manuales concurrentes de Sheets. Tras un conflicto o una respuesta incierta, actualizar los datos antes de reintentar.
 
@@ -89,7 +89,8 @@ No editar manualmente el JSON. Se rechazan encabezados, identificadores duplicad
 ## HTTP
 
 - `GET /alumnos`: inscripciones aceptadas/aprobadas visibles para la sesión.
-- `POST /alumnos/:postulacionId`: comando con `version` y acción. La API valida perfil, asignación y reglas, aunque se invoque fuera de la web.
+- `GET /planes`: catálogo activo con precios y recuperaciones predeterminadas.
+- `POST /alumnos/:inscripcionId`: comando con `version` y acción. La API valida perfil, asignación y reglas, aunque se invoque fuera de la web.
 - Acciones administrativas: `iniciar`, `configurar`, `renovar`.
 - Acciones de profesor/administrador: `asistencia`, `congelar`, `reactivar`, `recuperar`, `revocarRecuperacion`, `limiteRecuperaciones`, `resolverSolicitud`.
 - Acciones del alumno propio: `asistencia` solo para avisos actuales/futuros no registrados, `retirarAviso` y `solicitarCongelamiento`.

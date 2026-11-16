@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, ParseUUIDPipe, Post } from '@nestjs/common';
 import { CuentasService } from './cuentas.service.js';
 
 /** Sin @Perfiles: todas estas rutas son exclusivamente de administración. */
@@ -13,6 +13,12 @@ export class CuentasController {
   }
   @Post() crear(@Body() datos: unknown) {
     return this.cuentas.crear(datos);
+  }
+  @Post('inscripciones/:id') crearDesdeInscripcion(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() datos: unknown,
+  ) {
+    return this.cuentas.crearDesdeInscripcion(id, datos);
   }
   @Post(':id') editar(@Param('id', ParseUUIDPipe) id: string, @Body() datos: unknown) {
     return this.cuentas.editar(id, datos);

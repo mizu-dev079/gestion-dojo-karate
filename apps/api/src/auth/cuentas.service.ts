@@ -71,15 +71,20 @@ export class CuentasService {
       cuentas.filter((c) => c.perfil === 'alumno').flatMap((c) => c.alumnoIds),
     );
     return {
-      clases: clases.map((c) => ({
-        id: c.id,
-        nivel: c.nivel,
-        sede: c.sede,
-        profesor: c.profesor,
-        horaInicio: c.horaInicio,
-        horaFin: c.horaFin,
-        frecuencia: c.frecuencia,
-      })),
+      clases: clases
+        .filter((c) => c.estado !== 'Inactiva')
+        .map((c) => ({
+          id: c.id,
+          nivel: c.nivel,
+          sede: c.sede,
+          profesor: c.profesor,
+          horaInicio: c.horaInicio,
+          horaFin: c.horaFin,
+          frecuencia: c.frecuencia,
+        })),
+      aceptadosSinCuenta: postulaciones
+        .filter((p) => !idsRegistrados.has(p.id) && ['aceptado', 'aprobado'].includes(p.estado))
+        .map((p) => ({ id: p.id, nombre: p.nombre, claseId: p.claseId })),
       profesores: profesores
         .filter((p) => p.estado === 'activo')
         .map((p) => ({ id: p.id, nombre: p.nombre })),
@@ -94,6 +99,22 @@ export class CuentasService {
           fechaNacimiento: p.fechaNacimiento,
         })),
     };
+  }
+  async crearDesdeInscripcion(id: number, datos: unknown) {
+    const r = z
+      .object({ usuario: usuarioSchema, password: passwordSchema })
+      .strict()
+      .safeParse(datos);
+    if (!r.success)
+      throw new BadRequestException('Revisa el usuario y la contraseña (mínimo 12 caracteres).');
+    if (r.data.usuario === env.ADMIN_USUARIO.toLowerCase())
+      throw new BadRequestException('Ese usuario está reservado para administración.');
+    return this.cuentas.guardarDesdeInscripcion(id, {
+      usuario: r.data.usuario,
+      perfil: 'alumno',
+      activo: true,
+      ...(await hashPassword(r.data.password)),
+    });
   }
   async crear(datos: unknown) {
     const r = crearSchema.safeParse(datos);

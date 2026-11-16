@@ -145,14 +145,18 @@ export default function TarjetaClase({
           </div>
           <div>
             <dt className="text-xs text-gray-500">Tarifa mensual</dt>
-            <dd className="mt-1 font-medium text-gray-800">S/ {clase.tarifa}</dd>
+            <dd className="mt-1 font-medium text-gray-800">
+              {clase.estado !== undefined ? 'Según plan contratado' : `S/ ${clase.tarifa}`}
+            </dd>
           </div>
           <div className="col-span-2">
             <dt className="text-xs text-gray-500">Vigencia</dt>
             <dd className="mt-1 font-medium text-gray-800">
               {clase.fechaInicio && clase.fechaFin
                 ? `${formatearFecha(clase.fechaInicio)} al ${formatearFecha(clase.fechaFin)}`
-                : 'Sin fechas registradas'}
+                : clase.estado !== undefined
+                  ? 'Grupo permanente'
+                  : 'Sin fechas registradas'}
             </dd>
           </div>
           {clase.duracion && (

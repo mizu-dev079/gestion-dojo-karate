@@ -1,93 +1,64 @@
 # 3. Datos en Google Sheets
 
-Este proyecto **no usa una base de datos**: la API lee y escribe en una hoja de cálculo de Google con la librería `googleapis`. Cada pestaña de la hoja hace de tabla.
+La API utiliza la hoja configurada en `GOOGLE_SPREADSHEET_ID`. La estructura profesional separa personas, solicitudes, inscripciones y movimientos en doce pestañas. La pestaña Guía es informativa y no la modifica la app.
 
-## Pestañas y columnas
+## Encabezados y relaciones
 
-La **fila 1 de cada pestaña son los encabezados**; el código la omite al leer. El orden de las columnas importa: la API las lee por posición.
+La fila 1 contiene los encabezados del Excel importado. Su orden y nombre deben conservarse. Se ignoran las filas sin valores, aunque tengan formato. Una cabecera incorrecta, un identificador vacío o duplicado, o columnas adicionales desconocidas detienen las escrituras antes de modificar datos.
 
-### `Clases` (columnas A a M)
+Los IDs de clases, profesores, postulaciones, alumnos e inscripciones son números enteros positivos. Los genera la aplicación, salvo los grupos oficiales que se cargan en Sheets: para ellos se asignan IDs estables, por ejemplo 1, 2 y 3, mostrando temporalmente la columna oculta. Los IDs no deben cambiar al ordenar o renombrar un registro. Los IDs de pagos, cuentas, recuperaciones y congelamientos son UUID; el de sesión combina grupo y fecha.
 
-| Col | Campo | Notas |
-|---|---|---|
-| A | `id` | Se genera con `Date.now()` |
-| B | `nivel` | |
-| C | `sede` | |
-| D | `frecuencia` | Días separados por coma: `Lunes, Miércoles` |
-| E | `profesor` | Nombre del profesor |
-| F | `horaInicio` | |
-| G | `horaFin` | |
-| H | `tarifa` | Número |
-| I | `cupos` | Cupos totales |
-| J | `cuposDisponibles` | Se recalcula al aceptar, rechazar o eliminar postulaciones |
-| K | `fechaInicio` | `AAAA-MM-DD` |
-| L | `duracion` | `1 semana`, `2 semanas`, `3 semanas` o `1 mes` |
-| M | `fechaFin` | La calcula la API a partir de `fechaInicio` y `duracion` |
+| Pestaña | Columnas, en orden |
+| --- | --- |
+| Clases | ID clase · Nombre del grupo · Sede · Días · Hora inicio · Hora fin · ID profesor · Profesor habitual · Cupos totales · Cupos ocupados · Cupos disponibles · Estado |
+| Profesores | ID profesor · Nombre completo · Celular · Correo · Estado · Fecha de registro |
+| Postulaciones | ID postulación · Fecha de envío · Nombre completo · Fecha de nacimiento · Celular · Correo · Nombre del apoderado · Celular del apoderado · Correo del apoderado · ID clase solicitada · Clase solicitada · Estado · Fecha de revisión · Revisado por · Observaciones · Versión del consentimiento · Fecha del consentimiento · ID alumno generado |
+| Alumnos | ID alumno · Nombre completo · Fecha de nacimiento · Celular · Correo · Nombre del apoderado · Celular del apoderado · Correo del apoderado · Estado · Fecha de registro · Origen · ID postulación |
+| Inscripciones | ID inscripción · ID alumno · Alumno · ID clase · Clase · Fecha de ingreso · ID plan actual · Plan actual · Días contratados · Estado · Clases pendientes · Fecha de baja · Motivo de baja |
+| Planes | ID plan · Nombre · Cantidad de clases · Precio S/ · Recuperaciones predeterminadas · Estado |
+| Pagos | ID pago · ID inscripción · Alumno · Fecha de pago · Plan contratado · Clases contratadas · Importe pagado S/ · Medio de pago · Referencia · Límite de recuperaciones · Clases pendientes · Registrado por · Observaciones |
+| Sesiones | ID sesión · ID clase · Clase · Fecha · Hora inicio · Hora fin · Profesor habitual · ID profesor responsable · Profesor responsable · Asistencia del profesor · Estado de sesión · Motivo de cancelación · Actualizado por · Fecha de actualización |
+| Asistencias | ID asistencia · ID sesión · ID inscripción · Alumno · Estado · ID pago utilizado · Registrado por · Fecha de registro · Observaciones |
+| Recuperaciones | ID recuperación · ID asistencia original · ID inscripción · Alumno · ID pago · Fecha de la inasistencia · Motivo de justificación · Estado · Autorizado por · Fecha de autorización · Motivo de revocación · Fecha de revocación |
+| Congelamientos | ID congelamiento · ID inscripción · Alumno · Fecha de solicitud · Motivo · Estado · Fecha de inicio · Fecha prevista de regreso · Fecha real de reactivación · Autorizado por · Fecha de resolución · Respuesta u observaciones |
+| CuentasDojo | Nombre completo · Perfil · Usuario · Correo · Celular · Estado de cuenta · Fecha de creación · ID cuenta · ID profesor · ID alumno · cuentaJson |
 
-### `Postulaciones` (columnas A a S)
+`Clases` utiliza grupos permanentes, días separados por comas y horas HH:mm. El profesor se relaciona por ID; su nombre se consulta desde Profesores. Los precios pertenecen a Planes, no al grupo. La edición de grupos en la app no exige vigencia ni tarifa para esta estructura. Desactivar un grupo o profesor conserva sus registros históricos; un grupo con inscripciones activas no se puede desactivar mediante Eliminar.
 
-| Col | Campo | Notas |
-|---|---|---|
-| A | `id` | |
-| B | `nombre` | |
-| C | `telefono` | |
-| D | `correo` | |
-| E | `fechaNacimiento` | |
-| F | `nombreCompletoApoderado` | Opcional (menores de edad) |
-| G | `correoApoderado` | Opcional |
-| H | `telefonoApoderado` | Opcional |
-| I | `claseId` | Clase a la que postula |
-| J–O | `nivel`, `sede`, `profesor`, `frecuencia`, `horaInicio`, `horaFin` | Copia de los datos de la clase al momento de postular |
-| P | `estado` | `pendiente`, `aceptado`, `aprobado`, `rechazado` o `ignorado` |
-| Q | `fechaPostulacion` | Fecha y hora ISO |
-| R | `consentimientoVersion` | Versión del aviso aceptado (`2026-10-27`) |
-| S | `consentimientoFecha` | Fecha y hora ISO de la aceptación |
+Los estados se escriben con las etiquetas de la plantilla: Activa/Inactiva, Activo/Inactivo, Pendiente/Aceptada/Rechazada/Cancelada, Programada/Realizada/Cancelada, etc. No introducir filas ficticias para preparar una pestaña vacía.
 
-Las postulaciones con estado `aceptado` o `aprobado` descuentan un cupo de la clase.
+## Postulación, inscripción y acceso
 
-### `Profesores` (columnas A a E)
+1. El formulario público registra solo una postulación pendiente, con consentimiento y datos del apoderado cuando corresponde. No reserva cupo.
+2. Aceptar crea el alumno, la inscripción y la reserva del cupo, y actualiza la postulación en una sola operación atómica. Repetir la aceptación no duplica registros. No se unen personas únicamente por correo, ya que puede ser compartido por familiares.
+3. El profesor ve la inscripción aceptada al actualizar Alumnos o Sesiones. La identidad del alumno y la de la inscripción están separadas; la API de seguimiento utiliza el ID de inscripción.
+4. Desde Usuario → Profesores y alumnos → Alumnos aceptados sin acceso se crea la cuenta con usuario y contraseña. Esta acción no crea otra persona ni ocupa otro cupo.
+5. El registro manual continúa disponible y crea alumno, inscripción y cuenta juntos, sin inventar una postulación pública o un consentimiento.
 
-| Col | Campo | Notas |
-|---|---|---|
-| A | `id` | |
-| B | `nombre` | |
-| C | `estado` | `activo` o `inactivo` |
-| D | `telefono` | Opcional; se conserva como texto |
-| E | `correo` | Opcional; no necesita ser Gmail |
+Una postulación ya inscrita no se rechaza o elimina para dar de baja a la persona: se protege su historial. Los campos de baja están previstos en la hoja; una gestión completa de bajas y liquidación económica requiere definir sus reglas y su interfaz.
 
-Los valores de los estados y las duraciones están definidos en `packages/shared/src/enums`, y la forma de cada registro en `packages/shared/src/types/api.ts`.
+## Planes y seguimiento
 
-## Credenciales de la cuenta de servicio
+Planes contiene los paquetes oficiales de 4, 8 y 12 clases. La app obtiene sus precios y límites mediante `GET /planes`. El precio elegido se conserva en la configuración del alumno y en cada pago; cambiar el catálogo no reescribe pagos anteriores. El límite de recuperaciones se copia al registrar un nuevo pago y sus ajustes manuales conservan auditoría.
 
-La API entra a la hoja con una **cuenta de servicio** de Google Cloud.
+Los movimientos se guardan como filas legibles en Pagos, Asistencias, Recuperaciones y Congelamientos. Se reconstruye el seguimiento por inscripción y se recalcula el consumo de los pagos más antiguos primero. Las clases se conservan hasta completarlas; renovar mantiene el saldo. Cancelar una sesión del dojo devuelve descuentos y libera las recuperaciones de esa fecha.
 
-1. En Google Cloud, crea una cuenta de servicio y descarga su llave en formato JSON.
-2. Guárdala como `apps/api/credentials/google-service-account.json`.
-3. Comparte la hoja de cálculo con el correo de la cuenta de servicio (`...@...iam.gserviceaccount.com`) con permiso de **Editor**.
+La app añade dos columnas cuando hay movimientos que las necesitan: `Asistencias!J`, Política interna, conserva la política aplicada al registro; `Congelamientos!M`, Tipo de registro, distingue Solicitud y Período. Una solicitud aprobada se conserva como Aprobada y el período autorizado como Activo/Finalizado. Esto permite conservar el historial de ambas operaciones.
 
-> ⚠️ La carpeta `credentials/` está en el `.gitignore` y **nunca debe subirse a Git**: el archivo contiene una llave privada. Si alguna vez se sube por error, revoca la llave en Google Cloud y crea otra.
+En la primera operación que necesite auditoría se crea automáticamente la pestaña oculta `ControlSistema`, con Tipo, ID, Versión y Datos internos. Conserva versiones, auditorías y el importe configurado para próximos pagos; no sustituye las tablas legibles de movimientos. No se crean SeguimientoAlumnos ni SesionesDojo en la estructura nueva.
 
-La ruta se escribe como `credentials/google-service-account.json` (relativa), así que la API debe arrancar desde la carpeta `apps/api`. Con `pnpm dev` o `pnpm dev:api` Turborepo ya lo hace por ti.
+Consultar no crea registros. Las escrituras actualizan únicamente valores, conservando el formato del Excel importado. Las cadenas se escriben como texto literal, incluso si empiezan por `=`. Los lotes relacionados se envían mediante un único `spreadsheets.batchUpdate` atómico. Todas las escrituras de esta estructura comparten una cola dentro de la instancia de API; no se proporciona coordinación distribuida ni protección frente a ediciones manuales concurrentes. Se requiere una sola instancia escritora y evitar editar datos simultáneamente desde Sheets.
 
-## Pendiente de mejorar
+Las lecturas concurrentes se agrupan cuando es posible para reducir solicitudes a Google. No hay una caché temporal persistente de saldos. Se detiene una escritura si una celda supera el límite preventivo de 45 000 caracteres. Los historiales de auditoría extensos y el crecimiento del volumen requieren una base de datos.
 
-- El identificador de la hoja de cálculo (`spreadsheetId`) está escrito dentro de los tres repositorios (`clases`, `postulaciones` y `profesores`). Conviene moverlo a una variable de entorno.
-- Cada operación vuelve a leer la pestaña completa. Con pocos datos no se nota; si la hoja crece, habrá que optimizarlo.
+## Compatibilidad
 
-## Validación de postulaciones
+Se detecta la nueva estructura por Inscripciones y se validan las doce pestañas antes de escribir. Se mantiene lectura y escritura de la estructura anterior si la hoja sigue utilizándola; no se migran ni eliminan filas automáticamente. No mezclar encabezados antiguos y nuevos. Si aparecen pestañas nuevas y falta Inscripciones, se informa el error en lugar de iniciar escrituras antiguas.
 
-La API valida nombre (3–120 caracteres), correo, teléfono de 9 dígitos y fecha de nacimiento (0–100 años). Los menores de 18 deben incluir nombre, correo y teléfono del apoderado. El consentimiento es obligatorio y se registra en las columnas R y S; añade esos encabezados a una hoja existente. Las filas antiguas pueden dejar esas columnas vacías.
+## Autenticación de Google
 
-La convocatoria permite postular desde que se crea la clase hasta `fechaFin` inclusive, según la fecha de Perú (`America/Lima`), siempre que haya cupos. `fechaInicio` marca el comienzo de las clases, no la apertura de inscripciones: una clase que empieza el 31 de octubre puede recibir postulaciones el día 27. No se permite postular después del fin ni si faltan fechas o están invertidas. El correo se normaliza y no puede repetirse para la misma clase, incluso si la postulación anterior fue rechazada. Puede usarse para otra clase.
+La edición anónima por enlace en el navegador no sustituye la autenticación que necesita la API. Se mantiene el mismo `GOOGLE_SPREADSHEET_ID` si se reemplazó el contenido de la hoja original.
 
-Las postulaciones pendientes no reservan vacante. Aceptar o aprobar consume cupo; rechazar o ignorar lo libera. La API comprueba nuevamente los cupos al aceptar. Las operaciones de postulación y aceptación se serializan por clase dentro de una instancia; Google Sheets no ofrece transacciones y esta protección no coordina varias instancias de la API.
+La API utiliza `GOOGLE_CREDENTIALS_JSON`, con credenciales disponibles directamente en el proceso, o el archivo privado indicado en `GOOGLE_CREDENTIALS_PATH` (por defecto `credentials/google-service-account.json`, relativo a apps/api). La cuenta de servicio debe tener permiso de Editor. No subir llaves a Git ni escribirlas en celdas. Los secretos de proxy que solo sustituyen credenciales en solicitudes de red no sirven para firmar localmente un JWT con una llave JSON.
 
-El formulario público admite 5 intentos por IP cada 15 minutos, incluidos los inválidos. El límite vive en memoria y se reinicia con el proceso. No habilites confianza indiscriminada en encabezados de proxy; si se despliega detrás de un proxy, configura sus direcciones de confianza y un almacén compartido de límites antes de usar varias instancias.
-
-El aviso del formulario es un texto inicial para la demo. Antes de usar datos reales, el cliente debe confirmar responsable, contacto para ejercer derechos y plazos de conservación. No representa una validación legal del aviso.
-
-Las filas antiguas de Profesores con solo tres columnas siguen siendo compatibles. El alta combinada desde Profesores y alumnos agrega el contacto y la cuenta mediante un único lote atómico de Google Sheets. Si D/E ya contienen otros datos, rechaza el alta sin sobrescribirlos. Consultar [clases oficiales](08-clases-oficiales.md) antes de preparar los datos reales.
-
-### Altas manuales de alumnos
-
-El registro desde Profesores y alumnos añade una fila nueva en `Postulaciones` con estado `aceptado`, identificador nuevo y `origen` = `manual` en la columna **T**. No reutiliza IDs, nombres ni datos de las postulaciones anteriores. Cuenta, inscripción y cupo de la clase se guardan en un solo lote atómico. Las columnas A–S conservan su orden; R/S de consentimiento quedan vacías en un alta manual, sin simular consentimiento del formulario público. La cabecera T se añade sin sobrescribir otra columna ocupada; la consulta del seguimiento admite las filas anteriores sin T.
+Antes de usar datos oficiales se deben completar la carga de grupos, asignaciones de profesores, pruebas de aceptación y respaldo de la hoja. Las pruebas automatizadas usan Google simulado y no modifican la hoja real.

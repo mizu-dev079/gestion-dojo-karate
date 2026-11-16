@@ -5,6 +5,8 @@
  */
 
 export interface ClaseDto {
+  profesorId?: number;
+  estado?: string;
   id: number;
   nivel: string;
   sede: string;

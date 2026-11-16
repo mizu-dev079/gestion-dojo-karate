@@ -1,6 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { env } from '../../config/env.js';
 import { crearClienteSheets } from '../../google/sheets.client.js';
+import { libroNuevo, numero, texto } from '../../portal/libro.js';
+import { leerClases, recalcularCupos } from '../../portal/registros.js';
 import { Clase } from '../interfaces/clase.interface.js';
 
 @Injectable()
@@ -13,7 +15,9 @@ export class ClasesRepository {
     return crearClienteSheets();
   }
 
-  async obtenerTodas() {
+  async obtenerTodas(): Promise<Clase[]> {
+    const libro = await libroNuevo();
+    if (libro) return leerClases(await libro.leer());
     const sheets = await this.obtenerSheets();
 
     const respuesta = await sheets.spreadsheets.values.get({
@@ -53,6 +57,10 @@ export class ClasesRepository {
   }
 
   async guardar(clase: Clase) {
+    if (await libroNuevo())
+      throw new ConflictException(
+        'Las clases oficiales se cargan en la hoja; no se crean desde la app.',
+      );
     const sheets = await this.obtenerSheets();
 
     await sheets.spreadsheets.values.append({
@@ -99,6 +107,33 @@ export class ClasesRepository {
   }
 
   async actualizar(clase: Clase) {
+    const libro = await libroNuevo();
+    if (libro)
+      return libro.modificar((l) => {
+        const f = l.Clases.find((f) => numero(f[0]) === clase.id);
+        if (!f) throw new ConflictException('Clase no encontrada.');
+        const p = l.Profesores.filter((p) => p[1] === clase.profesor && p[4] === 'Activo');
+        if (p.length !== 1) throw new ConflictException('Selecciona un profesor activo y único.');
+        if (
+          clase.cupos <
+          l.Inscripciones.filter(
+            (i) => numero(i[3]) === clase.id && ['Activa', 'Congelada'].includes(texto(i[9])),
+          ).length
+        )
+          throw new ConflictException(
+            'No puedes reducir el cupo por debajo de los alumnos inscritos.',
+          );
+        f[1] = clase.nivel;
+        f[2] = clase.sede;
+        f[3] = clase.frecuencia.join(', ');
+        f[4] = clase.horaInicio;
+        f[5] = clase.horaFin;
+        f[6] = p[0][0];
+        f[7] = p[0][1];
+        f[8] = clase.cupos;
+        recalcularCupos(l);
+        return leerClases(l).find((c) => c.id === clase.id) as Clase;
+      });
     const sheets = await this.obtenerSheets();
 
     const respuesta = await sheets.spreadsheets.values.get({
@@ -120,7 +155,7 @@ export class ClasesRepository {
     await sheets.spreadsheets.values.update({
       spreadsheetId: this.spreadsheetId,
 
-      range: 'Clases!A' + (indiceFila + 1) + ':M' + (indiceFila + 1),
+      range: `Clases!A${indiceFila + 1}:M${indiceFila + 1}`,
 
       valueInputOption: 'USER_ENTERED',
 
@@ -161,6 +196,12 @@ export class ClasesRepository {
   }
 
   async actualizarCuposDisponibles(claseId: number, cuposDisponibles: number) {
+    const libro = await libroNuevo();
+    if (libro)
+      return libro.modificar((l) => {
+        recalcularCupos(l);
+        return { mensaje: 'Cupos disponibles actualizados' };
+      });
     const sheets = await this.obtenerSheets();
 
     const respuesta = await sheets.spreadsheets.values.get({
@@ -180,7 +221,7 @@ export class ClasesRepository {
     await sheets.spreadsheets.values.update({
       spreadsheetId: this.spreadsheetId,
 
-      range: 'Clases!J' + (indiceFila + 1),
+      range: `Clases!J${indiceFila + 1}`,
 
       valueInputOption: 'USER_ENTERED',
 
@@ -195,6 +236,20 @@ export class ClasesRepository {
   }
 
   async eliminar(claseId: number) {
+    const libro = await libroNuevo();
+    if (libro)
+      return libro.modificar((l) => {
+        const c = l.Clases.find((c) => numero(c[0]) === claseId);
+        if (!c) throw new ConflictException('Clase no encontrada.');
+        if (
+          l.Inscripciones.some(
+            (i) => numero(i[3]) === claseId && ['Activa', 'Congelada'].includes(texto(i[9])),
+          )
+        )
+          throw new ConflictException('La clase conserva inscripciones activas.');
+        c[11] = 'Inactiva';
+        return { mensaje: 'Clase desactivada; se conserva su historial' };
+      });
     const sheets = await this.obtenerSheets();
 
     const respuesta = await sheets.spreadsheets.values.get({

@@ -11,7 +11,7 @@ const secundario =
   'min-h-11 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-semibold disabled:opacity-50';
 const tarjeta = 'space-y-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm';
 
-function Registro({ perfil, clases, ocupado, crear, cancelar }) {
+function Registro({ perfil, clases, ocupado, crear, cancelar, inscripcion }) {
   const [usuario, setUsuario] = useState('');
   const [password, setPassword] = useState('');
   const [nombre, setNombre] = useState('');
@@ -21,6 +21,7 @@ function Registro({ perfil, clases, ocupado, crear, cancelar }) {
   const [fechaNacimiento, setFechaNacimiento] = useState('');
   async function enviar(e) {
     e.preventDefault();
+    if (inscripcion) return crear({ usuario, password }, inscripcion.id);
     await crear({
       usuario,
       password,
@@ -33,77 +34,86 @@ function Registro({ perfil, clases, ocupado, crear, cancelar }) {
   return (
     <form onSubmit={enviar} className={tarjeta}>
       <h2 className="text-lg font-bold">
-        {perfil === 'profesor' ? 'Registrar profesor' : 'Registrar alumno'}
+        {inscripcion
+          ? `Crear acceso para ${inscripcion.nombre}`
+          : perfil === 'profesor'
+            ? 'Registrar profesor'
+            : 'Registrar alumno'}
       </h2>
       <fieldset disabled={ocupado} className="space-y-4">
-        <label className="block text-sm font-semibold">
-          {perfil === 'profesor' ? 'Nombre del profesor' : 'Nombre del alumno'}
-          <input
-            required
-            maxLength={120}
-            autoComplete="name"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            className={campo}
-          />
-        </label>
-        <label className="block text-sm font-semibold">
-          Teléfono (opcional)
-          <input
-            type="tel"
-            maxLength={30}
-            autoComplete="tel"
-            value={telefono}
-            onChange={(e) => setTelefono(e.target.value)}
-            className={campo}
-          />
-        </label>
-        <label className="block text-sm font-semibold">
-          Correo (opcional)
-          <input
-            type="email"
-            maxLength={254}
-            autoComplete="email"
-            value={correo}
-            onChange={(e) => setCorreo(e.target.value)}
-            className={campo}
-          />
-        </label>
-        {perfil === 'alumno' && (
+        {!inscripcion && (
           <>
             <label className="block text-sm font-semibold">
-              Fecha de nacimiento (opcional)
+              {perfil === 'profesor' ? 'Nombre del profesor' : 'Nombre del alumno'}
               <input
-                type="date"
-                value={fechaNacimiento}
-                onChange={(e) => setFechaNacimiento(e.target.value)}
-                max={new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(
-                  new Date(),
-                )}
+                required
+                maxLength={120}
+                autoComplete="name"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
                 className={campo}
               />
             </label>
             <label className="block text-sm font-semibold">
-              Clase del alumno
-              <select
-                required
-                value={claseId}
-                onChange={(e) => setClaseId(e.target.value)}
+              Teléfono (opcional)
+              <input
+                type="tel"
+                maxLength={30}
+                autoComplete="tel"
+                value={telefono}
+                onChange={(e) => setTelefono(e.target.value)}
                 className={campo}
-              >
-                <option value="">Selecciona una clase oficial</option>
-                {clases.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nivel} · {c.sede} · {c.horaInicio} – {c.horaFin} · {c.frecuencia?.join(', ')}
-                  </option>
-                ))}
-              </select>
+              />
             </label>
-            {!clases.length && (
-              <p className="rounded-xl bg-gray-50 p-3 text-sm text-gray-600">
-                Carga primero los horarios oficiales del dojo en Google Sheets para asignar una
-                clase.
-              </p>
+            <label className="block text-sm font-semibold">
+              Correo (opcional)
+              <input
+                type="email"
+                maxLength={254}
+                autoComplete="email"
+                value={correo}
+                onChange={(e) => setCorreo(e.target.value)}
+                className={campo}
+              />
+            </label>
+            {perfil === 'alumno' && (
+              <>
+                <label className="block text-sm font-semibold">
+                  Fecha de nacimiento (opcional)
+                  <input
+                    type="date"
+                    value={fechaNacimiento}
+                    onChange={(e) => setFechaNacimiento(e.target.value)}
+                    max={new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(
+                      new Date(),
+                    )}
+                    className={campo}
+                  />
+                </label>
+                <label className="block text-sm font-semibold">
+                  Clase del alumno
+                  <select
+                    required
+                    value={claseId}
+                    onChange={(e) => setClaseId(e.target.value)}
+                    className={campo}
+                  >
+                    <option value="">Selecciona una clase oficial</option>
+                    {clases.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.nivel} · {c.sede} · {c.horaInicio} – {c.horaFin} ·{' '}
+                        {c.frecuencia?.join(', ')}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {!clases.length && (
+                  <p className="rounded-xl bg-gray-50 p-3 text-sm text-gray-600">
+                    Carga primero los horarios oficiales del dojo en Google Sheets para asignar una
+                    clase.
+                  </p>
+                )}
+              </>
             )}
           </>
         )}
@@ -139,7 +149,7 @@ function Registro({ perfil, clases, ocupado, crear, cancelar }) {
         <div className="flex flex-wrap gap-2">
           <button
             type="submit"
-            disabled={ocupado || (perfil === 'alumno' && !claseId)}
+            disabled={ocupado || (!inscripcion && perfil === 'alumno' && !claseId)}
             className={boton}
           >
             {ocupado
@@ -218,6 +228,7 @@ export default function Cuentas() {
   const [cuentas, setCuentas] = useState([]);
   const [profesores, setProfesores] = useState([]);
   const [alumnos, setAlumnos] = useState([]);
+  const [aceptados, setAceptados] = useState([]);
   const [clases, setClases] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [listo, setListo] = useState(false);
@@ -237,6 +248,7 @@ export default function Cuentas() {
       setCuentas(lista);
       setProfesores(profesores);
       setAlumnos(opciones.alumnos);
+      setAceptados(opciones.aceptadosSinCuenta ?? []);
       setClases(opciones.clases ?? []);
       setListo(true);
     } catch (error) {
@@ -252,10 +264,10 @@ export default function Cuentas() {
     setAviso(null);
     setRegistro({ perfil });
   }
-  async function crear(datos) {
+  async function crear(datos, inscripcionId) {
     const ok = await ejecutar(async () => {
       const nueva = await leerRespuesta(
-        await apiFetch('/cuentas', {
+        await apiFetch(inscripcionId ? `/cuentas/inscripciones/${inscripcionId}` : '/cuentas', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(datos),
@@ -266,6 +278,7 @@ export default function Cuentas() {
       if (nueva.profesorCreado)
         setProfesores((anteriores) => [...anteriores, nueva.profesorCreado]);
       if (nueva.alumnoCreado) setAlumnos((anteriores) => [...anteriores, nueva.alumnoCreado]);
+      if (inscripcionId) await cargar();
       return 'Registro completado. Entrega el usuario y la contraseña a su titular por un medio privado.';
     });
     if (ok) setRegistro(null);
@@ -334,6 +347,7 @@ export default function Cuentas() {
           <Registro
             key={registro.perfil}
             perfil={registro.perfil}
+            inscripcion={registro.inscripcion}
             clases={clases}
             ocupado={ocupado}
             crear={crear}
@@ -372,6 +386,31 @@ export default function Cuentas() {
               Crear cuenta de alumno
             </button>
           </section>
+          {aceptados.length > 0 && (
+            <section className={tarjeta}>
+              <h2 className="font-bold">Alumnos aceptados sin acceso</h2>
+              <p className="text-sm text-gray-600">
+                Ya están inscritos y aparecen en la clase del profesor. Crea su acceso sin volver a
+                registrar sus datos ni ocupar otro cupo.
+              </p>
+              {aceptados.map((a) => (
+                <article key={a.id} className="space-y-2 rounded-xl border border-gray-200 p-3">
+                  <p className="font-semibold">{a.nombre}</p>
+                  <p className="text-sm text-gray-600">
+                    {clases.find((c) => c.id === a.claseId)?.nivel ?? 'Clase asignada'}
+                  </p>
+                  <button
+                    type="button"
+                    className={boton}
+                    disabled={ocupado}
+                    onClick={() => setRegistro({ perfil: 'alumno', inscripcion: a })}
+                  >
+                    Crear acceso del alumno
+                  </button>
+                </article>
+              ))}
+            </section>
+          )}
           <button
             type="button"
             onClick={cargar}

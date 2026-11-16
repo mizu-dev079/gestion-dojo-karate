@@ -127,6 +127,16 @@ describe('Alta manual atómica de alumno', () => {
     ]);
     const r = await new CuentasRepository().guardarConAlumno(nueva(), datos());
     expect(r.alumnoCreado.nombre).toBe('Alumno oficial');
+    const visible = cuentas.at(-1)?.slice(2);
+    expect(visible).toEqual([
+      datos().nombre,
+      datos().correo,
+      datos().telefono,
+      nueva().usuario,
+      'Alumno',
+      'Activo',
+    ]);
+
     expect(r.alumnoIds).toEqual([r.alumnoCreado.id]);
     expect(r.alumnoCreado.id).not.toBe(300);
     expect(r).not.toHaveProperty('hash');

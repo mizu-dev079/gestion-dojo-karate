@@ -2,6 +2,13 @@ import { ConflictException, Injectable, InternalServerErrorException } from '@ne
 import type { sheets_v4 } from 'googleapis';
 import { env } from '../config/env.js';
 import { crearClienteSheets } from '../google/sheets.client.js';
+import { libroNuevo } from '../portal/libro.js';
+import {
+  guardarSeguimiento,
+  guardarSesion,
+  leerSeguimientos,
+  leerSesiones,
+} from '../portal/seguimientos.js';
 import { type Seguimiento, seguimientoSchema, vacio } from './seguimiento.js';
 import { type SesionClase, sesionClaseSchema } from './sesiones.js';
 
@@ -52,6 +59,8 @@ export class AlumnosRepository {
   }
 
   async obtenerTodos(): Promise<Map<number, Seguimiento>> {
+    const libro = await libroNuevo();
+    if (libro) return leerSeguimientos(await libro.leer());
     const { filas } = await this.leer();
     return new Map(filas.slice(1).map((fila) => [Number(fila[0]), this.decodificar(fila[1])]));
   }
@@ -62,6 +71,27 @@ export class AlumnosRepository {
     sesion?: { claseId: number; fecha: string; profesorId?: number },
   ): Promise<Seguimiento> {
     const resultado = this.cola.then(async () => {
+      const libro = await libroNuevo();
+      if (libro)
+        return libro.modificar((l) => {
+          const guardada = sesion
+            ? leerSesiones(l).find((s) => s.claseId === sesion.claseId && s.fecha === sesion.fecha)
+            : undefined;
+          if (guardada?.estado === 'cancelada')
+            throw new ConflictException(
+              'La sesión fue cancelada por el dojo. No consume clases ni recuperaciones.',
+            );
+          if (
+            guardada &&
+            sesion?.profesorId !== undefined &&
+            guardada.profesorId !== sesion.profesorId
+          )
+            throw new ConflictException('La sesión fue asignada a otro profesor.');
+          const actual = leerSeguimientos(l).get(id) ?? vacio();
+          const siguiente = cambiar(actual);
+          guardarSeguimiento(l, id, siguiente);
+          return siguiente;
+        });
       if (sesion) {
         const guardada = (await this.obtenerSesiones()).find(
           (s) => s.claseId === sesion.claseId && s.fecha === sesion.fecha,
@@ -120,6 +150,8 @@ export class AlumnosRepository {
     return resultado;
   }
   async obtenerSesiones(): Promise<SesionClase[]> {
+    const libro = await libroNuevo();
+    if (libro) return leerSesiones(await libro.leer());
     const sheets = await crearClienteSheets();
     const info = await sheets.spreadsheets.get({
       spreadsheetId: env.GOOGLE_SPREADSHEET_ID,
@@ -157,6 +189,14 @@ export class AlumnosRepository {
     ) => { sesion: SesionClase; alumnos: Map<number, Seguimiento> },
   ): Promise<SesionClase> {
     const resultado = this.cola.then(async () => {
+      const libro = await libroNuevo();
+      if (libro)
+        return libro.modificar((l) => {
+          const cambio = cambiar(leerSesiones(l), leerSeguimientos(l));
+          guardarSesion(l, cambio.sesion);
+          for (const [id, s] of cambio.alumnos) guardarSeguimiento(l, id, s);
+          return cambio.sesion;
+        });
       const sesiones = await this.obtenerSesiones();
       const { sheets, filas } = await this.leer();
       const alumnos = new Map(

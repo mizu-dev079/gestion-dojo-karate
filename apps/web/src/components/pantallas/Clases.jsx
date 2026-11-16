@@ -42,12 +42,12 @@ export default function Clases() {
       day: '2-digit',
     }).format(new Date());
 
-  const calcularFechaFin = (inicio, duracionSeleccionada) => {
+  const calcularFechaFin = useCallback((inicio, duracionSeleccionada) => {
     if (!inicio || !duracionSeleccionada) {
       return '';
     }
 
-    const fecha = new Date(inicio + 'T00:00:00');
+    const fecha = new Date(`${inicio}T00:00:00`);
 
     if (duracionSeleccionada === '1 semana') {
       fecha.setDate(fecha.getDate() + 7);
@@ -71,8 +71,8 @@ export default function Clases() {
 
     const dia = String(fecha.getDate()).padStart(2, '0');
 
-    return año + '-' + mes + '-' + dia;
-  };
+    return `${año}-${mes}-${dia}`;
+  }, []);
 
   const formatearFecha = (fecha) => {
     if (!fecha) {
@@ -85,10 +85,12 @@ export default function Clases() {
       return fecha;
     }
 
-    return partes[2] + '/' + partes[1] + '/' + partes[0];
+    return `${partes[2]}/${partes[1]}/${partes[0]}`;
   };
 
   const obtenerEstadoClase = (clase) => {
+    if (clase.estado === 'Inactiva')
+      return { texto: 'Inactiva', estilo: 'bg-gray-100 text-gray-500' };
     if (!clase.fechaInicio || !clase.fechaFin) {
       return {
         texto: 'Vigente',
@@ -174,7 +176,7 @@ export default function Clases() {
     } else {
       setFechaFin('');
     }
-  }, [fechaInicio, duracion]);
+  }, [fechaInicio, duracion, calcularFechaFin]);
 
   const iniciarEdicion = (clase) => {
     setEditandoId(clase.id);
@@ -249,10 +251,9 @@ export default function Clases() {
       horaInicio === '' ||
       horaFin === '' ||
       profesor === '' ||
-      tarifa === '' ||
+      (!estructuraNueva && tarifa === '') ||
       cupos === '' ||
-      fechaInicio === '' ||
-      duracion === ''
+      (!estructuraNueva && (fechaInicio === '' || duracion === ''))
     ) {
       setAviso({ tipo: 'error', texto: 'Completa todos los campos antes de guardar los cambios.' });
 
@@ -262,7 +263,7 @@ export default function Clases() {
     await ejecutar(async () => {
       const frecuenciaOrdenada = ordenarDias(frecuencia);
 
-      const respuesta = await apiFetch('/clases/' + editandoId, {
+      const respuesta = await apiFetch(`/clases/${editandoId}`, {
         method: 'POST',
 
         headers: {
@@ -304,7 +305,7 @@ export default function Clases() {
   const eliminarClase = async () => {
     if (!clasePorEliminar) return;
     const eliminado = await ejecutar(async () => {
-      const respuesta = await apiFetch('/clases/' + clasePorEliminar.id, {
+      const respuesta = await apiFetch(`/clases/${clasePorEliminar.id}`, {
         method: 'DELETE',
       });
 
@@ -317,13 +318,14 @@ export default function Clases() {
   };
 
   const vigentes = clases.filter((clase) => obtenerEstadoClase(clase).texto === 'Vigente');
-  const prioridad = { Vigente: 0, 'Por iniciar': 1, Finalizada: 2 };
+  const prioridad = { Vigente: 0, 'Por iniciar': 1, Finalizada: 2, Inactiva: 3 };
   const visibles = (vista === 'vigentes' ? vigentes : [...clases]).sort(
     (a, b) =>
       prioridad[obtenerEstadoClase(a).texto] - prioridad[obtenerEstadoClase(b).texto] ||
       (b.fechaInicio || '').localeCompare(a.fechaInicio || ''),
   );
 
+  const estructuraNueva = clases.some((c) => c.estado !== undefined);
   return (
     <div className="min-h-0 bg-[var(--page-background)] text-gray-800">
       <main className="space-y-4 px-4 pb-10 pt-4" aria-busy={ocupado}>
@@ -379,7 +381,7 @@ export default function Clases() {
                 </select>
               </div>
 
-              <div>
+              <div hidden={estructuraNueva}>
                 <label className="text-xs font-semibold text-gray-500">VIGENCIA DE LA CLASE</label>
 
                 <div className="mt-2 grid grid-cols-1 gap-3 min-[400px]:grid-cols-2">
@@ -489,7 +491,7 @@ export default function Clases() {
               </div>
 
               <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2">
-                <div>
+                <div hidden={estructuraNueva}>
                   <label className="text-xs font-semibold text-gray-500">TARIFA</label>
 
                   <select

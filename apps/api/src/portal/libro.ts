@@ -1,0 +1,272 @@
+import { ConflictException, InternalServerErrorException } from '@nestjs/common';
+import type { sheets_v4 } from 'googleapis';
+import { env } from '../config/env.js';
+import { crearClienteSheets } from '../google/sheets.client.js';
+import { estructura, type Fila, type Libro, type Tabla } from './estructura.js';
+
+let cola: Promise<unknown> = Promise.resolve();
+export class LibroPortal {
+  private lecturaEnCurso: Promise<Libro> | null = null;
+  constructor(private readonly sheets: sheets_v4.Sheets) {}
+  async leer(): Promise<Libro> {
+    if (!this.lecturaEnCurso) {
+      const lectura = this.leerActual();
+      this.lecturaEnCurso = lectura;
+      lectura.then(
+        () => {
+          if (this.lecturaEnCurso === lectura) this.lecturaEnCurso = null;
+        },
+        () => {
+          if (this.lecturaEnCurso === lectura) this.lecturaEnCurso = null;
+        },
+      );
+    }
+    return structuredClone(await this.lecturaEnCurso);
+  }
+  private async leerActual(): Promise<Libro> {
+    const info = await this.sheets.spreadsheets.get({
+      spreadsheetId: env.GOOGLE_SPREADSHEET_ID,
+      fields: 'sheets.properties',
+    });
+    const existentes = new Set(info.data.sheets?.map((s) => s.properties?.title));
+    const tablas = (Object.keys(estructura) as Tabla[]).filter((t) => existentes.has(t));
+    const faltantes = (Object.keys(estructura) as Tabla[]).filter(
+      (t) => t !== 'ControlSistema' && !existentes.has(t),
+    );
+    if (faltantes.length)
+      throw new ConflictException(
+        `Faltan pestañas de la nueva estructura: ${faltantes.join(', ')}.`,
+      );
+    const respuesta = await this.sheets.spreadsheets.values.batchGet({
+      spreadsheetId: env.GOOGLE_SPREADSHEET_ID,
+      ranges: tablas.map((t) => {
+        let n =
+          info.data.sheets?.find((s) => s.properties?.title === t)?.properties?.gridProperties
+            ?.columnCount ??
+          Math.max(
+            estructura[t].length,
+            t === 'Congelamientos' ? 13 : t === 'Asistencias' ? 10 : 1,
+          );
+        let ultima = '';
+        while (n > 0) {
+          n -= 1;
+          ultima = String.fromCharCode(65 + (n % 26)) + ultima;
+          n = Math.floor(n / 26);
+        }
+        return `'${t}'!A:${ultima}`;
+      }),
+      valueRenderOption: 'UNFORMATTED_VALUE',
+    });
+    const libro = Object.fromEntries(
+      Object.keys(estructura).map((t) => [t, []]),
+    ) as unknown as Libro;
+    tablas.forEach((t, i) => {
+      const filas = respuesta.data.valueRanges?.[i]?.values ?? [];
+      if (estructura[t].some((h, j) => filas[0]?.[j] !== h))
+        throw new ConflictException(`Revisa los encabezados de ${t}. No se han modificado datos.`);
+      const datos = filas
+        .slice(1)
+        .filter((f) => f.some((v) => v !== '' && v !== null && v !== undefined));
+      const columnaId = t === 'CuentasDojo' ? 7 : t === 'ControlSistema' ? -1 : 0;
+      const ids = datos.map((f) =>
+        columnaId < 0 ? `${f[0]}:${f[1]}` : String(f[columnaId] ?? ''),
+      );
+      if (ids.some((id) => !id) || new Set(ids).size !== ids.length)
+        throw new InternalServerErrorException(`Hay identificadores vacíos o duplicados en ${t}.`);
+      libro[t] = datos;
+    });
+    return libro;
+  }
+  modificar<T>(cambiar: (libro: Libro) => T): Promise<T> {
+    const resultado = cola.then(async () => {
+      const libro = await this.leerActual();
+      const original = structuredClone(libro);
+      const resultado = cambiar(libro);
+      const modificadas = (Object.keys(estructura) as Tabla[]).filter(
+        (t) => JSON.stringify(libro[t]) !== JSON.stringify(original[t]),
+      );
+      if (!modificadas.length) return resultado;
+      const info = await this.sheets.spreadsheets.get({
+        spreadsheetId: env.GOOGLE_SPREADSHEET_ID,
+        fields: 'sheets.properties',
+      });
+      const propiedades = info.data.sheets?.map((s) => s.properties).filter((s) => !!s) ?? [];
+      let siguienteId = Math.max(0, ...propiedades.map((p) => p.sheetId ?? 0)) + 1;
+      const requests: sheets_v4.Schema$Request[] = [];
+      for (const tabla of modificadas) {
+        const existente = propiedades.find((p) => p.title === tabla);
+        const sheetId = existente?.sheetId ?? siguienteId++;
+        const ancho = Math.max(
+          estructura[tabla].length,
+          ...libro[tabla].map((f) => f.length),
+          ...original[tabla].map((f) => f.length),
+        );
+        const alto = Math.max(libro[tabla].length, original[tabla].length) + 1;
+        if (!existente)
+          requests.push({
+            addSheet: {
+              properties: {
+                sheetId,
+                title: tabla,
+                hidden: tabla === 'ControlSistema',
+                gridProperties: {
+                  rowCount: Math.max(1000, alto),
+                  columnCount: Math.max(26, ancho),
+                },
+              },
+            },
+          });
+        if (
+          existente &&
+          ((existente.gridProperties?.rowCount ?? 1000) < alto ||
+            (existente.gridProperties?.columnCount ?? 26) < ancho)
+        )
+          requests.push({
+            updateSheetProperties: {
+              properties: {
+                sheetId,
+                gridProperties: {
+                  rowCount: Math.max(existente.gridProperties?.rowCount ?? 1000, alto),
+                  columnCount: Math.max(existente.gridProperties?.columnCount ?? 26, ancho),
+                },
+              },
+              fields: 'gridProperties.rowCount,gridProperties.columnCount',
+            },
+          });
+        const cabecera: Fila = [...estructura[tabla]];
+        if (tabla === 'Congelamientos' && ancho > 12) cabecera[12] = 'Tipo de registro';
+        if (tabla === 'Asistencias' && ancho > 9) cabecera[9] = 'Política interna';
+        if (tabla === 'Congelamientos')
+          requests.push({
+            setDataValidation: {
+              range: { sheetId, startRowIndex: 1, startColumnIndex: 5, endColumnIndex: 6 },
+              rule: {
+                condition: {
+                  type: 'ONE_OF_LIST',
+                  values: ['Solicitado', 'Rechazado', 'Aprobada', 'Activo', 'Finalizado'].map(
+                    (v) => ({ userEnteredValue: v }),
+                  ),
+                },
+                strict: true,
+                showCustomUi: true,
+              },
+            },
+          });
+        const filas: Fila[] = [cabecera, ...libro[tabla]];
+        const rows = filas.map((f) => ({
+          values: Array.from({ length: ancho }, (_, i) => {
+            const valor = f[i] ?? '';
+            if (typeof valor === 'string' && valor.length > 45000)
+              throw new ConflictException(
+                `Un registro de ${tabla} requiere ampliar el almacenamiento.`,
+              );
+            return {
+              userEnteredValue:
+                typeof valor === 'number'
+                  ? { numberValue: valor }
+                  : typeof valor === 'boolean'
+                    ? { boolValue: valor }
+                    : { stringValue: valor },
+            };
+          }),
+        }));
+        requests.push({
+          updateCells: {
+            range: {
+              sheetId,
+              startRowIndex: 0,
+              endRowIndex: alto,
+              startColumnIndex: 0,
+              endColumnIndex: ancho,
+            },
+            rows,
+            fields: 'userEnteredValue',
+          },
+        });
+      }
+      await this.sheets.spreadsheets.batchUpdate({
+        spreadsheetId: env.GOOGLE_SPREADSHEET_ID,
+        requestBody: { requests },
+      });
+      return resultado;
+    });
+    cola = resultado.catch(() => undefined);
+    return resultado;
+  }
+}
+let deteccionEnCurso: Promise<LibroPortal | null> | null = null;
+export function libroNuevo(): Promise<LibroPortal | null> {
+  if (!deteccionEnCurso) {
+    const deteccion = detectarLibro();
+    deteccionEnCurso = deteccion;
+    deteccion.then(
+      () => {
+        if (deteccionEnCurso === deteccion) deteccionEnCurso = null;
+      },
+      () => {
+        if (deteccionEnCurso === deteccion) deteccionEnCurso = null;
+      },
+    );
+  }
+  return deteccionEnCurso;
+}
+async function detectarLibro(): Promise<LibroPortal | null> {
+  const sheets = await crearClienteSheets();
+  if (typeof sheets.spreadsheets.get !== 'function') return null;
+  const info = await sheets.spreadsheets.get({
+    spreadsheetId: env.GOOGLE_SPREADSHEET_ID,
+    fields: 'sheets.properties',
+  });
+  if (!info?.data?.sheets?.some((s) => s.properties?.title === 'Inscripciones')) {
+    if (
+      info?.data?.sheets?.some((s) =>
+        ['Alumnos', 'Planes', 'Sesiones'].includes(s.properties?.title ?? ''),
+      )
+    )
+      throw new ConflictException(
+        'Falta la pestaña Inscripciones de la nueva estructura. No se han modificado datos.',
+      );
+    return null;
+  }
+  return new LibroPortal(sheets);
+}
+export const texto = (v: unknown) => String(v ?? '');
+export const numero = (v: unknown) => {
+  const n = Number(v);
+  if (!Number.isFinite(n)) throw new ConflictException('Revisa los valores numéricos de la hoja.');
+  return n;
+};
+export const fecha = (v: unknown) =>
+  typeof v === 'number'
+    ? new Date(Date.UTC(1899, 11, 30) + v * 86400000).toISOString().slice(0, 10)
+    : texto(v).slice(0, 10);
+export const hora = (v: unknown) =>
+  typeof v === 'number'
+    ? `${String(Math.floor(v * 24)).padStart(2, '0')}:${String(Math.round(v * 1440) % 60).padStart(2, '0')}`
+    : texto(v);
+export function nuevoId(filas: Fila[]) {
+  return Math.max(Date.now(), ...filas.map((f) => numero(f[0]) + 1));
+}
+export function control(libro: Libro, tipo: string, id: string | number) {
+  const r = libro.ControlSistema.find((f) => f[0] === tipo && texto(f[1]) === texto(id));
+  try {
+    return {
+      version: r ? numero(r[2]) : 0,
+      datos: r ? (JSON.parse(texto(r[3])) as Record<string, unknown>) : {},
+    };
+  } catch {
+    throw new InternalServerErrorException('Hay datos internos inválidos en ControlSistema.');
+  }
+}
+export function guardarControl(
+  libro: Libro,
+  tipo: string,
+  id: string | number,
+  version: number,
+  datos: unknown,
+) {
+  libro.ControlSistema = libro.ControlSistema.filter(
+    (f) => f[0] !== tipo || texto(f[1]) !== texto(id),
+  );
+  libro.ControlSistema.push([tipo, texto(id), version, JSON.stringify(datos)]);
+}

@@ -18,10 +18,10 @@ function fechaUtc(valor: string): number | null {
     : fecha.getTime();
 }
 
-export function validarHorarioClase(datos: CrearClaseInput) {
-  if (fechaUtc(datos.fechaInicio) === null)
+export function validarHorarioClase(datos: CrearClaseInput, permanente = false) {
+  if (!permanente && fechaUtc(datos.fechaInicio) === null)
     throw new BadRequestException('La fecha de inicio no es válida.');
-  if (!['1 semana', '2 semanas', '3 semanas', '1 mes'].includes(datos.duracion))
+  if (!permanente && !['1 semana', '2 semanas', '3 semanas', '1 mes'].includes(datos.duracion))
     throw new BadRequestException('La duración de la clase no es válida.');
   if (!datos.profesor?.trim()) throw new BadRequestException('Selecciona un profesor.');
   if (
@@ -43,10 +43,12 @@ export function validarHorarioClase(datos: CrearClaseInput) {
 
 /** Los periodos incluyen su último día; dos sesiones contiguas no se superponen. */
 function primerDiaEnComun(a: Horario, b: Horario): string | null {
-  const aInicio = fechaUtc(a.fechaInicio),
-    bInicio = fechaUtc(b.fechaInicio);
-  const aFin = fechaUtc(a.fechaFin),
-    bFin = fechaUtc(b.fechaFin);
+  const aPermanente = !a.fechaInicio && !a.fechaFin;
+  const bPermanente = !b.fechaInicio && !b.fechaFin;
+  const aInicio = aPermanente ? Date.UTC(2000, 0, 3) : fechaUtc(a.fechaInicio);
+  const bInicio = bPermanente ? Date.UTC(2000, 0, 3) : fechaUtc(b.fechaInicio);
+  const aFin = aPermanente ? Date.UTC(9999, 11, 31) : fechaUtc(a.fechaFin);
+  const bFin = bPermanente ? Date.UTC(9999, 11, 31) : fechaUtc(b.fechaFin);
   if (aInicio === null || bInicio === null || aFin === null || bFin === null) return null;
   const inicio = Math.max(aInicio, bInicio),
     fin = Math.min(aFin, bFin);

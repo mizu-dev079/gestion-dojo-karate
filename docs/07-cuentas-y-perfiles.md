@@ -1,3 +1,5 @@
+> En la estructura profesional, los datos legibles de CuentasDojo ocupan A:G, los identificadores H:J y cuentaJson K. La compatibilidad con A/B descrita más abajo corresponde a la hoja anterior. Consultar [estructura actual](03-google-sheets.md).
+
 # Cuentas y perfiles
 
 Hay tres perfiles: **administrador, profesor y alumno**. El rol no se elige en el login: se obtiene de la cuenta autenticada.
@@ -30,7 +32,7 @@ Inicio por perfil:
 
 ## Almacenamiento y seguridad
 
-La nueva pestaña `CuentasDojo` contiene `id` y `cuentaJson`. Se crea solo al guardar la primera cuenta, sin cambiar las pestañas anteriores. Conserva usuario, perfil, asignaciones, estado, revisión y contraseña derivada con **scrypt y una sal aleatoria por cuenta**. No almacena contraseñas en texto claro. Los hashes y sales no se devuelven en los endpoints de consulta o creación.
+La pestaña `CuentasDojo` conserva las columnas técnicas A/B (`id` y `cuentaJson`) y añade una vista legible en C:H: **Nombre, Correo, Celular, Usuario, Perfil y Estado**. Al crear una cuenta junto con el profesor o alumno se copian sus datos de contacto, incluidos los campos opcionales vacíos. Al actualizar la cuenta se actualiza también su fila visible. Las columnas visibles son una vista de consulta; la configuración de acceso sigue almacenada en el JSON. Los registros anteriores de dos columnas siguen siendo compatibles. La primera fila queda fija y la columna `cuentaJson` se presenta con 110 píxeles y texto recortado para no extender la fila. Se rechaza una escritura si C:H contiene cabeceras ajenas, para no sobrescribir datos del usuario. Se crea solo al guardar la primera cuenta, sin cambiar las pestañas anteriores. Conserva usuario, perfil, asignaciones, estado, revisión y contraseña derivada con **scrypt y una sal aleatoria por cuenta**. No almacena contraseñas en texto claro. Los hashes y sales no se devuelven en los endpoints de consulta o creación.
 
 Quien tenga acceso directo a la hoja puede ver/modificar esta información: restringir ese acceso como ya se hace con los datos personales del dojo. No publicar ni compartir la hoja.
 
@@ -45,3 +47,9 @@ El contacto del profesor no se usa como usuario de acceso: no necesita teléfono
 La ruta anterior `/profesores` redirige a `/cuentas`, que es la pantalla unificada **Profesores y alumnos**. En cada registro se administra su acceso y contraseña; en profesores también se conserva la activación/desactivación de su registro y la eliminación con confirmación. La lista de alumnos muestra cuentas registradas, sin convertir postulaciones anteriores sin cuenta en candidatos de alta.
 
 El alumno manual y su cuenta se guardan con un único lote atómico: se añade una inscripción nueva aceptada con origen `manual` y se reserva su cupo. La API rechaza `alumnoIds` en el alta y comprueba la clase, sus horarios, cupos y período antes de escribir. La reserva comparte la cola por clase con las aprobaciones de postulaciones de esta instancia para evitar una doble asignación del último cupo. Los datos de prueba existentes no se borran ni se copian al formulario.
+
+## Acceso después de aceptar una postulación
+
+En la estructura profesional, aceptar una solicitud crea el alumno y su inscripción antes de crear su cuenta. En Profesores y alumnos se muestran los alumnos aceptados sin acceso, cada uno con su botón Crear acceso del alumno. El formulario solicita solo usuario y contraseña; usa la inscripción seleccionada y no vuelve a pedir datos personales ni grupo. El endpoint administrativo es `POST /cuentas/inscripciones/:id`.
+
+El ID alumno de la hoja identifica a la persona; los `alumnoIds` internos de la sesión identifican sus inscripciones. La API obtiene las inscripciones del alumno al iniciar o comprobar su sesión, y no concede acceso a otra persona por compartir correo. Los hashes siguen siendo privados en las respuestas de la API. El administrador inicial continúa configurado mediante variables del entorno.

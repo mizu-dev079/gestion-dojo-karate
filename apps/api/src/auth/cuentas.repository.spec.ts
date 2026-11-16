@@ -36,8 +36,12 @@ describe('Almacenamiento privado de cuentas', () => {
     expect(append).toHaveBeenCalledWith(
       expect.objectContaining({
         valueInputOption: 'RAW',
-        range: 'CuentasDojo!A:B',
-        requestBody: { values: [[r.id, expect.stringContaining('"hash"')]] },
+        range: 'CuentasDojo!A:H',
+        requestBody: {
+          values: [
+            [r.id, expect.stringContaining('"hash"'), '', '', '', 'ana', 'Alumno', 'Activo'],
+          ],
+        },
       }),
     );
   });
@@ -46,6 +50,15 @@ describe('Almacenamiento privado de cuentas', () => {
     valuesGet.mockResolvedValue({ data: { values: [['otra', 'cabecera']] } });
     await expect(new CuentasRepository().guardar(cuenta())).rejects.toThrow('cabecera');
     expect(append).not.toHaveBeenCalled();
+  });
+  it('protege columnas adicionales que ya contengan datos ajenos', async () => {
+    get.mockResolvedValue({ data: { sheets: [{ properties: { title: 'CuentasDojo' } }] } });
+    valuesGet.mockResolvedValue({
+      data: { values: [['id', 'cuentaJson', 'Observaciones del cliente']] },
+    });
+    await expect(new CuentasRepository().guardar(cuenta())).rejects.toThrow('otros datos');
+    expect(append).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
   });
   it('actualizar una contraseña aumenta revisión y conserva asignaciones', async () => {
     const c = { ...cuenta(), id: '11111111-1111-4111-8111-111111111111', revision: 1 };
@@ -65,7 +78,7 @@ describe('Almacenamiento privado de cuentas', () => {
     expect(r).toMatchObject({ revision: 2, alumnoIds: [1] });
     expect(r).not.toHaveProperty('hash');
     expect(update).toHaveBeenCalledWith(
-      expect.objectContaining({ range: 'CuentasDojo!A2:B2', valueInputOption: 'RAW' }),
+      expect.objectContaining({ range: 'CuentasDojo!A2:H2', valueInputOption: 'RAW' }),
     );
   });
 });
@@ -112,6 +125,20 @@ describe('Alta atómica de profesor y cuenta', () => {
     const valores = inserciones[0].appendCells.rows[0].values;
     expect(valores[1].userEnteredValue).toEqual({ stringValue: 'Sensei mayor' });
     expect(valores[3].userEnteredValue).toEqual({ stringValue: '' });
+    const cuentaVisible = inserciones[1].appendCells.rows[0].values
+      .slice(2)
+      .map((v: { userEnteredValue: { stringValue: string } }) => v.userEnteredValue.stringValue);
+    expect(cuentaVisible).toEqual(['Sensei mayor', '', '', 'sensei.nuevo', 'Profesor', 'Activo']);
+    expect(peticiones).toContainEqual(
+      expect.objectContaining({
+        updateDimensionProperties: {
+          range: { sheetId: expect.any(Number), dimension: 'COLUMNS', startIndex: 1, endIndex: 2 },
+          properties: { pixelSize: 110 },
+          fields: 'pixelSize',
+        },
+      }),
+    );
+
     expect(append).not.toHaveBeenCalled();
     expect(update).not.toHaveBeenCalled();
   });

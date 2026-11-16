@@ -14,7 +14,6 @@ const fechaVisible = (f) =>
   new Intl.DateTimeFormat('es-PE', { dateStyle: 'medium', timeZone: 'UTC' }).format(
     new Date(`${f}T00:00:00Z`),
   );
-const preciosPlanes = { 4: 130, 8: 150, 12: 180 };
 const base = (p) => p.limiteRecuperaciones ?? (p.cantidad === 4 ? 1 : 2);
 const titulos = {
   iniciar: 'Registrar plan y primer pago',
@@ -31,13 +30,20 @@ const titulos = {
   retirarAviso: 'Retirar aviso de ausencia',
 };
 
-function FormularioAccion({ alumno, seleccion, fechaInicial, ocupado, guardar, cerrar }) {
+function FormularioAccion({ alumno, seleccion, fechaInicial, ocupado, guardar, cerrar, planes }) {
+  const preciosPlanes = Object.fromEntries(planes.map((p) => [p.cantidad, p.importe]));
   const s = alumno.seguimiento;
   const accion = seleccion.accion;
   const [cantidad, setCantidad] = useState(
-    String([4, 8, 12].includes(s.plan?.cantidad) ? s.plan.cantidad : 8),
+    String(
+      planes.some((p) => p.cantidad === s.plan?.cantidad)
+        ? s.plan.cantidad
+        : (planes.find((p) => p.cantidad === 8)?.cantidad ?? planes[0]?.cantidad ?? ''),
+    ),
   );
-  const [importe, setImporte] = useState(s.plan?.importe ?? preciosPlanes[cantidad]);
+  const [importe, setImporte] = useState(
+    planes.some((p) => p.cantidad === s.plan?.cantidad) ? s.plan.importe : preciosPlanes[cantidad],
+  );
   const faltas = s.asistencias.filter(
     (a) =>
       a.estado !== 'presente' &&
@@ -101,15 +107,18 @@ function FormularioAccion({ alumno, seleccion, fechaInicial, ocupado, guardar, c
                 }}
                 className={campo}
               >
-                <option value="4">4 clases continuas — S/ 130</option>
-                <option value="8">8 clases continuas — S/ 150</option>
-                <option value="12">12 clases continuas — S/ 180</option>
+                {planes.map((p) => (
+                  <option key={p.id} value={p.cantidad}>
+                    {p.cantidad} clases continuas — S/ {p.importe.toFixed(2)}
+                  </option>
+                ))}
               </select>
             </label>
             <p className="text-sm text-gray-600">
-              Límite inicial: {cantidad === '4' ? '1 recuperación' : '2 recuperaciones'} por pago,
-              por inasistencias justificadas y con autorización manual. Las clases se conservan
-              hasta completarlas.{' '}
+              Límite inicial:{' '}
+              {planes.find((p) => p.cantidad === Number(cantidad))?.recuperaciones ?? 0}{' '}
+              recuperaciones por pago, por inasistencias justificadas y con autorización manual. Las
+              clases se conservan hasta completarlas.{' '}
               {accion === 'configurar' &&
                 'El cambio se aplicará a los próximos pagos y conservará el saldo y las condiciones anteriores.'}
             </p>
@@ -300,6 +309,7 @@ function FormularioAccion({ alumno, seleccion, fechaInicial, ocupado, guardar, c
 export default function Alumnos() {
   const sesion = useSesion();
   const [alumnos, setAlumnos] = useState([]);
+  const [planes, setPlanes] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [busqueda, setBusqueda] = useState('');
   const [profesor, setProfesor] = useState('');
@@ -313,7 +323,7 @@ export default function Alumnos() {
     setCargando(true);
     setProfesores([]);
     try {
-      const [datos, listaProfesores] = await Promise.all([
+      const [datos, listaProfesores, catalogo] = await Promise.all([
         apiFetch('/alumnos', { cache: 'no-store' }).then((r) =>
           leerRespuesta(r, 'No se pudieron cargar los alumnos.'),
         ),
@@ -322,6 +332,9 @@ export default function Alumnos() {
               leerRespuesta(r, 'No se pudieron cargar los profesores registrados.'),
             )
           : Promise.resolve([]),
+        apiFetch('/planes', { cache: 'no-store' }).then((r) =>
+          leerRespuesta(r, 'No se pudieron cargar los planes oficiales.'),
+        ),
       ]);
       const actuales = [
         ...new Set(
@@ -329,6 +342,7 @@ export default function Alumnos() {
         ),
       ].sort();
       setAlumnos(datos);
+      setPlanes(catalogo);
       setProfesores(actuales);
       setProfesor((seleccionado) => (actuales.includes(seleccionado) ? seleccionado : ''));
     } catch (error) {
@@ -699,6 +713,7 @@ export default function Alumnos() {
               <FormularioAccion
                 key={`${alumno.id}-${seleccion.accion}-${seleccion.id ?? ''}-${fechaAgenda}`}
                 alumno={alumno}
+                planes={planes}
                 seleccion={seleccion}
                 fechaInicial={fechaAgenda}
                 ocupado={ocupado}
