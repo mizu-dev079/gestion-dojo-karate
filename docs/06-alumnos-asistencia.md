@@ -4,7 +4,17 @@
 
 Los alumnos se añaden manualmente desde **Usuario → Profesores y alumnos → Crear cuenta de alumno**. Se asigna una clase oficial y se crean datos e inscripción nuevos junto con su cuenta; luego se registra el primer plan y pago desde Alumnos. No se requiere seleccionar una postulación anterior.
 
-Los nuevos planes son de **4, 8 o 12 clases**, con días de entrenamiento elegidos entre los del grupo. No vencen por mes calendario. Administración registra un pago efectivamente recibido; no hay pasarela de pago ni cargos automáticos.
+Los nuevos planes son de **4, 8 o 12 clases**, con días de entrenamiento elegidos entre los del grupo. Las clases se conservan hasta completarlas; no vencen al transcurrir un mes desde el pago ni por mes calendario. Administración registra un pago efectivamente recibido; no hay pasarela de pago ni cargos automáticos.
+
+Precios oficiales de referencia:
+
+| Plan | Precio | Recuperaciones por inasistencia justificada |
+| --- | --- | --- |
+| 4 clases | S/ 130 | Hasta 1 |
+| 8 clases | S/ 150 | Hasta 2 |
+| 12 clases | S/ 180 | Hasta 2 |
+
+Al elegir un plan se propone su precio oficial. Administración puede ajustar el importe registrado. Las condiciones de los planes y pagos existentes se conservan; una renovación utiliza el importe guardado del alumno. Para actualizarlo se utiliza **Cambiar próximos pagos** antes de renovar.
 
 **Renovar** conserva las clases pendientes y registra otro pago con el mismo formato. Primero se consumen los créditos del pago antiguo. **Cambiar próximos pagos** permite modificar cantidad, importe y días de próximas renovaciones, conservando el historial y el saldo anterior. Los formatos antiguos se conservan para lectura; antes de renovar uno que no sea 4/8/12, administración debe actualizar su formato.
 

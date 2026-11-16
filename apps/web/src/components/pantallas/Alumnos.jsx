@@ -14,6 +14,7 @@ const fechaVisible = (f) =>
   new Intl.DateTimeFormat('es-PE', { dateStyle: 'medium', timeZone: 'UTC' }).format(
     new Date(`${f}T00:00:00Z`),
   );
+const preciosPlanes = { 4: 130, 8: 150, 12: 180 };
 const base = (p) => p.limiteRecuperaciones ?? (p.cantidad === 4 ? 1 : 2);
 const titulos = {
   iniciar: 'Registrar plan y primer pago',
@@ -36,6 +37,7 @@ function FormularioAccion({ alumno, seleccion, fechaInicial, ocupado, guardar, c
   const [cantidad, setCantidad] = useState(
     String([4, 8, 12].includes(s.plan?.cantidad) ? s.plan.cantidad : 8),
   );
+  const [importe, setImporte] = useState(s.plan?.importe ?? preciosPlanes[cantidad]);
   const faltas = s.asistencias.filter(
     (a) =>
       a.estado !== 'presente' &&
@@ -93,22 +95,26 @@ function FormularioAccion({ alumno, seleccion, fechaInicial, ocupado, guardar, c
               Plan de clases
               <select
                 value={cantidad}
-                onChange={(e) => setCantidad(e.target.value)}
+                onChange={(e) => {
+                  setCantidad(e.target.value);
+                  setImporte(preciosPlanes[e.target.value]);
+                }}
                 className={campo}
               >
-                <option value="4">4 clases continuas</option>
-                <option value="8">8 clases continuas</option>
-                <option value="12">12 clases continuas</option>
+                <option value="4">4 clases continuas — S/ 130</option>
+                <option value="8">8 clases continuas — S/ 150</option>
+                <option value="12">12 clases continuas — S/ 180</option>
               </select>
             </label>
             <p className="text-sm text-gray-600">
               Límite inicial: {cantidad === '4' ? '1 recuperación' : '2 recuperaciones'} por pago,
-              siempre con autorización manual.{' '}
+              por inasistencias justificadas y con autorización manual. Las clases se conservan
+              hasta completarlas.{' '}
               {accion === 'configurar' &&
                 'El cambio se aplicará a los próximos pagos y conservará el saldo y las condiciones anteriores.'}
             </p>
             <label className="block text-sm font-semibold">
-              Importe del plan
+              Importe del plan (S/)
               <input
                 name="importe"
                 type="number"
@@ -116,7 +122,8 @@ function FormularioAccion({ alumno, seleccion, fechaInicial, ocupado, guardar, c
                 max="100000"
                 step="0.01"
                 required
-                defaultValue={s.plan?.importe ?? ''}
+                value={importe}
+                onChange={(e) => setImporte(e.target.value)}
                 className={campo}
               />
             </label>
@@ -144,7 +151,7 @@ function FormularioAccion({ alumno, seleccion, fechaInicial, ocupado, guardar, c
             <p className="text-sm text-gray-600">
               Registra un pago ya recibido.{' '}
               {accion === 'renovar' &&
-                `Mismo plan: ${s.plan.cantidad} clases, importe ${s.plan.importe.toFixed(2)}. Se conservan ${s.pendientes} clases pendientes.`}
+                `Mismo plan: ${s.plan.cantidad} clases, importe S/ ${s.plan.importe.toFixed(2)}. Se conservan ${s.pendientes} clases pendientes.`}
             </p>
             <label className="block text-sm font-semibold">
               Fecha del pago
