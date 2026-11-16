@@ -25,7 +25,7 @@ const esquema = z.object({
     .positive()
     .default(60 * 60 * 8),
   ADMIN_USUARIO: z.string().min(3, 'ADMIN_USUARIO debe tener al menos 3 caracteres'),
-  ADMIN_PASSWORD: z.string().min(12, 'ADMIN_PASSWORD debe tener al menos 12 caracteres'),
+  ADMIN_PASSWORD: z.string().min(8, 'ADMIN_PASSWORD debe tener al menos 8 caracteres'),
   GOOGLE_SPREADSHEET_ID: z.string().min(10, 'Falta el id de la hoja de Google'),
   GOOGLE_CREDENTIALS_PATH: z.string().default('credentials/google-service-account.json'),
   GOOGLE_CREDENTIALS_JSON: z.string().optional().transform(vacioAUndefined),

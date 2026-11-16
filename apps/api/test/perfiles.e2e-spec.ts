@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import { get as httpGet, type IncomingMessage } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import type { ProfesorDto } from '@dojo/shared';
 import { ConflictException, type INestApplication } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -756,5 +758,165 @@ describe('Perfiles y aislamiento de acceso (HTTP)', () => {
       .set('Cookie', cookies.admin)
       .send({ accion: 'profesor', asistencia: 'ausente', version: 0, motivo: 'Marca obsoleta' })
       .expect(409);
+  });
+  it.each(['profesor', 'alumno'])(
+    'crear una cuenta de %s admite ocho caracteres y rechaza siete',
+    async (perfil) => {
+      const nuevo = {
+        usuario: `ocho.${perfil}`,
+        perfil,
+        ...(perfil === 'profesor'
+          ? { nuevoProfesor: { nombre: 'Profesor Ocho', telefono: '', correo: '' } }
+          : {
+              nuevoAlumno: {
+                nombre: 'Alumno Ocho',
+                claseId: 11,
+                telefono: '',
+                correo: '',
+                fechaNacimiento: '',
+              },
+            }),
+      };
+      await request(app.getHttpServer())
+        .post('/cuentas')
+        .set('Cookie', cookies.admin)
+        .send({ ...nuevo, password: '1234567' })
+        .expect(400);
+      await request(app.getHttpServer())
+        .post('/cuentas')
+        .set('Cookie', cookies.admin)
+        .send({ ...nuevo, password: 'Clave123' })
+        .expect(201);
+      await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({ usuario: nuevo.usuario, password: 'Clave123' })
+        .expect(200);
+    },
+  );
+  it('el cambio propio admite ocho caracteres y rechaza siete', async () => {
+    await request(app.getHttpServer())
+      .post('/auth/password')
+      .set('Cookie', cookies.ana)
+      .send({ actual: PASSWORD, nueva: '1234567' })
+      .expect(400);
+    await request(app.getHttpServer())
+      .post('/auth/password')
+      .set('Cookie', cookies.ana)
+      .send({ actual: PASSWORD, nueva: 'Clave123' })
+      .expect(201);
+    await request(app.getHttpServer()).get('/auth/me').set('Cookie', cookies.ana).expect(401);
+    await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ usuario: 'ana', password: 'Clave123' })
+      .expect(200);
+  });
+  it('el restablecimiento administrativo admite ocho caracteres y rechaza siete', async () => {
+    await request(app.getHttpServer())
+      .post(`/cuentas/${alumnoId}`)
+      .set('Cookie', cookies.admin)
+      .send({ revision: 1, password: '1234567' })
+      .expect(400);
+    await request(app.getHttpServer())
+      .post(`/cuentas/${alumnoId}`)
+      .set('Cookie', cookies.admin)
+      .send({ revision: 1, password: 'Clave123' })
+      .expect(201);
+    await request(app.getHttpServer()).get('/auth/me').set('Cookie', cookies.ana).expect(401);
+    await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ usuario: 'ana', password: 'Clave123' })
+      .expect(200);
+  });
+  it('el canal de cambios exige sesión de administración', async () => {
+    await request(app.getHttpServer()).get('/cuentas/cambios').expect(401);
+    await request(app.getHttpServer())
+      .get('/cuentas/cambios')
+      .set('Cookie', cookies.sensei)
+      .expect(403);
+    await request(app.getHttpServer())
+      .get('/cuentas/cambios')
+      .set('Cookie', cookies.ana)
+      .expect(403);
+  });
+  it('una conexión SSE abierta recibe el alta de otro cliente sin recargar la página', async () => {
+    await app.listen(0, '127.0.0.1');
+    const puerto = (app.getHttpServer().address() as AddressInfo).port;
+    const revisiones: number[] = [];
+    let respuesta: IncomingMessage | undefined;
+    let buffer = '';
+    const esperas = new Map<
+      number,
+      { resolve: () => void; reject: (e: Error) => void; timer: ReturnType<typeof setTimeout> }
+    >();
+    const esperar = (n: number) =>
+      revisiones.includes(n)
+        ? Promise.resolve()
+        : new Promise<void>((resolve, reject) => {
+            esperas.set(n, {
+              resolve,
+              reject,
+              timer: setTimeout(() => reject(new Error('No llegó el evento SSE')), 5000),
+            });
+          });
+    const primera = esperar(0);
+    const conexion = httpGet(
+      {
+        hostname: '127.0.0.1',
+        port: puerto,
+        path: '/cuentas/cambios',
+        headers: { Cookie: cookies.admin, Accept: 'text/event-stream' },
+      },
+      (res) => {
+        respuesta = res;
+        res.on('data', (datos) => {
+          buffer += datos.toString();
+          const eventos = buffer.split(/\r?\n\r?\n/);
+          buffer = eventos.pop() ?? '';
+          for (const evento of eventos) {
+            const linea = evento.split(/\r?\n/).find((l) => l.startsWith('data:'));
+            if (!linea) continue;
+            const data = JSON.parse(linea.slice(5).trim());
+            if (typeof data.revision !== 'number') continue;
+            revisiones.push(data.revision);
+            const espera = esperas.get(data.revision);
+            if (espera) {
+              clearTimeout(espera.timer);
+              espera.resolve();
+              esperas.delete(data.revision);
+            }
+          }
+        });
+      },
+    );
+    conexion.on('error', (e) => {
+      for (const espera of esperas.values()) {
+        clearTimeout(espera.timer);
+        espera.reject(e);
+      }
+    });
+    try {
+      await primera;
+      await request(app.getHttpServer())
+        .post('/cuentas')
+        .set('Cookie', cookies.admin)
+        .send({
+          usuario: 'profesor.vivo',
+          password: 'Clave123',
+          perfil: 'profesor',
+          nuevoProfesor: {
+            nombre: 'Profesor en vivo',
+            telefono: '999123456',
+            correo: 'profesor@example.com',
+          },
+        })
+        .expect(201);
+      await esperar(1);
+      expect(respuesta?.headers['content-type']).toContain('text/event-stream');
+      expect(revisiones).toContain(1);
+    } finally {
+      for (const espera of esperas.values()) clearTimeout(espera.timer);
+      respuesta?.destroy();
+      conexion.destroy();
+    }
   });
 });

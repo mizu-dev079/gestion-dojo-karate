@@ -9,7 +9,7 @@ Hay tres perfiles: **administrador, profesor y alumno**. El rol no se elige en e
 1. El administrador continúa ingresando con `ADMIN_USUARIO` y `ADMIN_PASSWORD` configurados en el entorno. Las sesiones de ese administrador mantienen compatibilidad.
 2. Entrar a **Usuario → Profesores y alumnos**, la pantalla única de registro y administración. Al abrirla se muestran dos tarjetas: Registrar profesor y Registrar alumno, seguidas de las listas de registros. Elegir la tarjeta correspondiente abre su formulario. Tanto profesores como alumnos se registran manualmente desde su tarjeta, creando su cuenta al mismo tiempo. No se seleccionan registros ni postulaciones de prueba.
 3. Para Profesor, pulsar **Crear cuenta de profesor**: nombre obligatorio, teléfono y correo opcionales. Se guardan juntos mediante una operación atómica de Google Sheets; no se deja uno creado sin el otro si el lote falla. Todos los profesores oficiales se crean desde cero junto con su cuenta; no se permite vincular registros existentes. Para Alumno, pulsar **Crear cuenta de alumno** e ingresar nombre, contacto opcional, fecha de nacimiento opcional, clase oficial, usuario y contraseña. Se genera un identificador nuevo sin reutilizar postulaciones anteriores.
-4. Entregar usuario y contraseña inicial por un medio privado. El titular puede cambiar su contraseña desde **Usuario**. Las contraseñas requieren al menos 12 caracteres. No hay registro público ni contraseñas compartidas predeterminadas.
+4. Entregar usuario y contraseña inicial por un medio privado. El titular puede cambiar su contraseña desde **Usuario**. Las contraseñas requieren al menos 8 caracteres. No hay registro público ni contraseñas compartidas predeterminadas.
 5. Desactivar acceso o restablecer contraseña desde la cuenta. Ambas acciones invalidan sesiones existentes inmediatamente; el usuario debe volver a ingresar.
 
 El administrador configurado en el entorno no se desactiva ni cambia de contraseña mediante esta pantalla. La gestión permite crear cuentas de profesor y alumno; no crea administradores adicionales.
@@ -53,3 +53,11 @@ El alumno manual y su cuenta se guardan con un único lote atómico: se añade u
 En la estructura profesional, aceptar una solicitud crea el alumno y su inscripción antes de crear su cuenta. En Profesores y alumnos se muestran los alumnos aceptados sin acceso, cada uno con su botón Crear acceso del alumno. El formulario solicita solo usuario y contraseña; usa la inscripción seleccionada y no vuelve a pedir datos personales ni grupo. El endpoint administrativo es `POST /cuentas/inscripciones/:id`.
 
 El ID alumno de la hoja identifica a la persona; los `alumnoIds` internos de la sesión identifican sus inscripciones. La API obtiene las inscripciones del alumno al iniciar o comprobar su sesión, y no concede acceso a otra persona por compartir correo. Los hashes siguen siendo privados en las respuestas de la API. El administrador inicial continúa configurado mediante variables del entorno.
+
+## Actualización automática de los listados
+
+Profesores y alumnos se sincronizan sin botón de recarga. El canal autenticado `GET /cuentas/cambios` utiliza SSE y solo está disponible para administración. Tras una operación HTTP de escritura exitosa se anuncia una revisión, sin nombres, contactos ni credenciales. La página vuelve a consultar sus datos y conserva los filtros, fichas desplegadas y formularios.
+
+Una comprobación cada 30 segundos mientras la página está visible permite recuperar cambios hechos directamente en Sheets o notificaciones perdidas. También se sincroniza al volver a la pestaña, recuperar la conexión y terminar una operación local. Las lecturas anteriores a una modificación propia se descartan para no sobrescribirla con datos viejos. El canal se cierra al salir de la página y envía latidos para evitar conexiones inactivas.
+
+Las notificaciones se comparten dentro de una instancia de la API. Varias réplicas necesitan un canal compartido; la comprobación periódica permite recuperar cambios, pero no sustituye esa coordinación para una entrega inmediata.

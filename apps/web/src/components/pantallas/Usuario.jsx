@@ -133,12 +133,12 @@ export default function Usuario() {
                 name="nueva"
                 autoComplete="new-password"
                 required
-                minLength={12}
+                minLength={8}
                 maxLength={200}
               />
             </label>
             <p className="text-sm text-gray-600">
-              Usa al menos 12 caracteres. Al guardar, deberás volver a iniciar sesión.
+              Usa al menos 8 caracteres. Al guardar, deberás volver a iniciar sesión.
             </p>
             <button
               type="submit"

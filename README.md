@@ -106,7 +106,7 @@ Los dos archivos `.env` se configuran antes del arranque. La API valida las vari
 | `apps/api/.env` | `JWT_SECRET` | Secreto aleatorio de al menos 32 caracteres; sustituir el ejemplo |
 | `apps/api/.env` | `JWT_EXPIRES_IN_SECONDS` | Duración de la sesión; por defecto, `28800` segundos (8 horas) |
 | `apps/api/.env` | `ADMIN_USUARIO` | Usuario del administrador, de al menos 3 caracteres |
-| `apps/api/.env` | `ADMIN_PASSWORD` | Contraseña del administrador, de al menos 12 caracteres; sustituir el ejemplo |
+| `apps/api/.env` | `ADMIN_PASSWORD` | Contraseña del administrador, de al menos 8 caracteres; sustituir el ejemplo |
 | `apps/api/.env` | `GOOGLE_SPREADSHEET_ID` | Identificador de la hoja de cálculo, tomado de su URL |
 | `apps/api/.env` | `GOOGLE_CREDENTIALS_PATH` | Por defecto, `credentials/google-service-account.json`, relativo a `apps/api` |
 | `apps/api/.env` | `GOOGLE_CREDENTIALS_JSON` | Alternativa al archivo: JSON de la credencial configurado de forma privada en el alojamiento |

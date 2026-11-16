@@ -17,7 +17,7 @@ const usuarioSchema = z
   .trim()
   .toLowerCase()
   .regex(/^[a-z0-9._-]{3,60}$/);
-const passwordSchema = z.string().min(12).max(200);
+const passwordSchema = z.string().min(8).max(200);
 const crearSchema = z.discriminatedUnion('perfil', [
   z
     .object({
@@ -106,7 +106,7 @@ export class CuentasService {
       .strict()
       .safeParse(datos);
     if (!r.success)
-      throw new BadRequestException('Revisa el usuario y la contraseña (mínimo 12 caracteres).');
+      throw new BadRequestException('Revisa el usuario y la contraseña (mínimo 8 caracteres).');
     if (r.data.usuario === env.ADMIN_USUARIO.toLowerCase())
       throw new BadRequestException('Ese usuario está reservado para administración.');
     return this.cuentas.guardarDesdeInscripcion(id, {
@@ -121,7 +121,7 @@ export class CuentasService {
     if (!r.success)
       throw new BadRequestException(
         r.error.issues.find((i) => i.path.includes('telefono'))?.message ??
-          'Revisa el usuario, la contraseña (mínimo 12 caracteres) y la asignación del perfil.',
+          'Revisa el usuario, la contraseña (mínimo 8 caracteres) y la asignación del perfil.',
       );
     const d = r.data;
     if (d.usuario === env.ADMIN_USUARIO.toLowerCase())

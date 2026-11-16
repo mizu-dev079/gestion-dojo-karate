@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
+import { useActualizacionesCuentas } from '../../hooks/useActualizacionesCuentas.js';
 import { useOperacion } from '../../hooks/useOperacion.js';
 import { apiFetch, leerRespuesta } from '../../lib/api.js';
 import ConfirmarAccion from '../ConfirmarAccion.jsx';
@@ -10,6 +11,81 @@ const boton =
 const secundario =
   'min-h-11 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-semibold disabled:opacity-50';
 const tarjeta = 'space-y-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm';
+
+const normalizarNombre = (valor) =>
+  String(valor ?? '')
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .toLocaleLowerCase('es')
+    .trim();
+
+function ApartadoPersonas({ tipo, busqueda, buscar, children }) {
+  const [abierto, setAbierto] = useState(false);
+  const etiqueta = tipo === 'profesores' ? 'profesores registrados' : 'alumnos registrados';
+  return (
+    <section className={tarjeta}>
+      <h2>
+        <button
+          type="button"
+          className="flex min-h-11 w-full items-center justify-between gap-3 text-left font-bold text-dojo-700"
+          aria-expanded={abierto}
+          aria-controls={`lista-${tipo}`}
+          onClick={() => setAbierto(!abierto)}
+        >
+          {abierto ? 'Ocultar' : 'Mostrar'} {etiqueta}
+          <svg
+            className={`shrink-0 transition-transform ${abierto ? 'rotate-180' : ''}`}
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden="true"
+          >
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </button>
+      </h2>
+      <div id={`lista-${tipo}`} hidden={!abierto} className="space-y-3">
+        <label className="block text-sm font-semibold">
+          Buscar {tipo === 'profesores' ? 'profesor' : 'alumno'} por nombre
+          <input
+            type="search"
+            value={busqueda}
+            onChange={(e) => buscar(e.target.value)}
+            className={campo}
+            placeholder="Escribe un nombre"
+          />
+        </label>
+        {children}
+      </div>
+    </section>
+  );
+}
+
+function FichaPersona({ nombre, children }) {
+  return (
+    <details className="group/ficha overflow-hidden rounded-xl border border-gray-200 bg-white">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 font-semibold focus-visible:outline-2 focus-visible:outline-dojo-600 [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0 break-words">{nombre}</span>
+        <svg
+          className="shrink-0 text-gray-500 transition-transform group-open/ficha:rotate-180"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          aria-hidden="true"
+        >
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </summary>
+      <div className="space-y-3 border-t border-gray-100 p-3">{children}</div>
+    </details>
+  );
+}
 
 function Registro({ perfil, clases, ocupado, crear, cancelar, inscripcion }) {
   const [usuario, setUsuario] = useState('');
@@ -144,7 +220,7 @@ function Registro({ perfil, clases, ocupado, crear, cancelar, inscripcion }) {
           <input
             type="password"
             required
-            minLength={12}
+            minLength={8}
             maxLength={200}
             autoComplete="new-password"
             value={password}
@@ -214,7 +290,7 @@ function Acceso({ cuenta, bloqueada = false, ocupado, editar }) {
             <input
               name="password"
               type="password"
-              minLength={12}
+              minLength={8}
               maxLength={200}
               required
               autoComplete="new-password"
@@ -236,13 +312,17 @@ export default function Cuentas() {
   const [alumnos, setAlumnos] = useState([]);
   const [aceptados, setAceptados] = useState([]);
   const [clases, setClases] = useState([]);
+  const [busquedaProfesores, setBusquedaProfesores] = useState('');
+  const [busquedaAlumnos, setBusquedaAlumnos] = useState('');
   const [cargando, setCargando] = useState(true);
   const [listo, setListo] = useState(false);
   const [registro, setRegistro] = useState(null);
   const [pendiente, setPendiente] = useState(null);
   const { ocupado, aviso, setAviso, ejecutar } = useOperacion();
+  const [errorSincronizacion, setErrorSincronizacion] = useState('');
+  const versionDatos = useRef(0);
   const cargar = useCallback(async () => {
-    setCargando(true);
+    const version = versionDatos.current;
     try {
       const obtener = (ruta, mensaje) =>
         apiFetch(ruta, { cache: 'no-store' }).then((r) => leerRespuesta(r, mensaje));
@@ -251,6 +331,8 @@ export default function Cuentas() {
         obtener('/profesores', 'No se pudieron cargar los profesores.'),
         obtener('/cuentas/opciones', 'No se pudieron cargar los alumnos.'),
       ]);
+      if (version !== versionDatos.current) return;
+      setErrorSincronizacion('');
       setCuentas(lista);
       setProfesores(profesores);
       setAlumnos(opciones.alumnos);
@@ -258,20 +340,19 @@ export default function Cuentas() {
       setClases(opciones.clases ?? []);
       setListo(true);
     } catch (error) {
-      setAviso({ tipo: 'error', texto: error.message });
+      if (version === versionDatos.current) setErrorSincronizacion(error.message);
     } finally {
       setCargando(false);
     }
-  }, [setAviso]);
-  useEffect(() => {
-    cargar();
-  }, [cargar]);
+  }, []);
+  useActualizacionesCuentas(cargar, ocupado);
   function abrir(perfil) {
     setAviso(null);
     setRegistro({ perfil });
   }
   async function crear(datos, inscripcionId) {
     const ok = await ejecutar(async () => {
+      versionDatos.current += 1;
       const nueva = await leerRespuesta(
         await apiFetch(inscripcionId ? `/cuentas/inscripciones/${inscripcionId}` : '/cuentas', {
           method: 'POST',
@@ -280,17 +361,18 @@ export default function Cuentas() {
         }),
         'No se pudo completar el registro.',
       );
+      versionDatos.current += 1;
       setCuentas((anteriores) => [...anteriores, nueva]);
       if (nueva.profesorCreado)
         setProfesores((anteriores) => [...anteriores, nueva.profesorCreado]);
       if (nueva.alumnoCreado) setAlumnos((anteriores) => [...anteriores, nueva.alumnoCreado]);
-      if (inscripcionId) await cargar();
       return 'Registro completado. Entrega el usuario y la contraseña a su titular por un medio privado.';
     });
     if (ok) setRegistro(null);
   }
   async function editar(cuenta, datos) {
     return ejecutar(async () => {
+      versionDatos.current += 1;
       const nueva = await leerRespuesta(
         await apiFetch(`/cuentas/${cuenta.id}`, {
           method: 'POST',
@@ -299,6 +381,7 @@ export default function Cuentas() {
         }),
         'No se pudo actualizar el acceso.',
       );
+      versionDatos.current += 1;
       setCuentas((anteriores) => anteriores.map((c) => (c.id === cuenta.id ? nueva : c)));
       return 'Acceso actualizado. Sus sesiones anteriores han quedado cerradas.';
     });
@@ -307,11 +390,13 @@ export default function Cuentas() {
     if (!pendiente) return;
     const { profesor, tipo } = pendiente;
     const ok = await ejecutar(async () => {
+      versionDatos.current += 1;
       if (tipo === 'eliminar') {
         await leerRespuesta(
           await apiFetch(`/profesores/${profesor.id}`, { method: 'DELETE' }),
           'No se pudo eliminar al profesor.',
         );
+        versionDatos.current += 1;
         setProfesores((anteriores) => anteriores.filter((p) => p.id !== profesor.id));
         return 'Profesor eliminado. Su cuenta ya no puede ingresar.';
       }
@@ -324,6 +409,7 @@ export default function Cuentas() {
         }),
         'No se pudo cambiar el estado del profesor.',
       );
+      versionDatos.current += 1;
       setProfesores((anteriores) =>
         anteriores.map((p) => (p.id === profesor.id ? { ...p, estado } : p)),
       );
@@ -334,12 +420,37 @@ export default function Cuentas() {
     if (ok) setPendiente(null);
   }
   const cuentasAlumno = cuentas.filter((c) => c.perfil === 'alumno');
+  const nombreAlumno = (c) =>
+    c.nombre ||
+    [
+      ...new Set(c.alumnoIds.map((id) => alumnos.find((a) => a.id === id)?.nombre).filter(Boolean)),
+    ].join(' · ') ||
+    c.usuario;
+  const profesoresVisibles = profesores.filter((p) =>
+    normalizarNombre(p.nombre).includes(normalizarNombre(busquedaProfesores)),
+  );
+  const alumnosVisibles = cuentasAlumno.filter((c) =>
+    normalizarNombre(nombreAlumno(c)).includes(normalizarNombre(busquedaAlumnos)),
+  );
+  const aceptadosVisibles = aceptados.filter((a) =>
+    normalizarNombre(a.nombre).includes(normalizarNombre(busquedaAlumnos)),
+  );
   const cuentasSinProfesor = cuentas.filter(
     (c) => c.perfil === 'profesor' && !profesores.some((p) => p.id === c.profesorId),
   );
   return (
     <main className="space-y-4 px-4 pb-6 pt-4" aria-busy={ocupado || cargando}>
       <Mensaje aviso={aviso} />
+      {errorSincronizacion && (
+        <p role="status" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+          No se pudieron sincronizar los registros. Se reintentará automáticamente.
+        </p>
+      )}
+      {cargando && (
+        <p role="status" className="text-sm text-gray-600">
+          Cargando registros…
+        </p>
+      )}
       {registro ? (
         <>
           <button
@@ -392,49 +503,23 @@ export default function Cuentas() {
               Crear cuenta de alumno
             </button>
           </section>
-          {aceptados.length > 0 && (
-            <section className={tarjeta}>
-              <h2 className="font-bold">Alumnos aceptados sin acceso</h2>
-              <p className="text-sm text-gray-600">
-                Ya están inscritos y aparecen en la clase del profesor. Crea su acceso sin volver a
-                registrar sus datos ni ocupar otro cupo.
-              </p>
-              {aceptados.map((a) => (
-                <article key={a.id} className="space-y-2 rounded-xl border border-gray-200 p-3">
-                  <p className="font-semibold">{a.nombre}</p>
-                  <p className="text-sm text-gray-600">
-                    {clases.find((c) => c.id === a.claseId)?.nivel ?? 'Clase asignada'}
-                  </p>
-                  <button
-                    type="button"
-                    className={boton}
-                    disabled={ocupado}
-                    onClick={() => setRegistro({ perfil: 'alumno', inscripcion: a })}
-                  >
-                    Crear acceso del alumno
-                  </button>
-                </article>
-              ))}
-            </section>
-          )}
-          <button
-            type="button"
-            onClick={cargar}
-            disabled={ocupado || cargando}
-            className="min-h-11 font-semibold text-dojo-700"
-          >
-            {cargando ? 'Cargando registros…' : 'Actualizar lista'}
-          </button>
           {listo && (
             <>
-              <section className={tarjeta}>
-                <h2 className="font-bold">Profesores registrados</h2>
+              <ApartadoPersonas
+                tipo="profesores"
+                busqueda={busquedaProfesores}
+                buscar={setBusquedaProfesores}
+              >
                 {!profesores.length && (
                   <p className="text-sm text-gray-600">No hay profesores para mostrar.</p>
                 )}
-                {profesores.map((p) => (
-                  <article key={p.id} className="space-y-3 rounded-xl border border-gray-200 p-3">
-                    <h3 className="break-words font-semibold">{p.nombre}</h3>
+                {profesores.length > 0 && !profesoresVisibles.length && (
+                  <p className="text-sm text-gray-600" role="status">
+                    No se encontraron profesores con ese nombre.
+                  </p>
+                )}
+                {profesoresVisibles.map((p) => (
+                  <FichaPersona key={p.id} nombre={p.nombre}>
                     <p className="text-sm text-gray-600">
                       {p.estado === 'activo' ? 'Profesor activo' : 'Profesor inactivo'}
                     </p>
@@ -479,28 +564,54 @@ export default function Cuentas() {
                         </button>
                       </div>
                     </details>
-                  </article>
+                  </FichaPersona>
                 ))}
-              </section>
-              <section className={tarjeta}>
-                <h2 className="font-bold">Alumnos registrados</h2>
-                {!cuentasAlumno.length && (
+              </ApartadoPersonas>
+              <ApartadoPersonas
+                tipo="alumnos"
+                busqueda={busquedaAlumnos}
+                buscar={setBusquedaAlumnos}
+              >
+                {aceptadosVisibles.length > 0 && (
+                  <section className="space-y-3 rounded-xl border border-gray-200 p-3">
+                    <h2 className="font-bold">Alumnos aceptados sin acceso</h2>
+                    <p className="text-sm text-gray-600">
+                      Ya están inscritos y aparecen en la clase del profesor. Crea su acceso sin
+                      volver a registrar sus datos ni ocupar otro cupo.
+                    </p>
+                    {aceptadosVisibles.map((a) => (
+                      <FichaPersona key={a.id} nombre={a.nombre}>
+                        <p className="text-sm text-gray-600">
+                          {clases.find((c) => c.id === a.claseId)?.nivel ?? 'Clase asignada'}
+                        </p>
+                        <button
+                          type="button"
+                          className={boton}
+                          disabled={ocupado}
+                          onClick={() => setRegistro({ perfil: 'alumno', inscripcion: a })}
+                        >
+                          Crear acceso del alumno
+                        </button>
+                      </FichaPersona>
+                    ))}
+                  </section>
+                )}
+
+                {!cuentasAlumno.length && !aceptados.length && (
                   <p className="text-sm text-gray-600">
                     No hay alumnos registrados. Usa Crear cuenta de alumno para añadir uno
                     manualmente.
                   </p>
                 )}
-                {cuentasAlumno.map((c) => (
-                  <article key={c.id} className="space-y-3 rounded-xl border border-gray-200 p-3">
-                    <h3 className="break-words font-semibold">
-                      {[
-                        ...new Set(
-                          c.alumnoIds
-                            .map((id) => alumnos.find((a) => a.id === id)?.nombre)
-                            .filter(Boolean),
-                        ),
-                      ].join(' · ') || c.usuario}
-                    </h3>
+                {(cuentasAlumno.length > 0 || aceptados.length > 0) &&
+                  !alumnosVisibles.length &&
+                  !aceptadosVisibles.length && (
+                    <p className="text-sm text-gray-600" role="status">
+                      No se encontraron alumnos con ese nombre.
+                    </p>
+                  )}
+                {alumnosVisibles.map((c) => (
+                  <FichaPersona key={c.id} nombre={nombreAlumno(c)}>
                     <p className="text-sm text-gray-600">
                       {c.alumnoIds
                         .map((id) => {
@@ -509,8 +620,20 @@ export default function Cuentas() {
                         })
                         .join(' · ')}
                     </p>
+                    {(c.telefono || alumnos.find((a) => c.alumnoIds.includes(a.id))?.telefono) && (
+                      <p className="text-sm text-gray-600">
+                        Teléfono:{' '}
+                        {c.telefono || alumnos.find((a) => c.alumnoIds.includes(a.id))?.telefono}
+                      </p>
+                    )}
+                    {(c.correo || alumnos.find((a) => c.alumnoIds.includes(a.id))?.correo) && (
+                      <p className="break-all text-sm text-gray-600">
+                        Correo:{' '}
+                        {c.correo || alumnos.find((a) => c.alumnoIds.includes(a.id))?.correo}
+                      </p>
+                    )}
                     <Acceso cuenta={c} ocupado={ocupado} editar={editar} />
-                  </article>
+                  </FichaPersona>
                 ))}
                 <a
                   href="/alumnos"
@@ -518,7 +641,7 @@ export default function Cuentas() {
                 >
                   Ver planes y asistencia
                 </a>
-              </section>
+              </ApartadoPersonas>
               {!!cuentasSinProfesor.length && (
                 <section className={tarjeta}>
                   <h2 className="font-bold">Accesos sin profesor registrado</h2>
