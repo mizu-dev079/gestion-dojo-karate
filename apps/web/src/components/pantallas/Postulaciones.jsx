@@ -112,10 +112,7 @@ export default function Postulaciones() {
   const filtradas = deClase.filter(
     (item) =>
       (estado === 'todas' || estadoGrupo(item.estado) === estado) &&
-      (!consulta ||
-        (/^sol-\d+$/.test(consulta)
-          ? consulta === `sol-${item.id}`
-          : normalizar(`${item.nombre} ${item.correo} SOL-${item.id}`).includes(consulta))),
+      (!consulta || normalizar(item.nombre).includes(consulta)),
   );
   const bloqueado = ocupado || cargando || Boolean(errorCarga);
   function cambiarClase(valor) {
@@ -252,26 +249,6 @@ export default function Postulaciones() {
         )}
         <div>
           <label
-            htmlFor="buscar-postulaciones"
-            className="mb-2 block text-sm font-medium text-gray-700"
-          >
-            Buscar por nombre, correo o número
-          </label>
-          <input
-            id="buscar-postulaciones"
-            type="search"
-            value={busqueda}
-            disabled={ocupado}
-            onChange={(event) => {
-              setBusqueda(event.target.value);
-              setSeleccionados([]);
-            }}
-            placeholder="Ej. Ana o SOL-123…"
-            className="rounded-xl border border-gray-200 bg-gray-50 px-3"
-          />
-        </div>
-        <div>
-          <label
             htmlFor="estado-postulaciones"
             className="mb-2 block text-sm font-medium text-gray-700"
           >
@@ -292,6 +269,26 @@ export default function Postulaciones() {
             <option value="aceptado">Aceptadas</option>
             <option value="rechazado">Rechazadas</option>
           </select>
+        </div>
+        <div>
+          <label
+            htmlFor="buscar-postulaciones"
+            className="mb-2 block text-sm font-medium text-gray-700"
+          >
+            Buscar por nombre
+          </label>
+          <input
+            id="buscar-postulaciones"
+            type="search"
+            value={busqueda}
+            disabled={ocupado}
+            onChange={(event) => {
+              setBusqueda(event.target.value);
+              setSeleccionados([]);
+            }}
+            placeholder="Escribe el nombre del postulante"
+            className="rounded-xl border border-gray-200 bg-gray-50 px-3"
+          />
         </div>
         {(busqueda || estado !== 'todas') && (
           <button
