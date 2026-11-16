@@ -235,7 +235,7 @@ function Registro({ perfil, clases, ocupado, crear, cancelar, inscripcion, postu
                 </p>
                 <p className="break-words">{[p.telefono, p.correo].filter(Boolean).join(' · ')}</p>
                 <a
-                  href={`/postulaciones?clase=${p.claseId}&buscar=${encodeURIComponent(p.nombre)}`}
+                  href={`/postulaciones?clase=${p.claseId}#postulacion-${p.id}`}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex min-h-11 items-center font-semibold text-dojo-700 underline"

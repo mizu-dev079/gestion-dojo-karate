@@ -5,11 +5,6 @@ import { agruparClases, idClase } from '../../lib/turnos.js';
 import IndicadorCupos from '../IndicadorCupos.jsx';
 import Mensaje from '../Mensaje.jsx';
 
-const normalizar = (texto) =>
-  String(texto ?? '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase();
 const estadoGrupo = (estado) =>
   ['aceptado', 'aprobado'].includes(estado)
     ? 'aceptado'
@@ -37,7 +32,6 @@ export default function Postulaciones() {
   const [postulaciones, setPostulaciones] = useState([]);
   const [claseId, setClaseId] = useState('');
   const seleccionClase = useRef('');
-  const [busqueda, setBusqueda] = useState('');
   const [estado, setEstado] = useState('todas');
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState('');
@@ -46,9 +40,10 @@ export default function Postulaciones() {
   const { ocupado, aviso, setAviso, ejecutar } = useOperacion();
 
   useEffect(() => {
-    const buscar = new URLSearchParams(window.location.search).get('buscar');
-    if (buscar) setBusqueda(buscar);
-  }, []);
+    if (!cargando && /^#postulacion-\d+$/.test(window.location.hash)) {
+      document.getElementById(window.location.hash.slice(1))?.scrollIntoView({ block: 'center' });
+    }
+  }, [cargando]);
   const cargar = useCallback(async () => {
     setCargando(true);
     setErrorCarga('');
@@ -108,11 +103,8 @@ export default function Postulaciones() {
   const deClase = postulaciones.filter(
     (item) => claseId === 'todas' || String(item.claseId) === claseId,
   );
-  const consulta = normalizar(busqueda.trim());
   const filtradas = deClase.filter(
-    (item) =>
-      (estado === 'todas' || estadoGrupo(item.estado) === estado) &&
-      (!consulta || normalizar(item.nombre).includes(consulta)),
+    (item) => estado === 'todas' || estadoGrupo(item.estado) === estado,
   );
   const bloqueado = ocupado || cargando || Boolean(errorCarga);
   function cambiarClase(valor) {
@@ -270,38 +262,17 @@ export default function Postulaciones() {
             <option value="rechazado">Rechazadas</option>
           </select>
         </div>
-        <div>
-          <label
-            htmlFor="buscar-postulaciones"
-            className="mb-2 block text-sm font-medium text-gray-700"
-          >
-            Buscar por nombre
-          </label>
-          <input
-            id="buscar-postulaciones"
-            type="search"
-            value={busqueda}
-            disabled={ocupado}
-            onChange={(event) => {
-              setBusqueda(event.target.value);
-              setSeleccionados([]);
-            }}
-            placeholder="Escribe el nombre del postulante"
-            className="rounded-xl border border-gray-200 bg-gray-50 px-3"
-          />
-        </div>
-        {(busqueda || estado !== 'todas') && (
+        {estado !== 'todas' && (
           <button
             type="button"
             disabled={ocupado}
             onClick={() => {
-              setBusqueda('');
               setEstado('todas');
               setSeleccionados([]);
             }}
             className="text-sm font-semibold text-dojo-700"
           >
-            Limpiar filtros
+            Mostrar todos los estados
           </button>
         )}
       </section>
@@ -354,7 +325,7 @@ export default function Postulaciones() {
                 </h2>
                 <p className="mt-2 text-sm text-gray-500">
                   {deClase.length
-                    ? 'Prueba con otro nombre, correo o estado.'
+                    ? 'Selecciona otro estado para ver más solicitudes.'
                     : 'Las solicitudes aparecerán aquí cuando se envíe el formulario de la clase.'}
                 </p>
               </section>
@@ -368,6 +339,7 @@ export default function Postulaciones() {
               return (
                 <article
                   key={postulacion.id}
+                  id={`postulacion-${postulacion.id}`}
                   aria-label={`Postulación de ${postulacion.nombre}`}
                   className="space-y-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
                 >
