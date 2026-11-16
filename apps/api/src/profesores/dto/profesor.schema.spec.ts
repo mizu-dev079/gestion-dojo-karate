@@ -11,11 +11,11 @@ describe('Datos opcionales del profesor', () => {
       profesorNuevoSchema.safeParse({ nombre: 'Sensei', telefono: '', correo: '' }).success,
     ).toBe(true);
   });
-  it('admite correo de cualquier proveedor y teléfono internacional', () => {
+  it('admite correo de cualquier proveedor y celular de nueve dígitos', () => {
     expect(
       profesorNuevoSchema.safeParse({
         nombre: 'Sensei',
-        telefono: '+51 (999) 123-456',
+        telefono: '999123456',
         correo: 'maestro@example.org',
       }).success,
     ).toBe(true);
@@ -28,4 +28,10 @@ describe('Datos opcionales del profesor', () => {
     ])
       expect(profesorNuevoSchema.safeParse(datos).success).toBe(false);
   });
+  it.each(['12345678', '1234567890', '999 123456', '+51999123456', '99912345a', '999-12345'])(
+    'rechaza el celular inválido %s',
+    (telefono) => {
+      expect(profesorNuevoSchema.safeParse({ nombre: 'Profesor', telefono }).success).toBe(false);
+    },
+  );
 });

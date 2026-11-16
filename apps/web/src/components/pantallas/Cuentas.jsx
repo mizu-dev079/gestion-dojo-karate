@@ -58,10 +58,16 @@ function Registro({ perfil, clases, ocupado, crear, cancelar, inscripcion }) {
               Teléfono (opcional)
               <input
                 type="tel"
-                maxLength={30}
+                inputMode="numeric"
+                minLength={9}
+                maxLength={9}
+                pattern="[0-9]{9}"
+                title="Ingresa exactamente 9 dígitos, sin espacios ni prefijo."
                 autoComplete="tel"
                 value={telefono}
-                onChange={(e) => setTelefono(e.target.value)}
+                onChange={(e) => {
+                  if (/^[0-9]{0,9}$/.test(e.target.value)) setTelefono(e.target.value);
+                }}
                 className={campo}
               />
             </label>

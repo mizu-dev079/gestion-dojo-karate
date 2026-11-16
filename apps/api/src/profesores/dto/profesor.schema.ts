@@ -11,8 +11,10 @@ export const profesorNuevoSchema = z
     telefono: z
       .string()
       .trim()
-      .max(30)
-      .regex(/^[+\d\s().-]*$/, 'Teléfono inválido')
+      .regex(
+        /^(?:[0-9]{9})?$/,
+        'El celular debe tener exactamente 9 dígitos, sin espacios ni prefijo.',
+      )
       .default(''),
     correo: z.union([z.email(), z.literal('')]).default(''),
   })

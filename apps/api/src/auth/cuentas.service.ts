@@ -120,7 +120,8 @@ export class CuentasService {
     const r = crearSchema.safeParse(datos);
     if (!r.success)
       throw new BadRequestException(
-        'Revisa el usuario, la contraseña (mínimo 12 caracteres) y la asignación del perfil.',
+        r.error.issues.find((i) => i.path.includes('telefono'))?.message ??
+          'Revisa el usuario, la contraseña (mínimo 12 caracteres) y la asignación del perfil.',
       );
     const d = r.data;
     if (d.usuario === env.ADMIN_USUARIO.toLowerCase())

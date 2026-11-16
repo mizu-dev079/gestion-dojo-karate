@@ -523,4 +523,25 @@ describe('Portal sobre la nueva estructura de Sheets (HTTP y persistencia reales
       reloj.mockRestore();
     }
   });
+  it.each(['profesor', 'alumno'])(
+    'la API impide crear %s con un celular que no tenga exactamente nueve dígitos',
+    async (perfil) => {
+      for (const telefono of ['12345678', '1234567890', '99912345a']) {
+        const datos = { nombre: 'Registro inválido', telefono, correo: 'prueba@example.com' };
+        await api()
+          .post('/cuentas')
+          .set('Cookie', cookie)
+          .send({
+            usuario: `prueba.${perfil}`,
+            password: PASS,
+            perfil,
+            ...(perfil === 'profesor'
+              ? { nuevoProfesor: datos }
+              : { nuevoAlumno: { ...datos, claseId: 11, fechaNacimiento: '' } }),
+          })
+          .expect(400);
+      }
+      expect(batchUpdate).not.toHaveBeenCalled();
+    },
+  );
 });

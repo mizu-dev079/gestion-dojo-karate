@@ -500,7 +500,7 @@ describe('Perfiles y aislamiento de acceso (HTTP)', () => {
       perfil: 'profesor',
       nuevoProfesor: {
         nombre: 'Sensei nuevo',
-        telefono: '+51 999 123 456',
+        telefono: '999123456',
         correo: 'maestro@example.org',
       },
     };
@@ -521,7 +521,7 @@ describe('Perfiles y aislamiento de acceso (HTTP)', () => {
       .send(base)
       .expect(201);
     expect(r.body.profesorCreado).toMatchObject({
-      telefono: '+51 999 123 456',
+      telefono: '999123456',
       correo: 'maestro@example.org',
     });
   });

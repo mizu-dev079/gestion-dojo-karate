@@ -14,7 +14,10 @@ export class ProfesoresService {
   async crearProfesor(nombre: string, telefono = '', correo = '') {
     const r = profesorNuevoSchema.safeParse({ nombre, telefono, correo });
     if (!r.success)
-      throw new BadRequestException('Revisa el nombre y los datos de contacto del profesor.');
+      throw new BadRequestException(
+        r.error.issues.find((i) => i.path.includes('telefono'))?.message ??
+          'Revisa el nombre y los datos de contacto del profesor.',
+      );
     nombre = r.data.nombre;
     if (!nombre || !nombre.trim()) {
       throw new Error('El nombre del profesor es obligatorio');

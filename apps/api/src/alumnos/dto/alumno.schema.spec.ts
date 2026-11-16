@@ -25,4 +25,13 @@ describe('Alta manual: datos del alumno', () => {
       alumnoNuevoSchema.safeParse({ nombre: 'Alumno', claseId: 11, alumnoIds: [1] }).success,
     ).toBe(false);
   });
+  it('admite nueve dígitos y rechaza celulares incompletos, largos o con letras', () => {
+    expect(
+      alumnoNuevoSchema.safeParse({ nombre: 'Alumno', claseId: 11, telefono: '999123456' }).success,
+    ).toBe(true);
+    for (const telefono of ['12345678', '1234567890', '99912345a', '+51999123456'])
+      expect(alumnoNuevoSchema.safeParse({ nombre: 'Alumno', claseId: 11, telefono }).success).toBe(
+        false,
+      );
+  });
 });
