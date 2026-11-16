@@ -3,6 +3,7 @@ import { profesorNuevoSchema } from '../../profesores/dto/profesor.schema.js';
 
 export const alumnoNuevoSchema = profesorNuevoSchema
   .extend({
+    turnoId: z.number().int().positive().optional(),
     claseId: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
     fechaNacimiento: z
       .string()

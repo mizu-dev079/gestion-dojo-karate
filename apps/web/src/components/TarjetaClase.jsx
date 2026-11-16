@@ -27,11 +27,18 @@ export default function TarjetaClase({
       aria-labelledby={tituloId}
       className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
     >
+      {clase.configurado === false && (
+        <p className="mb-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+          Completa la sede y el profesor de este turno para habilitar inscripciones.
+        </p>
+      )}
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
-          <p className="break-words text-xs font-semibold text-gray-500">Sede {clase.sede}</p>
+          <p className="break-words text-xs font-semibold text-gray-500">
+            {clase.sede ? `Sede ${clase.sede}` : 'Sede por asignar'}
+          </p>
           <h2 id={tituloId} className="mt-1 break-words text-base font-bold text-gray-900">
-            Karate · {clase.nivel}
+            {clase.turnoId !== undefined ? 'Turno' : 'Karate'} · {clase.turno ?? clase.nivel}
           </h2>
         </div>
         <span
@@ -79,7 +86,7 @@ export default function TarjetaClase({
               }}
               className="w-full rounded-lg px-3 text-left text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
-              Editar clase
+              {clase.turnoId !== undefined ? 'Editar turno' : 'Editar clase'}
             </button>
             <button
               type="button"
@@ -115,7 +122,7 @@ export default function TarjetaClase({
           Ver postulaciones
         </a>
         <a
-          href={`/compartir-convocatoria?clase=${encodeURIComponent(clase.id)}`}
+          href={`/compartir-convocatoria?clase=${encodeURIComponent(clase.claseBaseId ?? clase.id)}${clase.turnoId !== undefined ? `&turno=${clase.id}` : ''}`}
           className="inline-flex min-h-11 items-center justify-center rounded-xl border border-dojo-200 px-2 py-2 text-center text-sm font-semibold text-dojo-700 hover:bg-dojo-50"
         >
           Compartir QR

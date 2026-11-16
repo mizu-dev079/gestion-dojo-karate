@@ -75,6 +75,14 @@ export class CuentasService {
         .filter((c) => c.estado !== 'Inactiva')
         .map((c) => ({
           id: c.id,
+          claseBaseId: c.claseBaseId,
+          turnoId: c.turnoId,
+          turno: c.turno,
+          edadMinima: c.edadMinima,
+          edadMaxima: c.edadMaxima,
+          configurado: c.configurado,
+          cuposDisponibles: c.cuposDisponibles,
+          estado: c.estado,
           nivel: c.nivel,
           sede: c.sede,
           profesor: c.profesor,

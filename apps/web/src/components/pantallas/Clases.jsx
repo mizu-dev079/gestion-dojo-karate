@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useOperacion } from '../../hooks/useOperacion.js';
 import { apiFetch, leerRespuesta } from '../../lib/api.js';
+import { agruparClases } from '../../lib/turnos.js';
 import ConfirmarAccion from '../ConfirmarAccion.jsx';
 import Mensaje from '../Mensaje.jsx';
 import TarjetaClase from '../TarjetaClase.jsx';
@@ -8,6 +9,10 @@ import TarjetaClase from '../TarjetaClase.jsx';
 export default function Clases() {
   const { ocupado, aviso, setAviso, ejecutar } = useOperacion();
   const [clases, setClases] = useState([]);
+  const [preparado, setPreparado] = useState(false);
+  const [grupoSeleccionado, setGrupoSeleccionado] = useState(null);
+  const [confirmarPrueba, setConfirmarPrueba] = useState(false);
+  const [confirmarTurnos, setConfirmarTurnos] = useState(false);
   const [vista, setVista] = useState('vigentes');
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState('');
@@ -124,7 +129,7 @@ export default function Clases() {
     setCargando(true);
     setErrorCarga('');
     try {
-      const respuesta = await apiFetch('/clases', { cache: 'no-store' });
+      const respuesta = await apiFetch('/clases/catalogo', { cache: 'no-store' });
 
       if (!respuesta.ok) {
         throw new Error('No se pudieron cargar las clases');
@@ -132,7 +137,8 @@ export default function Clases() {
 
       const datos = await respuesta.json();
 
-      setClases(datos);
+      setPreparado(datos.preparado);
+      setClases(datos.clases.flatMap((c) => c.turnos));
     } catch (error) {
       console.error('Error al cargar clases:', error);
 
@@ -325,6 +331,10 @@ export default function Clases() {
       (b.fechaInicio || '').localeCompare(a.fechaInicio || ''),
   );
 
+  const grupos = agruparClases(visibles);
+  const totalGrupos = agruparClases(clases).length;
+  const grupoActual = grupos.find((g) => g.id === grupoSeleccionado);
+  const turnosVisibles = grupoActual?.turnos ?? [];
   const estructuraNueva = clases.some((c) => c.estado !== undefined);
   return (
     <div className="min-h-0 bg-[var(--page-background)] text-gray-800">
@@ -348,37 +358,58 @@ export default function Clases() {
               <div>
                 <label className="text-xs font-semibold text-gray-500">NIVEL</label>
 
-                <select
-                  value={nivel}
-                  onChange={(e) => setNivel(e.target.value)}
-                  className="mt-1 h-9 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700"
-                >
-                  <option value="">Seleccionar nivel</option>
+                {estructuraNueva ? (
+                  <input
+                    aria-label="Clase"
+                    readOnly
+                    value={nivel}
+                    className="mt-1 min-h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm"
+                  />
+                ) : (
+                  <select
+                    value={nivel}
+                    onChange={(e) => setNivel(e.target.value)}
+                    className="mt-1 h-9 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700"
+                  >
+                    <option value="">Seleccionar nivel</option>
 
-                  <option value="Básico">Básico</option>
+                    <option value="Básico">Básico</option>
 
-                  <option value="Intermedio">Intermedio</option>
+                    <option value="Intermedio">Intermedio</option>
 
-                  <option value="Avanzado">Avanzado</option>
-                </select>
+                    <option value="Avanzado">Avanzado</option>
+                  </select>
+                )}
               </div>
 
               <div>
                 <label className="text-xs font-semibold text-gray-500">SEDE</label>
 
-                <select
-                  value={sede}
-                  onChange={(e) => setSede(e.target.value)}
-                  className="mt-1 h-9 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700"
-                >
-                  <option value="">Seleccionar sede</option>
+                {estructuraNueva ? (
+                  <input
+                    aria-label="Sede"
+                    required
+                    maxLength={120}
+                    value={sede}
+                    onChange={(e) => setSede(e.target.value)}
+                    placeholder="Nombre de la sede"
+                    className="mt-1 min-h-11 w-full rounded-xl border border-gray-200 px-3 text-sm"
+                  />
+                ) : (
+                  <select
+                    value={sede}
+                    onChange={(e) => setSede(e.target.value)}
+                    className="mt-1 h-9 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700"
+                  >
+                    <option value="">Seleccionar sede</option>
 
-                  <option value="Callao">Callao</option>
+                    <option value="Callao">Callao</option>
 
-                  <option value="San Miguel">San Miguel</option>
+                    <option value="San Miguel">San Miguel</option>
 
-                  <option value="Ventanilla">Ventanilla</option>
-                </select>
+                    <option value="Ventanilla">Ventanilla</option>
+                  </select>
+                )}
               </div>
 
               <div hidden={estructuraNueva}>
@@ -561,6 +592,39 @@ export default function Clases() {
           </div>
         </section>
 
+        <details className="rounded-2xl border border-gray-200 bg-white p-4">
+          <summary className="cursor-pointer font-semibold">Preparar demostración</summary>
+          <p className="my-3 text-sm text-gray-600">
+            Carga los horarios oficiales y cinco alumnos ficticios, uno por turno. Usa sede y
+            profesores de prueba donde no estén asignados.
+          </p>
+          <button
+            type="button"
+            disabled={ocupado || cargando}
+            onClick={() => setConfirmarPrueba(true)}
+            className="min-h-11 rounded-xl bg-dojo-600 px-4 py-2 font-semibold text-white"
+          >
+            Cargar clases y alumnos de prueba
+          </button>
+        </details>
+        {!preparado && !cargando && !errorCarga && (
+          <section className="space-y-3 rounded-2xl border border-dojo-200 bg-white p-4">
+            <h2 className="font-bold">Clases con turnos</h2>
+            <p className="text-sm text-gray-600">
+              Prepara las tres clases oficiales y sus cinco turnos confirmados. Se conservarán las
+              inscripciones y sus movimientos; después deberás completar la sede y el profesor de
+              cada turno.
+            </p>
+            <button
+              type="button"
+              disabled={ocupado}
+              className="min-h-11 rounded-xl bg-dojo-600 px-4 py-2 font-semibold text-white"
+              onClick={() => setConfirmarTurnos(true)}
+            >
+              Preparar clases y turnos
+            </button>
+          </section>
+        )}
         <fieldset className="flex gap-2" aria-label="Filtrar clases">
           <button
             type="button"
@@ -568,7 +632,7 @@ export default function Clases() {
             onClick={() => setVista('vigentes')}
             className={`flex-1 rounded-xl border px-3 py-2 text-sm font-semibold ${vista === 'vigentes' ? 'border-dojo-200 bg-dojo-50 text-dojo-700' : 'border-gray-200 bg-white text-gray-600'}`}
           >
-            Vigentes{!cargando && !errorCarga ? ` (${vigentes.length})` : ''}
+            Vigentes{!cargando && !errorCarga ? ` (${agruparClases(vigentes).length})` : ''}
           </button>
           <button
             type="button"
@@ -576,7 +640,7 @@ export default function Clases() {
             onClick={() => setVista('todas')}
             className={`flex-1 rounded-xl border px-3 py-2 text-sm font-semibold ${vista === 'todas' ? 'border-dojo-200 bg-dojo-50 text-dojo-700' : 'border-gray-200 bg-white text-gray-600'}`}
           >
-            Todas{!cargando && !errorCarga ? ` (${clases.length})` : ''}
+            Todas{!cargando && !errorCarga ? ` (${totalGrupos})` : ''}
           </button>
         </fieldset>
 
@@ -620,28 +684,116 @@ export default function Clases() {
           </section>
         ) : (
           <div className="space-y-3">
-            {visibles.map((clase) => (
-              <TarjetaClase
-                key={clase.id}
-                clase={clase}
-                estado={obtenerEstadoClase(clase)}
-                dias={
-                  Array.isArray(clase.frecuencia)
-                    ? ordenarDias(clase.frecuencia).join(', ')
-                    : clase.frecuencia
-                }
-                formatearFecha={formatearFecha}
-                onEditar={iniciarEdicion}
-                onEliminar={(id) => {
-                  setAviso(null);
-                  setClasePorEliminar(clases.find((clase) => clase.id === id));
-                }}
-                ocupado={ocupado || cargando}
-              />
-            ))}
+            {grupoActual ? (
+              <>
+                <button
+                  type="button"
+                  className="min-h-11 font-semibold text-dojo-700"
+                  onClick={() => setGrupoSeleccionado(null)}
+                >
+                  ← Volver a las clases
+                </button>
+                <h2 className="text-lg font-bold">{grupoActual.nombre}</h2>
+                {turnosVisibles.map((clase) => (
+                  <TarjetaClase
+                    key={clase.id}
+                    clase={clase}
+                    estado={obtenerEstadoClase(clase)}
+                    dias={
+                      Array.isArray(clase.frecuencia)
+                        ? ordenarDias(clase.frecuencia).join(', ')
+                        : clase.frecuencia
+                    }
+                    formatearFecha={formatearFecha}
+                    onEditar={iniciarEdicion}
+                    onEliminar={(id) => {
+                      setAviso(null);
+                      setClasePorEliminar(clases.find((clase) => clase.id === id));
+                    }}
+                    ocupado={ocupado || cargando}
+                  />
+                ))}{' '}
+              </>
+            ) : (
+              grupos.map((g) => (
+                <section
+                  key={g.id}
+                  className="space-y-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
+                >
+                  <h2 className="text-lg font-bold">{g.nombre}</h2>
+                  <p className="text-sm text-gray-600">
+                    {g.turnos.length}{' '}
+                    {g.turnos.length === 1 ? 'turno disponible' : 'turnos disponibles'}. Consulta
+                    los días, edades y cupos de cada uno.
+                  </p>
+                  <button
+                    type="button"
+                    className="min-h-11 rounded-xl bg-dojo-600 px-4 py-2 font-semibold text-white"
+                    onClick={() => setGrupoSeleccionado(g.id)}
+                  >
+                    Ver turnos de {g.nombre}
+                  </button>
+                </section>
+              ))
+            )}
           </div>
         )}
       </main>
+      {confirmarPrueba && (
+        <ConfirmarAccion
+          titulo="¿Cargar la demostración?"
+          ocupado={ocupado}
+          aviso={aviso}
+          textoConfirmar="Cargar datos de prueba"
+          textoOcupado="Cargando…"
+          onCancelar={() => setConfirmarPrueba(false)}
+          onConfirmar={async () => {
+            const ok = await ejecutar(async () => {
+              const r = await leerRespuesta(
+                await apiFetch('/clases/datos-prueba', { method: 'POST' }),
+                'No se pudieron cargar los ejemplos.',
+              );
+              await cargarClases();
+              return r.mensaje;
+            });
+            if (ok) setConfirmarPrueba(false);
+          }}
+        >
+          <p>
+            Se conservarán los registros existentes. Los nuevos alumnos se llamarán Mateo,
+            Valentina, Lucas, Camila y Diego Prueba. Sus usuarios serán alumno.prueba01 a
+            alumno.prueba05; la contraseña inicial será igual al usuario. No se registrarán pagos ni
+            se activarán paquetes.
+          </p>
+        </ConfirmarAccion>
+      )}
+      {confirmarTurnos && (
+        <ConfirmarAccion
+          titulo="¿Preparar clases y turnos?"
+          ocupado={ocupado}
+          aviso={aviso}
+          textoConfirmar="Preparar estructura"
+          textoOcupado="Preparando…"
+          onCancelar={() => setConfirmarTurnos(false)}
+          onConfirmar={async () => {
+            const ok = await ejecutar(async () => {
+              const r = await leerRespuesta(
+                await apiFetch('/clases/turnos/preparar', { method: 'POST' }),
+                'No se pudo preparar la estructura.',
+              );
+              await cargarClases();
+              return r.mensaje;
+            });
+            if (ok) setConfirmarTurnos(false);
+          }}
+        >
+          <p>
+            Se crearán las tres clases y los cinco turnos oficiales, sin inventar sedes ni
+            profesores. Las relaciones existentes se actualizarán juntas para conservar el
+            historial.
+          </p>
+        </ConfirmarAccion>
+      )}
       {clasePorEliminar && (
         <ConfirmarAccion
           titulo="¿Eliminar esta clase?"

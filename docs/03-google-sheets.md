@@ -1,12 +1,12 @@
 # 3. Datos en Google Sheets
 
-La API utiliza la hoja configurada en `GOOGLE_SPREADSHEET_ID`. La estructura profesional separa personas, solicitudes, inscripciones y movimientos en doce pestañas. La pestaña Guía es informativa y no la modifica la app.
+La API utiliza la hoja configurada en `GOOGLE_SPREADSHEET_ID`. La estructura profesional separa personas, solicitudes, inscripciones y movimientos en pestañas relacionadas. La pestaña Guía es informativa y no la modifica la app.
 
 ## Encabezados y relaciones
 
 La fila 1 contiene los encabezados del Excel importado. Su orden y nombre deben conservarse. Se ignoran las filas sin valores, aunque tengan formato. Una cabecera incorrecta, un identificador vacío o duplicado, o columnas adicionales desconocidas detienen las escrituras antes de modificar datos.
 
-Los IDs de clases, profesores, postulaciones, alumnos e inscripciones son números enteros positivos. Los genera la aplicación, salvo los grupos oficiales que se cargan en Sheets: para ellos se asignan IDs estables, por ejemplo 1, 2 y 3, mostrando temporalmente la columna oculta. Los IDs no deben cambiar al ordenar o renombrar un registro. Los IDs de pagos, cuentas, recuperaciones y congelamientos son UUID; el de sesión combina grupo y fecha.
+Los IDs de clases, profesores, postulaciones, alumnos e inscripciones son números enteros positivos. Los genera la aplicación, salvo los grupos oficiales que se cargan en Sheets: para ellos se asignan IDs estables, por ejemplo 1, 2 y 3, mostrando temporalmente la columna oculta. Los IDs no deben cambiar al ordenar o renombrar un registro. Los IDs de pagos, cuentas, recuperaciones y congelamientos son UUID; el de sesión combina turno y fecha.
 
 | Pestaña | Columnas, en orden |
 | --- | --- |
@@ -26,6 +26,16 @@ Los IDs de clases, profesores, postulaciones, alumnos e inscripciones son númer
 `Clases` utiliza grupos permanentes, días separados por comas y horas HH:mm. El profesor se relaciona por ID; su nombre se consulta desde Profesores. Los precios pertenecen a Planes, no al grupo. La edición de grupos en la app no exige vigencia ni tarifa para esta estructura. Desactivar un grupo o profesor conserva sus registros históricos; un grupo con inscripciones activas no se puede desactivar mediante Eliminar.
 
 Los estados se escriben con las etiquetas de la plantilla: Activa/Inactiva, Activo/Inactivo, Pendiente/Aceptada/Rechazada/Cancelada, Programada/Realizada/Cancelada, etc. No introducir filas ficticias para preparar una pestaña vacía.
+
+## Clases con turnos
+
+Al confirmar **Clases → Preparar clases y turnos**, Clases pasa a contener `ID clase · Nombre de la clase · Estado`. Se crea Turnos con las columnas `ID turno · ID clase · Turno · Sede · Días · Hora inicio · Hora fin · Edad mínima · Edad máxima · ID profesor · Profesor habitual · Cupos totales · Cupos ocupados · Cupos disponibles · Estado`.
+
+La tabla anterior describe el formato compatible previo a esa preparación. Con Turnos, las relaciones originales de Postulaciones, Inscripciones y Sesiones apuntan a la categoría. Se añaden `ID turno · Turno` en Postulaciones S/T, Inscripciones N/O y Sesiones O/P. La preparación mantiene los IDs anteriores como IDs de turno y conserva sus movimientos; no migra automáticamente al consultar.
+
+Cada turno tiene sus propios cupos y profesor. La sede y el profesor activo son obligatorios para admitir inscripciones. Los horarios oficiales y el procedimiento se detallan en [Clases oficiales](08-clases-oficiales.md).
+
+`GET /clases/catalogo` devuelve las tres clases con sus turnos. Por compatibilidad, `GET /clases`, `/clases/:id` y los DTO de seguimiento siguen identificando el horario concreto con `id` o `claseId`. El alta pública y manual envía `claseId` de la categoría y `turnoId` del horario; se valida que correspondan entre sí.
 
 ## Postulación, inscripción y acceso
 

@@ -31,7 +31,7 @@ Los datos se guardan en una hoja de cálculo de Google. La estructura del almace
 - **Recuperaciones manuales:** autorización de clases pendientes en el horario habitual, sin añadir clases al plan. Se contempla una recuperación por pago de 4 clases y dos por pago de 8 o 12, con ajuste del límite y registro del motivo por el profesor o administrador.
 - **Congelamiento del plan:** solicitud del alumno y autorización del profesor asignado o administrador, con fecha de regreso o reactivación manual, manteniendo el cupo y las clases pendientes.
 - **Gestión unificada de profesores y alumnos:** alta de profesores junto con su cuenta, contacto opcional, administración de accesos, restablecimiento de contraseñas y cambio de contraseña por el titular.
-- **Consulta de clases oficiales:** visualización de los grupos registrados en Google Sheets y del calendario de entrenamiento. Los grupos permanentes pueden recibir inscripciones sin una fecha de finalización.
+- **Consulta de clases oficiales:** visualización de tres clases con sus turnos por días y edades, cupos independientes y calendario de entrenamiento. Los grupos permanentes pueden recibir inscripciones sin una fecha de finalización.
 - **Convocatorias y postulaciones:** enlaces y códigos QR descargables, formulario público de inscripción y revisión de solicitudes con control de cupos.
 - **Historial de seguimiento:** consulta de pagos, asistencia, congelamientos y recuperaciones, con registro de las autorizaciones y sus motivos.
 - **Interfaz adaptable:** navegación para celulares y computadoras, avisos dentro del portal, guía de uso y un único tema claro con la identidad visual del dojo.
@@ -92,7 +92,7 @@ Copy-Item apps/web/.env.example apps/web/.env
 New-Item -ItemType Directory -Force apps/api/credentials
 ```
 
-La llave JSON de la cuenta de servicio se guarda en `apps/api/credentials/google-service-account.json`. La hoja se prepara con las pestañas **Clases**, **Profesores** y **Postulaciones**, respetando los encabezados y el orden descritos en la [guía de Google Sheets](docs/03-google-sheets.md). Las clases oficiales se cargan antes de asignar alumnos. Los registros anteriores de Profesores con tres columnas siguen siendo compatibles; el alta añade D `telefono` y E `correo`. En Postulaciones se conservan R/S para el consentimiento del formulario público y se utiliza T `origen` para distinguir las altas manuales.
+La llave JSON de la cuenta de servicio se guarda en `apps/api/credentials/google-service-account.json`, o se proporciona mediante `GOOGLE_CREDENTIALS_JSON`. La estructura de personas, inscripciones y movimientos se describe en la [guía de Google Sheets](docs/03-google-sheets.md). Desde **Clases → Preparar clases y turnos** se preparan las tres clases y sus cinco turnos, conservando los registros compatibles existentes. Después se completan sede y profesor por turno; no se admiten inscripciones hasta configurarlos.
 
 Las pestañas **CuentasDojo** y **SeguimientoAlumnos** se crean en la primera operación válida de escritura que las requiere. La aplicación no carga datos de demostración ni elimina automáticamente registros anteriores.
 
@@ -236,6 +236,8 @@ Las rutas privadas requieren autenticación y son exclusivas de administración 
 | `POST` | `/alumnos/:id` | Según acción y asignación | Planes, pagos, asistencia, recuperaciones, solicitudes y congelamientos |
 | `GET` | `/sesiones?fecha=AAAA-MM-DD` | Administrador o profesor asignado | Sesiones, asistencia del profesor y alumnos del grupo |
 | `POST` | `/sesiones/:id/:fecha` | Administrador o profesor asignado | Marcación propia del profesor; administración corrige, asigna reemplazos o cancela |
+| `GET` | `/clases/catalogo` | Público | Clases agrupadas con sus turnos |
+| `POST` | `/clases/turnos/preparar` | Administrador | Preparación de clases y turnos conservando registros compatibles |
 | `GET` | `/clases` | Administrador | Consulta de clases oficiales y cupos disponibles |
 | `GET` | `/clases/:id` | Público | Consulta de la clase del formulario o QR |
 | `POST` | `/clases` | Deshabilitado | Respuesta 405 para administración; las altas se realizan en Sheets |

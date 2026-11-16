@@ -198,7 +198,8 @@ export default function Postulaciones() {
           {!clases.length && <option value="">Sin clases disponibles</option>}
           {clases.map((item) => (
             <option key={item.id} value={String(item.id)}>
-              {item.nivel} · {item.sede}
+              {item.nivel}
+              {item.turno ? ` · ${item.turno}` : ''} · {item.sede}
             </option>
           ))}
           {clases.length > 0 && <option value="todas">Todas las clases</option>}

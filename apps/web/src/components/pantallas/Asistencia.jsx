@@ -251,6 +251,9 @@ export default function Asistencia() {
         >
           <h3 className="font-bold">
             {s.nivel} · {s.horaInicio}–{s.horaFin}
+            {s.turno && (
+              <span className="mt-1 block text-sm font-normal text-gray-600">{s.turno}</span>
+            )}
           </h3>
           <p className="text-sm">
             {s.sede} ·{' '}

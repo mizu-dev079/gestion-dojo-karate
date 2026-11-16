@@ -4,5 +4,5 @@ export function enlaceFormulario(clase) {
     return '';
   }
 
-  return `${window.location.origin}/formulario?clase=${encodeURIComponent(clase.id)}`;
+  return `${window.location.origin}/formulario?clase=${encodeURIComponent(clase.claseBaseId ?? clase.id)}${clase.turnoId !== undefined ? `&turno=${encodeURIComponent(clase.id)}` : ''}`;
 }

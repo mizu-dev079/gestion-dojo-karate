@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { API_URL } from '../../lib/api.js';
 import IndicadorCupos from '../IndicadorCupos.jsx';
 import MarcaDojo from '../MarcaDojo.jsx';
+import SelectorClaseTurno from '../SelectorClaseTurno.jsx';
 
 const fechaEnLima = () =>
   new Intl.DateTimeFormat('en-CA', {
@@ -29,6 +30,8 @@ const fechaEnEspanol = (fecha) => {
 
 export default function FormularioPostulacion() {
   const [clase, setClase] = useState(null);
+  const [turnos, setTurnos] = useState([]);
+  const [claseInicial, setClaseInicial] = useState('');
   const [cargando, setCargando] = useState(true);
   const [errorClase, setErrorClase] = useState('');
   const [errorEnvio, setErrorEnvio] = useState('');
@@ -55,7 +58,13 @@ export default function FormularioPostulacion() {
       clase.fechaInicio <= clase.fechaFin &&
       hoy <= clase.fechaFin);
   const sinCupos = clase && clase.cuposDisponibles <= 0;
-  const habilitado = Boolean(convocatoriaAbierta && !sinCupos && !cargando);
+  const habilitado = Boolean(
+    convocatoriaAbierta &&
+      !sinCupos &&
+      !cargando &&
+      clase?.estado !== 'Inactiva' &&
+      clase?.configurado !== false,
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -64,11 +73,42 @@ export default function FormularioPostulacion() {
       setErrorClase('');
       try {
         let id = new URLSearchParams(window.location.search).get('clase');
+        let turnoGuardado;
         if (!id) {
           try {
-            id = JSON.parse(localStorage.getItem('claseFormulario') ?? 'null')?.id;
+            const previa = JSON.parse(localStorage.getItem('claseFormulario') ?? 'null');
+            id = previa?.claseBaseId ?? previa?.id;
+            turnoGuardado = previa?.turnoId;
           } catch {
             /* Una vista previa dañada no debe bloquear la página. */
+          }
+        }
+        const respuestaCatalogo = await fetch(`${API_URL}/clases/catalogo`, {
+          signal: controller.signal,
+          cache: 'no-store',
+        });
+        if (respuestaCatalogo.ok) {
+          const catalogo = await respuestaCatalogo.json();
+          if (catalogo.preparado) {
+            const todos = catalogo.clases.flatMap((c) => c.turnos);
+            const destino =
+              new URLSearchParams(window.location.search).get('turno') ??
+              (turnoGuardado ? String(turnoGuardado) : null);
+            const grupo = id ? catalogo.clases.find((c) => String(c.id) === String(id)) : null;
+            if (id && !grupo) throw new Error('Esta clase ya no existe o el enlace no es válido.');
+            const elegido = destino
+              ? todos.find(
+                  (t) => String(t.id) === destino && (!grupo || t.claseBaseId === grupo.id),
+                )
+              : grupo?.turnos.length === 1
+                ? grupo.turnos[0]
+                : null;
+            if (destino && !elegido)
+              throw new Error('El turno no corresponde a la clase del enlace.');
+            setClaseInicial(id ?? '');
+            setTurnos(todos);
+            setClase(elegido);
+            return;
           }
         }
         if (!id)
@@ -117,7 +157,8 @@ export default function FormularioPostulacion() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...datos,
-          claseId: clase.id,
+          claseId: clase.claseBaseId ?? clase.id,
+          ...(clase.turnoId !== undefined ? { turnoId: clase.id } : {}),
           consentimiento: datos.consentimiento === 'on',
         }),
       });
@@ -152,7 +193,8 @@ export default function FormularioPostulacion() {
       <h2 className="break-words text-lg font-bold text-dojo-900">
         {clase.nivel} · Sede {clase.sede}
       </h2>
-      <p className="mt-2 text-sm text-dojo-900">Prof. {clase.profesor}</p>
+      {clase.turno && <p className="mt-2 font-semibold text-dojo-900">{clase.turno}</p>}
+      <p className="mt-2 text-sm text-dojo-900">Prof. {clase.profesor || 'Por asignar'}</p>
       <p className="mt-2 text-sm text-dojo-900">
         {Array.isArray(clase.frecuencia) ? clase.frecuencia.join(', ') : clase.frecuencia}
       </p>
@@ -233,6 +275,26 @@ export default function FormularioPostulacion() {
                 Reintentar
               </button>
             </div>
+          )}
+          {turnos.length > 0 && !cargando && (
+            <section className="rounded-2xl bg-white p-5 shadow-sm">
+              <SelectorClaseTurno
+                turnos={turnos}
+                valor={clase?.id ?? ''}
+                cambiar={(id) => setClase(turnos.find((t) => String(t.id) === String(id)) ?? null)}
+                claseInicial={claseInicial}
+                etiquetaClase="Clase"
+                etiquetaTurno="Turno"
+                className={campo}
+                disabled={enviando}
+              />
+            </section>
+          )}
+          {clase?.configurado === false && (
+            <p role="status" className="rounded-xl bg-amber-50 p-4 text-amber-900">
+              Este turno está pendiente de asignación de sede y profesor. Elige otro turno o
+              consulta al dojo.
+            </p>
           )}
           {resumenClase}
           {clase && !convocatoriaAbierta && (

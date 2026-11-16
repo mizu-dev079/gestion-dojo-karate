@@ -100,7 +100,13 @@ export class SesionesController {
             tienePlan: !!estado.plan,
           };
         });
-      resultado.push({ ...sesion, nivel: clase.nivel, sede: clase.sede, alumnos });
+      resultado.push({
+        ...sesion,
+        nivel: clase.nivel,
+        sede: clase.sede,
+        turno: clase.turno,
+        alumnos,
+      });
     }
     return {
       sesiones: resultado,

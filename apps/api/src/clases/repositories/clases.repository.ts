@@ -110,6 +110,29 @@ export class ClasesRepository {
     const libro = await libroNuevo();
     if (libro)
       return libro.modificar((l) => {
+        if (l.clasesConTurnos) {
+          const t = l.Turnos.find((t) => numero(t[0]) === clase.id);
+          if (!t) throw new ConflictException('Turno no encontrado.');
+          const profesores = l.Profesores.filter(
+            (p) => p[1] === clase.profesor && p[4] === 'Activo',
+          );
+          if (profesores.length !== 1)
+            throw new ConflictException('Selecciona un profesor activo.');
+          const n = l.Inscripciones.filter(
+            (i) => numero(i[13]) === clase.id && ['Activa', 'Congelada'].includes(texto(i[9])),
+          ).length;
+          if (clase.cupos < n)
+            throw new ConflictException('El cupo no puede ser menor al número de inscritos.');
+          t[3] = clase.sede;
+          t[4] = clase.frecuencia.join(', ');
+          t[5] = clase.horaInicio;
+          t[6] = clase.horaFin;
+          t[9] = profesores[0][0];
+          t[10] = profesores[0][1];
+          t[11] = clase.cupos;
+          recalcularCupos(l);
+          return leerClases(l).find((c) => c.id === clase.id) as Clase;
+        }
         const f = l.Clases.find((f) => numero(f[0]) === clase.id);
         if (!f) throw new ConflictException('Clase no encontrada.');
         const p = l.Profesores.filter((p) => p[1] === clase.profesor && p[4] === 'Activo');
@@ -239,6 +262,18 @@ export class ClasesRepository {
     const libro = await libroNuevo();
     if (libro)
       return libro.modificar((l) => {
+        if (l.clasesConTurnos) {
+          const t = l.Turnos.find((t) => numero(t[0]) === claseId);
+          if (!t) throw new ConflictException('Turno no encontrado.');
+          if (
+            l.Inscripciones.some(
+              (i) => numero(i[13]) === claseId && ['Activa', 'Congelada'].includes(texto(i[9])),
+            )
+          )
+            throw new ConflictException('El turno conserva inscripciones activas.');
+          t[14] = 'Inactiva';
+          return { mensaje: 'Turno desactivado; se conserva su historial' };
+        }
         const c = l.Clases.find((c) => numero(c[0]) === claseId);
         if (!c) throw new ConflictException('Clase no encontrada.');
         if (

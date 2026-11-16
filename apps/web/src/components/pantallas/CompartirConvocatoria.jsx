@@ -13,7 +13,9 @@ export default function CompartirConvocatoria() {
     const controller = new AbortController();
     async function cargarClase() {
       try {
-        let id = new URLSearchParams(window.location.search).get('clase');
+        let id =
+          new URLSearchParams(window.location.search).get('turno') ??
+          new URLSearchParams(window.location.search).get('clase');
         if (!id) {
           try {
             id = JSON.parse(localStorage.getItem('claseFormulario') ?? 'null')?.id;

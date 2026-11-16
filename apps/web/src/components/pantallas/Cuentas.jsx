@@ -5,6 +5,7 @@ import { apiFetch, leerRespuesta } from '../../lib/api.js';
 import CampoContrasena from '../CampoContrasena.jsx';
 import ConfirmarAccion from '../ConfirmarAccion.jsx';
 import Mensaje from '../Mensaje.jsx';
+import SelectorClaseTurno from '../SelectorClaseTurno.jsx';
 
 const campo = 'mt-1 min-h-11 w-full rounded-xl border border-gray-300 bg-white px-3 py-2';
 const boton =
@@ -81,7 +82,18 @@ function Registro({ perfil, clases, ocupado, crear, cancelar, inscripcion }) {
       perfil,
       ...(perfil === 'profesor'
         ? { nuevoProfesor: { nombre, telefono, correo } }
-        : { nuevoAlumno: { nombre, telefono, correo, fechaNacimiento, claseId: Number(claseId) } }),
+        : {
+            nuevoAlumno: {
+              nombre,
+              telefono,
+              correo,
+              fechaNacimiento,
+              claseId: clases.find((c) => c.id === Number(claseId))?.claseBaseId ?? Number(claseId),
+              ...(clases.find((c) => c.id === Number(claseId))?.turnoId !== undefined
+                ? { turnoId: Number(claseId) }
+                : {}),
+            },
+          }),
     });
   }
   return (
@@ -149,23 +161,12 @@ function Registro({ perfil, clases, ocupado, crear, cancelar, inscripcion }) {
                     className={campo}
                   />
                 </label>
-                <label className="block text-sm font-semibold">
-                  Clase del alumno
-                  <select
-                    required
-                    value={claseId}
-                    onChange={(e) => setClaseId(e.target.value)}
-                    className={campo}
-                  >
-                    <option value="">Selecciona una clase oficial</option>
-                    {clases.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.nivel} · {c.sede} · {c.horaInicio} – {c.horaFin} ·{' '}
-                        {c.frecuencia?.join(', ')}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <SelectorClaseTurno
+                  turnos={clases}
+                  valor={claseId}
+                  cambiar={setClaseId}
+                  className={campo}
+                />
                 {!clases.length && (
                   <p className="rounded-xl bg-gray-50 p-3 text-sm text-gray-600">
                     Carga primero los horarios oficiales del dojo en Google Sheets para asignar una
@@ -586,7 +587,8 @@ export default function Cuentas({ vista = 'menu' }) {
                       {aceptadosVisibles.map((a) => (
                         <FichaPersona key={a.id} nombre={a.nombre}>
                           <p className="text-sm text-gray-600">
-                            {clases.find((c) => c.id === a.claseId)?.nivel ?? 'Clase asignada'}
+                            {clases.find((c) => c.id === a.claseId)?.nivel ?? 'Clase asignada'} ·{' '}
+                            {clases.find((c) => c.id === a.claseId)?.turno ?? ''}
                           </p>
                           <button
                             type="button"
@@ -620,7 +622,10 @@ export default function Cuentas({ vista = 'menu' }) {
                         {c.alumnoIds
                           .map((id) => {
                             const a = alumnos.find((a) => a.id === id);
-                            return a ? `Clase #${a.claseId}` : `Inscripción #${id} no activa`;
+                            const t = clases.find((t) => t.id === a?.claseId);
+                            return a
+                              ? `${t?.nivel ?? 'Clase asignada'}${t?.turno ? ` · ${t.turno}` : ''}`
+                              : `Inscripción #${id} no activa`;
                           })
                           .join(' · ')}
                       </p>

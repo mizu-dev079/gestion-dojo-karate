@@ -29,6 +29,17 @@ export class ClasesController {
     return this.clasesService.obtenerClases();
   }
 
+  @Public()
+  @Get('catalogo')
+  obtenerCatalogo() {
+    return this.clasesService.obtenerCatalogo();
+  }
+  @Post('datos-prueba') cargarDatosPrueba() {
+    return this.clasesService.cargarDatosPrueba();
+  }
+  @Post('turnos/preparar') prepararTurnos() {
+    return this.clasesService.prepararTurnos();
+  }
   @Get('postulaciones')
   obtenerPostulaciones() {
     return this.clasesService.obtenerPostulaciones();

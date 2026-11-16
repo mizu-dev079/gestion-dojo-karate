@@ -19,6 +19,10 @@ const limpiarCorreo = ({ value }: { value: unknown }) =>
   typeof value === 'string' ? value.trim().toLowerCase() : value;
 
 export class CrearPostulacionDto {
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  turnoId?: number;
   @IsInt({ message: 'Selecciona una clase válida.' })
   @Min(1, { message: 'Selecciona una clase válida.' })
   claseId: number;

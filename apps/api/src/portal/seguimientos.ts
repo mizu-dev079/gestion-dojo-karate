@@ -9,15 +9,15 @@ import {
 import { type SesionClase, sesionClaseSchema } from '../alumnos/sesiones.js';
 import { type Fila, type Libro } from './estructura.js';
 import { control, fecha, guardarControl, hora, numero, texto } from './libro.js';
-import { leerClases } from './registros.js';
+import { idTurnoInscripcion, leerClases } from './registros.js';
 
 export function leerSesiones(l: Libro): SesionClase[] {
   return l.Sesiones.map((f) => {
-    if (texto(f[0]) !== `${f[1]}:${fecha(f[3])}`)
+    if (texto(f[0]) !== `${l.clasesConTurnos ? f[14] : f[1]}:${fecha(f[3])}`)
       throw new ConflictException('El ID de una sesión no coincide con el grupo y la fecha.');
     const meta = control(l, 'sesion', texto(f[0]));
     return sesionClaseSchema.parse({
-      claseId: numero(f[1]),
+      claseId: numero(l.clasesConTurnos ? f[14] : f[1]),
       fecha: fecha(f[3]),
       horaInicio: hora(f[4]),
       horaFin: hora(f[5]),
@@ -38,7 +38,7 @@ export function guardarSesion(l: Libro, s: SesionClase) {
   const mayuscula = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
   const fila: Fila = [
     id,
-    s.claseId,
+    c?.claseBaseId ?? s.claseId,
     c?.nivel ?? anterior?.[2] ?? '',
     s.fecha,
     s.horaInicio,
@@ -51,6 +51,7 @@ export function guardarSesion(l: Libro, s: SesionClase) {
     s.estado === 'cancelada' ? (ultima?.motivo ?? '') : '',
     ultima?.usuario ?? '',
     ultima?.fecha ?? '',
+    ...(l.clasesConTurnos ? [s.claseId, c?.turno ?? ''] : []),
   ];
   const index = l.Sesiones.findIndex((f) => texto(f[0]) === id);
   if (index < 0) l.Sesiones.push(fila);
@@ -193,9 +194,9 @@ export function guardarSeguimiento(l: Libro, id: number, s: Seguimiento) {
     'Asistencias',
     2,
     s.asistencias.map((a) => {
-      const sesionId = `${ins[3]}:${a.fecha}`;
+      const sesionId = `${idTurnoInscripcion(l, ins)}:${a.fecha}`;
       if (!l.Sesiones.some((f) => f[0] === sesionId)) {
-        const c = leerClases(l).find((c) => c.id === numero(ins[3]));
+        const c = leerClases(l).find((c) => c.id === idTurnoInscripcion(l, ins));
         if (!c) throw new ConflictException('La clase de la asistencia no existe.');
         guardarSesion(l, {
           claseId: c.id,

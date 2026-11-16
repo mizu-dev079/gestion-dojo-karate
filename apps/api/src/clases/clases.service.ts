@@ -5,6 +5,10 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { cargarDatosPrueba } from '../portal/datos-prueba.js';
+import { libroNuevo } from '../portal/libro.js';
+import { validarEdadTurno } from '../portal/registros.js';
+import { catalogo, prepararTurnos } from '../portal/turnos.js';
 import { enClaseCompartida } from './cola-clases.js';
 import { CrearClaseDto } from './dto/crear-clase.dto.js';
 import { CrearPostulacionDto } from './dto/crear-postulacion.dto.js';
@@ -63,6 +67,30 @@ export class ClasesService {
     return `${año}-${mes}-${dia}`;
   }
 
+  async obtenerCatalogo() {
+    const libro = await libroNuevo();
+    if (libro) return catalogo(await libro.leer());
+    const turnos = await this.obtenerClases();
+    return {
+      preparado: false,
+      clases: turnos.map((t) => ({
+        id: t.id,
+        nombre: t.nivel,
+        estado: t.estado ?? 'Activa',
+        turnos: [t],
+      })),
+    };
+  }
+  async cargarDatosPrueba() {
+    const libro = await libroNuevo();
+    if (!libro) throw new ConflictException('Primero importa la estructura profesional de Sheets.');
+    return libro.modificar(cargarDatosPrueba);
+  }
+  async prepararTurnos() {
+    const libro = await libroNuevo();
+    if (!libro) throw new ConflictException('Primero importa la estructura profesional de Sheets.');
+    return libro.modificar(prepararTurnos);
+  }
   async obtenerClases() {
     const clases = await this.clasesRepository.obtenerTodas();
 
@@ -139,8 +167,13 @@ export class ClasesService {
   }
 
   async crearPostulacion(datos: CrearPostulacionDto) {
-    return this.enClase(datos.claseId, async () => {
-      const clase = await this.obtenerClase(datos.claseId);
+    return this.enClase(datos.turnoId ?? datos.claseId, async () => {
+      const clase = await this.obtenerClase(datos.turnoId ?? datos.claseId);
+      if (clase.turnoId !== undefined && (!datos.turnoId || clase.claseBaseId !== datos.claseId))
+        throw new BadRequestException('Selecciona el turno que corresponde a la clase.');
+      if (clase.configurado === false)
+        throw new BadRequestException('Este turno aún no tiene sede y profesor asignados.');
+      validarEdadTurno(clase, datos.fechaNacimiento);
       const hoy = this.hoyEnLima();
       const permanente = !clase.fechaInicio && !clase.fechaFin;
       if (
@@ -180,7 +213,7 @@ export class ClasesService {
       if (
         postulaciones.some(
           (item) =>
-            Number(item.claseId) === datos.claseId && item.correo?.trim().toLowerCase() === correo,
+            Number(item.claseId) === clase.id && item.correo?.trim().toLowerCase() === correo,
         )
       ) {
         throw new ConflictException('Este correo ya tiene una postulación para esta clase.');

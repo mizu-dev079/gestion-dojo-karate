@@ -1,9 +1,11 @@
+import { randomUUID } from 'node:crypto';
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import { hoyLima } from '../src/alumnos/seguimiento.js';
 import { AppModule } from '../src/app.module.js';
+import { hashPassword } from '../src/auth/cuentas.service.js';
 import { crearClienteSheets } from '../src/google/sheets.client.js';
 import { estructura, type Fila } from '../src/portal/estructura.js';
 
@@ -24,7 +26,7 @@ describe('Portal sobre la nueva estructura de Sheets (HTTP y persistencia reales
     fallar = false;
     tablas = Object.fromEntries(
       Object.entries(estructura)
-        .filter(([t]) => t !== 'ControlSistema')
+        .filter(([t]) => t !== 'ControlSistema' && t !== 'Turnos')
         .map(([t, h]) => [t, [[...h]]]),
     );
     ids = Object.fromEntries(Object.keys(tablas).map((t, i) => [t, i]));
@@ -544,4 +546,316 @@ describe('Portal sobre la nueva estructura de Sheets (HTTP y persistencia reales
       expect(batchUpdate).not.toHaveBeenCalled();
     },
   );
+  async function prepararCincoTurnos() {
+    tablas.Clases = [tablas.Clases[0]];
+    await api().post('/clases/turnos/preparar').set('Cookie', cookie).expect(201);
+    for (const t of tablas.Turnos.slice(1).filter((f) => f.length)) {
+      t[3] = 'Sede de prueba';
+      t[9] = t[0] === 2 ? 20 : 10;
+    }
+  }
+  function postularEnTurno(
+    turnoId: number,
+    claseId = 1,
+    correo = `turno${turnoId}@example.com`,
+    nacimiento = '2020-06-15',
+  ) {
+    return api().post('/clases/postulaciones').send({
+      claseId,
+      turnoId,
+      nombre: 'Alumno del turno',
+      telefono: '999888777',
+      correo,
+      fechaNacimiento: nacimiento,
+      nombreCompletoApoderado: 'Apoderado Prueba',
+      correoApoderado: 'apoderado@example.com',
+      telefonoApoderado: '988777666',
+      consentimiento: true,
+    });
+  }
+  it('admite una pestaña Turnos vacía añadida al Excel sin modificar sus datos existentes', async () => {
+    tablas.Turnos = [[...estructura.Turnos]];
+    const anterior = structuredClone(tablas);
+    const catalogo = await api().get('/clases/catalogo').expect(200);
+    expect(catalogo.body.preparado).toBe(false);
+    expect(tablas).toEqual(anterior);
+    tablas.Clases = [tablas.Clases[0]];
+    await api().post('/clases/turnos/preparar').set('Cookie', cookie).expect(201);
+    expect(tablas.Turnos.filter((f) => f.length)).toHaveLength(6);
+  });
+  it('rechaza turnos cargados con Clases antigua sin borrar sus datos', async () => {
+    tablas.Turnos = [[...estructura.Turnos], [1, 1, 'Turno existente']];
+    const anterior = structuredClone(tablas);
+    await api().post('/clases/turnos/preparar').set('Cookie', cookie).expect(409);
+    expect(tablas).toEqual(anterior);
+  });
+  it('carga cinco alumnos con acceso, un cupo por turno, sin pagos ni duplicados', async () => {
+    tablas.Clases = [tablas.Clases[0]];
+    await api().post('/clases/datos-prueba').expect(401);
+    const r = await api().post('/clases/datos-prueba').set('Cookie', cookie).expect(201);
+    expect(r.body.cuentas).toHaveLength(5);
+    expect(tablas.Alumnos.filter((f) => f.length)).toHaveLength(6);
+    expect(tablas.Inscripciones.filter((f) => f.length)).toHaveLength(6);
+    expect(tablas.Pagos.filter((f) => f.length)).toHaveLength(1);
+    expect(
+      tablas.Turnos.slice(1)
+        .filter((f) => f.length)
+        .map((f) => f[12]),
+    ).toEqual([1, 1, 1, 1, 1]);
+    const anterior = structuredClone(tablas);
+    const segunda = await api().post('/clases/datos-prueba').set('Cookie', cookie).expect(201);
+    expect(segunda.body.cuentas.every((c: { creada: boolean }) => !c.creada)).toBe(true);
+    expect(tablas).toEqual(anterior);
+    await api()
+      .post('/auth/login')
+      .send({ usuario: 'alumno.prueba01', password: 'alumno.prueba01' })
+      .expect(200);
+  });
+  it('no carga parcialmente ejemplos si no hay cupo y conserva las asignaciones existentes', async () => {
+    await prepararCincoTurnos();
+    tablas.Turnos[1][11] = 0;
+    const anterior = structuredClone(tablas);
+    await api().post('/clases/datos-prueba').set('Cookie', cookie).expect(409);
+    expect(tablas).toEqual(anterior);
+  });
+  it('prepara tres clases y cinco turnos con los días, edades y cupos oficiales, sin duplicar al repetir', async () => {
+    await prepararCincoTurnos();
+    await api().post('/clases/turnos/preparar').set('Cookie', cookie).expect(201);
+    expect(tablas.Clases.filter((f) => f.length)).toHaveLength(4);
+    expect(tablas.Turnos.filter((f) => f.length)).toHaveLength(6);
+    expect(
+      tablas.Turnos.slice(1)
+        .filter((f) => f.length)
+        .map((f) => [f[1], f[4], f[7], f[8], f[11]]),
+    ).toEqual([
+      [1, 'Lunes, Miércoles, Viernes', 5, 6, 12],
+      [1, 'Martes, Jueves', 5, 7, 12],
+      [2, 'Lunes, Miércoles, Viernes', 7, 11, 15],
+      [2, 'Martes, Jueves', 8, 15, 15],
+      [3, 'Lunes, Miércoles, Viernes', 12, '', 18],
+    ]);
+    const catalogo = await api().get('/clases/catalogo').expect(200);
+    expect(catalogo.body.preparado).toBe(true);
+    expect(catalogo.body.clases.map((c: { turnos: unknown[] }) => c.turnos.length)).toEqual([
+      2, 2, 1,
+    ]);
+  });
+  it('al aceptar se reserva solo el turno seleccionado y no el otro de la misma clase', async () => {
+    await prepararCincoTurnos();
+    for (const t of tablas.Turnos.slice(1)) t[11] = 1;
+    const uno = await postularEnTurno(1, 1, 'uno@example.com').expect(201),
+      dos = await postularEnTurno(1, 1, 'dos@example.com').expect(201),
+      otro = await postularEnTurno(2, 1, 'otro@example.com').expect(201);
+    await aceptar(uno.body.id);
+    await api()
+      .post('/clases/postulaciones/estado')
+      .set('Cookie', cookie)
+      .send({ id: dos.body.id, estado: 'aceptado' })
+      .expect(409);
+    await aceptar(otro.body.id);
+    expect(tablas.Inscripciones.slice(1).map((i) => [i[3], i[13]])).toEqual([
+      [1, 1],
+      [1, 2],
+    ]);
+    expect(tablas.Turnos[1][13]).toBe(0);
+    expect(tablas.Turnos[2][13]).toBe(0);
+    expect(tablas.Postulaciones[1][18]).toBe(1);
+  });
+  it('exige turno, comprueba que pertenece a la clase y valida edades al postular', async () => {
+    await prepararCincoTurnos();
+    const base = {
+      nombre: 'Alumno',
+      telefono: '999888777',
+      correo: 'prueba@example.com',
+      fechaNacimiento: '2000-01-01',
+      consentimiento: true,
+    };
+    await api()
+      .post('/clases/postulaciones')
+      .send({ ...base, claseId: 1 })
+      .expect(400);
+    await postularEnTurno(1, 2).expect(400);
+    await postularEnTurno(1, 1, 'edad7@example.com', '2019-06-15').expect(409);
+    await postularEnTurno(2, 1, 'edad7@example.com', '2019-06-15').expect(201);
+  });
+  it('la inscripción manual recibe clase y turno, y rechaza una combinación ajena', async () => {
+    await prepararCincoTurnos();
+    const datos = {
+      usuario: 'alumno.turno',
+      password: PASS,
+      perfil: 'alumno',
+      nuevoAlumno: {
+        nombre: 'Alumno Manual',
+        claseId: 1,
+        turnoId: 2,
+        fechaNacimiento: '2020-06-15',
+        telefono: '999888777',
+        correo: 'manual@example.com',
+      },
+    };
+    await api()
+      .post('/cuentas')
+      .set('Cookie', cookie)
+      .send({ ...datos, nuevoAlumno: { ...datos.nuevoAlumno, claseId: 2 } })
+      .expect(409);
+    await api().post('/cuentas').set('Cookie', cookie).send(datos).expect(201);
+    expect(tablas.Inscripciones[1][13]).toBe(2);
+    expect(tablas.Alumnos.filter((f) => f.length)).toHaveLength(2);
+    const opciones = await api().get('/cuentas/opciones').set('Cookie', cookie).expect(200);
+    expect(opciones.body.clases[1]).toMatchObject({
+      claseBaseId: 1,
+      turnoId: 2,
+      turno: expect.any(String),
+    });
+  });
+  it('cada profesor ve únicamente los alumnos y sesiones de sus turnos', async () => {
+    await prepararCincoTurnos();
+    const uno = await postularEnTurno(1).expect(201),
+      dos = await postularEnTurno(2).expect(201);
+    await aceptar(uno.body.id);
+    await aceptar(dos.body.id);
+    for (const id of [10, 20]) {
+      const c = {
+        id: randomUUID(),
+        usuario: `profesor.${id}`,
+        perfil: 'profesor',
+        profesorId: id,
+        alumnoIds: [],
+        activo: true,
+        revision: 1,
+        ...(await hashPassword(PASS)),
+      };
+      tablas.CuentasDojo.push([
+        'Profesor',
+        'Profesor',
+        c.usuario,
+        '',
+        '',
+        'Activa',
+        hoy,
+        c.id,
+        id,
+        '',
+        JSON.stringify(c),
+      ]);
+      const login = await api()
+        .post('/auth/login')
+        .send({ usuario: c.usuario, password: PASS })
+        .expect(200);
+      const alumnos = await api()
+        .get('/alumnos')
+        .set('Cookie', login.headers['set-cookie'][0])
+        .expect(200);
+      expect(alumnos.body.map((a: { id: number }) => a.id)).toEqual([
+        id === 10 ? uno.body.id : dos.body.id,
+      ]);
+    }
+  });
+  it('migrar conserva cuentas, pagos, saldo e identificadores de sesiones existentes', async () => {
+    tablas.Clases[1] = [
+      11,
+      'Jóvenes Guerreros',
+      'Dojo',
+      'Lunes, Miércoles, Viernes',
+      '17:00',
+      '18:00',
+      10,
+      'Hiroshi',
+      15,
+      0,
+      15,
+      'Activa',
+    ];
+    const lunes = new Date(`${hoy}T00:00:00Z`);
+    lunes.setUTCDate(lunes.getUTCDate() - ((lunes.getUTCDay() + 6) % 7));
+    const fechaEntreno = lunes.toISOString().slice(0, 10);
+    const c = await alumnoManual(),
+      id = c.alumnoCreado.id;
+    await api()
+      .post(`/alumnos/${id}`)
+      .set('Cookie', cookie)
+      .send({
+        accion: 'iniciar',
+        version: 0,
+        cantidad: 8,
+        importe: 150,
+        dias: ['Lunes'],
+        fecha: fechaEntreno,
+      })
+      .expect(201);
+    await api()
+      .post(`/alumnos/${id}`)
+      .set('Cookie', cookie)
+      .send({ accion: 'asistencia', version: 1, fecha: fechaEntreno, estado: 'presente' })
+      .expect(201);
+    const pagos = structuredClone(tablas.Pagos),
+      cuentas = structuredClone(tablas.CuentasDojo),
+      sesion = tablas.Sesiones[1][0];
+    await api().post('/clases/turnos/preparar').set('Cookie', cookie).expect(201);
+    expect(tablas.Pagos).toEqual(pagos);
+    expect(tablas.CuentasDojo).toEqual(cuentas);
+    expect(tablas.Sesiones[1][0]).toBe(sesion);
+    expect(tablas.Sesiones[1][14]).toBe(11);
+    expect(tablas.Inscripciones[1][3]).toBe(2);
+    expect(tablas.Inscripciones[1][13]).toBe(11);
+    const a = await api().get('/alumnos').set('Cookie', cookie).expect(200);
+    expect(a.body[0].seguimiento.pendientes).toBe(7);
+    expect(a.body[0].clase.claseBaseId).toBe(2);
+  });
+  it('si no se puede identificar un grupo antiguo no migra ni elimina datos', async () => {
+    tablas.Clases[1][1] = 'Clase sin correspondencia';
+    const antes = structuredClone(tablas);
+    await api().post('/clases/turnos/preparar').set('Cookie', cookie).expect(409);
+    expect(tablas).toEqual(antes);
+    expect(batchUpdate).not.toHaveBeenCalled();
+  });
+  it('cancelar una sesión devuelve solo el saldo del turno correspondiente', async () => {
+    await prepararCincoTurnos();
+    const a = await postularEnTurno(1, 1, 'a@example.com').expect(201),
+      b = await postularEnTurno(2, 1, 'b@example.com').expect(201);
+    await aceptar(a.body.id);
+    await aceptar(b.body.id);
+    const fechaDia = (n: number) => {
+      const d = new Date(`${hoy}T00:00:00Z`);
+      d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() - n + 7) % 7));
+      return d.toISOString().slice(0, 10);
+    };
+    for (const [id, diaNombre, fecha] of [
+      [a.body.id, 'Lunes', fechaDia(1)],
+      [b.body.id, 'Martes', fechaDia(2)],
+    ] as const) {
+      await api()
+        .post(`/alumnos/${id}`)
+        .set('Cookie', cookie)
+        .send({
+          accion: 'iniciar',
+          version: 0,
+          cantidad: 8,
+          importe: 150,
+          dias: [diaNombre],
+          fecha,
+        })
+        .expect(201);
+      await api()
+        .post(`/alumnos/${id}`)
+        .set('Cookie', cookie)
+        .send({ accion: 'asistencia', version: 1, estado: 'presente', fecha })
+        .expect(201);
+    }
+    await api()
+      .post(`/sesiones/1/${fechaDia(1)}`)
+      .set('Cookie', cookie)
+      .send({
+        accion: 'estado',
+        estado: 'cancelada',
+        version: 0,
+        motivo: 'Cancelación del primer turno',
+      })
+      .expect(201);
+    expect(tablas.Pagos.slice(1).find((f) => f[1] === a.body.id)?.[10]).toBe(8);
+    expect(tablas.Pagos.slice(1).find((f) => f[1] === b.body.id)?.[10]).toBe(7);
+    const sesiones = tablas.Sesiones.slice(1).filter((f) => f.length);
+    expect(sesiones.map((f) => f[1])).toEqual([1, 1]);
+    expect(sesiones.map((f) => f[14])).toEqual([1, 2]);
+  });
 });

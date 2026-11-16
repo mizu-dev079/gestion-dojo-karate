@@ -5,6 +5,13 @@
  */
 
 export interface ClaseDto {
+  claseBaseId?: number;
+  claseNombre?: string;
+  turnoId?: number;
+  turno?: string;
+  edadMinima?: number;
+  edadMaxima?: number | null;
+  configurado?: boolean;
   profesorId?: number;
   estado?: string;
   id: number;
@@ -37,6 +44,9 @@ export interface CrearClaseInput {
 }
 
 export interface PostulacionDto {
+  turnoId?: number;
+  claseBaseId?: number;
+  turno?: string;
   origen?: string;
   id: number;
   nombre: string;

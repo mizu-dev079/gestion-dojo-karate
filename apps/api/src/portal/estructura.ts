@@ -13,6 +13,23 @@ export const estructura = {
     'Cupos disponibles',
     'Estado',
   ],
+  Turnos: [
+    'ID turno',
+    'ID clase',
+    'Turno',
+    'Sede',
+    'Días',
+    'Hora inicio',
+    'Hora fin',
+    'Edad mínima',
+    'Edad máxima',
+    'ID profesor',
+    'Profesor habitual',
+    'Cupos totales',
+    'Cupos ocupados',
+    'Cupos disponibles',
+    'Estado',
+  ],
   Profesores: [
     'ID profesor',
     'Nombre completo',
@@ -165,4 +182,5 @@ export const estructura = {
 } as const;
 export type Tabla = keyof typeof estructura;
 export type Fila = (string | number | boolean)[];
-export type Libro = Record<Tabla, Fila[]>;
+export const cabeceraClasesConTurnos = ['ID clase', 'Nombre de la clase', 'Estado'] as const;
+export type Libro = Record<Tabla, Fila[]> & { clasesConTurnos?: boolean };

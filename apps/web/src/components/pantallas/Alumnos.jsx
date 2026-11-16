@@ -482,7 +482,8 @@ export default function Alumnos() {
               ...new Map(alumnos.filter((a) => a.clase).map((a) => [a.claseId, a.clase])).values(),
             ].map((c) => (
               <option key={c.id} value={c.id}>
-                {c.nivel} · {c.sede} · {c.horaInicio}
+                {c.nivel}
+                {c.turno ? ` · ${c.turno}` : ''} · {c.sede} · {c.horaInicio}
               </option>
             ))}
           </select>

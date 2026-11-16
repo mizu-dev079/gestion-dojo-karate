@@ -2,7 +2,13 @@ import { ConflictException, InternalServerErrorException } from '@nestjs/common'
 import type { sheets_v4 } from 'googleapis';
 import { env } from '../config/env.js';
 import { crearClienteSheets } from '../google/sheets.client.js';
-import { estructura, type Fila, type Libro, type Tabla } from './estructura.js';
+import {
+  cabeceraClasesConTurnos,
+  estructura,
+  type Fila,
+  type Libro,
+  type Tabla,
+} from './estructura.js';
 
 let cola: Promise<unknown> = Promise.resolve();
 export class LibroPortal {
@@ -31,7 +37,7 @@ export class LibroPortal {
     const existentes = new Set(info.data.sheets?.map((s) => s.properties?.title));
     const tablas = (Object.keys(estructura) as Tabla[]).filter((t) => existentes.has(t));
     const faltantes = (Object.keys(estructura) as Tabla[]).filter(
-      (t) => t !== 'ControlSistema' && !existentes.has(t),
+      (t) => t !== 'ControlSistema' && t !== 'Turnos' && !existentes.has(t),
     );
     if (faltantes.length)
       throw new ConflictException(
@@ -60,9 +66,15 @@ export class LibroPortal {
     const libro = Object.fromEntries(
       Object.keys(estructura).map((t) => [t, []]),
     ) as unknown as Libro;
+    const encabezadosClases = respuesta.data.valueRanges?.[tablas.indexOf('Clases')]?.values?.[0];
+    libro.clasesConTurnos =
+      existentes.has('Turnos') &&
+      cabeceraClasesConTurnos.every((h, i) => encabezadosClases?.[i] === h);
     tablas.forEach((t, i) => {
       const filas = respuesta.data.valueRanges?.[i]?.values ?? [];
-      if (estructura[t].some((h, j) => filas[0]?.[j] !== h))
+      const cabecera =
+        t === 'Clases' && libro.clasesConTurnos ? cabeceraClasesConTurnos : estructura[t];
+      if (cabecera.some((h, j) => filas[0]?.[j] !== h))
         throw new ConflictException(`Revisa los encabezados de ${t}. No se han modificado datos.`);
       const datos = filas
         .slice(1)
@@ -75,6 +87,10 @@ export class LibroPortal {
         throw new InternalServerErrorException(`Hay identificadores vacíos o duplicados en ${t}.`);
       libro[t] = datos;
     });
+    if (!libro.clasesConTurnos && libro.Turnos.length)
+      throw new ConflictException(
+        'Turnos contiene datos pero Clases conserva el formato anterior. Revisa la estructura antes de continuar.',
+      );
     return libro;
   }
   modificar<T>(cambiar: (libro: Libro) => T): Promise<T> {
@@ -83,7 +99,9 @@ export class LibroPortal {
       const original = structuredClone(libro);
       const resultado = cambiar(libro);
       const modificadas = (Object.keys(estructura) as Tabla[]).filter(
-        (t) => JSON.stringify(libro[t]) !== JSON.stringify(original[t]),
+        (t) =>
+          JSON.stringify(libro[t]) !== JSON.stringify(original[t]) ||
+          (['Clases', 'Turnos'].includes(t) && libro.clasesConTurnos !== original.clasesConTurnos),
       );
       if (!modificadas.length) return resultado;
       const info = await this.sheets.spreadsheets.get({
@@ -98,6 +116,13 @@ export class LibroPortal {
         const sheetId = existente?.sheetId ?? siguienteId++;
         const ancho = Math.max(
           estructura[tabla].length,
+          libro.clasesConTurnos
+            ? ((
+                { Postulaciones: 20, Inscripciones: 15, Sesiones: 16 } as Partial<
+                  Record<Tabla, number>
+                >
+              )[tabla] ?? 0)
+            : 0,
           ...libro[tabla].map((f) => f.length),
           ...original[tabla].map((f) => f.length),
         );
@@ -133,7 +158,25 @@ export class LibroPortal {
               fields: 'gridProperties.rowCount,gridProperties.columnCount',
             },
           });
-        const cabecera: Fila = [...estructura[tabla]];
+        const cabecera: Fila = [
+          ...(tabla === 'Clases' && libro.clasesConTurnos
+            ? cabeceraClasesConTurnos
+            : estructura[tabla]),
+        ];
+        if (libro.clasesConTurnos) {
+          if (tabla === 'Postulaciones') {
+            cabecera[18] = 'ID turno';
+            cabecera[19] = 'Turno';
+          }
+          if (tabla === 'Inscripciones') {
+            cabecera[13] = 'ID turno';
+            cabecera[14] = 'Turno';
+          }
+          if (tabla === 'Sesiones') {
+            cabecera[14] = 'ID turno';
+            cabecera[15] = 'Turno';
+          }
+        }
         if (tabla === 'Congelamientos' && ancho > 12) cabecera[12] = 'Tipo de registro';
         if (tabla === 'Asistencias' && ancho > 9) cabecera[9] = 'Política interna';
         if (tabla === 'Congelamientos')
@@ -152,6 +195,55 @@ export class LibroPortal {
               },
             },
           });
+        if (tabla === 'Turnos' && !existente) {
+          requests.push(
+            {
+              updateSheetProperties: {
+                properties: { sheetId, gridProperties: { frozenRowCount: 1 } },
+                fields: 'gridProperties.frozenRowCount',
+              },
+            },
+            {
+              repeatCell: {
+                range: { sheetId, startRowIndex: 0, endRowIndex: 1 },
+                cell: {
+                  userEnteredFormat: {
+                    backgroundColor: { red: 0.1, green: 0.1, blue: 0.1 },
+                    textFormat: { bold: true, foregroundColor: { red: 1, green: 1, blue: 1 } },
+                  },
+                },
+                fields: 'userEnteredFormat',
+              },
+            },
+          );
+          for (const [inicio, fin, ancho] of [
+            [0, 2, 100],
+            [2, 3, 360],
+            [3, 4, 180],
+            [4, 5, 240],
+            [5, 9, 110],
+            [10, 11, 210],
+            [11, 15, 140],
+          ])
+            requests.push({
+              updateDimensionProperties: {
+                range: { sheetId, dimension: 'COLUMNS', startIndex: inicio, endIndex: fin },
+                properties: { pixelSize: ancho },
+                fields: 'pixelSize',
+              },
+            });
+          for (const [inicio, fin] of [
+            [0, 2],
+            [9, 10],
+          ])
+            requests.push({
+              updateDimensionProperties: {
+                range: { sheetId, dimension: 'COLUMNS', startIndex: inicio, endIndex: fin },
+                properties: { hiddenByUser: true },
+                fields: 'hiddenByUser',
+              },
+            });
+        }
         const filas: Fila[] = [cabecera, ...libro[tabla]];
         const rows = filas.map((f) => ({
           values: Array.from({ length: ancho }, (_, i) => {
