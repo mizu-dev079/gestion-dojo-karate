@@ -1,0 +1,7 @@
+---
+import LayoutAdministracion from '../layouts/LayoutAdministracion.astro';
+import Asistencia from '../components/pantallas/Asistencia.jsx';
+---
+<LayoutAdministracion title="Asistencia" active="alumnos" backHref="/alumnos" backLabel="Volver a alumnos">
+  <Asistencia client:load />
+</LayoutAdministracion>

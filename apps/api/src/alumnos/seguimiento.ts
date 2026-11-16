@@ -159,7 +159,7 @@ export function congelado(s: Seguimiento, dia: string): boolean {
   );
 }
 
-function recalcular(s: Seguimiento) {
+export function recalcular(s: Seguimiento) {
   for (const p of s.pagos) p.restantes = p.cantidad;
   for (const a of s.asistencias.sort((x, y) => x.fecha.localeCompare(y.fecha))) {
     const autorizada = s.recuperaciones.find((r) => r.fecha === a.fecha && !r.revocada);

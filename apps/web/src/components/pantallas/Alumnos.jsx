@@ -418,6 +418,14 @@ export default function Alumnos() {
           Planes continuos de 4, 8 o 12 clases. Se conservan las clases pendientes al renovar. Las
           recuperaciones las autoriza manualmente el profesor o administrador.
         </p>
+        {!alumnoPropio && (
+          <a
+            href="/asistencia"
+            className="inline-flex min-h-11 items-center rounded-xl bg-dojo-600 px-4 py-2 font-semibold text-white"
+          >
+            Sesiones y asistencia
+          </a>
+        )}
         {admin && (
           <a
             href="/cuentas"

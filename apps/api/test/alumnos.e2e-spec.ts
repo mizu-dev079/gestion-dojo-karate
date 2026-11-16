@@ -29,6 +29,7 @@ describe('Seguimiento de alumnos (HTTP con sesión)', () => {
       .overrideProvider(AlumnosRepository)
       .useValue({
         obtenerTodos: async () => estados,
+        obtenerSesiones: async () => [],
         actualizar: async (id: number, transformar: (s: Seguimiento) => Seguimiento) => {
           const s = transformar(estados.get(id) ?? vacio());
           estados.set(id, s);

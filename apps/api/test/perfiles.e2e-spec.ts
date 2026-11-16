@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { ProfesorDto } from '@dojo/shared';
-import type { INestApplication } from '@nestjs/common';
+import { ConflictException, type INestApplication } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
@@ -13,6 +13,7 @@ import {
   type Seguimiento,
   vacio,
 } from '../src/alumnos/seguimiento.js';
+import type { SesionClase } from '../src/alumnos/sesiones.js';
 import { AppModule } from '../src/app.module.js';
 import { ACCESS_TOKEN_COOKIE } from '../src/auth/auth.constants.js';
 import { type Cuenta, CuentasRepository, cuentaPublica } from '../src/auth/cuentas.repository.js';
@@ -29,6 +30,7 @@ describe('Perfiles y aislamiento de acceso (HTTP)', () => {
   let app: INestApplication;
   let cuentas: Cuenta[], estados: Map<number, Seguimiento>;
   let profesores: ProfesorDto[];
+  let sesiones: SesionClase[];
   let matriculas: { id: number; nombre: string; claseId: number; estado: string }[];
   let claves: Awaited<ReturnType<typeof hashPassword>>;
   const cookies: Record<string, string> = {};
@@ -36,6 +38,7 @@ describe('Perfiles y aislamiento de acceso (HTTP)', () => {
     claves = await hashPassword(PASSWORD);
   });
   beforeEach(async () => {
+    sesiones = [];
     profesores = [
       { id: 10, nombre: 'Hiroshi', estado: 'activo' },
       { id: 20, nombre: 'Otro profesor', estado: 'activo' },
@@ -139,8 +142,24 @@ describe('Perfiles y aislamiento de acceso (HTTP)', () => {
       .overrideProvider(ClasesRepository)
       .useValue({
         obtenerTodas: async () => [
-          { id: 11, profesor: 'Hiroshi', frecuencia: ['Lunes', 'Miércoles'] },
-          { id: 12, profesor: 'Otro profesor', frecuencia: ['Lunes', 'Miércoles'] },
+          {
+            id: 11,
+            profesor: 'Hiroshi',
+            nivel: 'Jóvenes',
+            sede: 'Dojo',
+            horaInicio: '17:00',
+            horaFin: '18:00',
+            frecuencia: ['Lunes', 'Miércoles'],
+          },
+          {
+            id: 12,
+            profesor: 'Otro profesor',
+            nivel: 'Adultos',
+            sede: 'Dojo',
+            horaInicio: '18:00',
+            horaFin: '19:00',
+            frecuencia: ['Lunes', 'Miércoles'],
+          },
         ],
       })
       .overrideProvider(ProfesoresRepository)
@@ -148,7 +167,36 @@ describe('Perfiles y aislamiento de acceso (HTTP)', () => {
       .overrideProvider(AlumnosRepository)
       .useValue({
         obtenerTodos: async () => estados,
-        actualizar: async (id: number, cambiar: (s: Seguimiento) => Seguimiento) => {
+        obtenerSesiones: async () => structuredClone(sesiones),
+        modificarSesion: async (
+          cambiar: (
+            sesiones: SesionClase[],
+            estados: Map<number, Seguimiento>,
+          ) => { sesion: SesionClase; alumnos: Map<number, Seguimiento> },
+        ) => {
+          const cambio = cambiar(structuredClone(sesiones), structuredClone(estados));
+          sesiones = sesiones.filter(
+            (s) => s.claseId !== cambio.sesion.claseId || s.fecha !== cambio.sesion.fecha,
+          );
+          sesiones.push(cambio.sesion);
+          for (const [id, s] of cambio.alumnos) estados.set(id, s);
+          return cambio.sesion;
+        },
+        actualizar: async (
+          id: number,
+          cambiar: (s: Seguimiento) => Seguimiento,
+          contexto?: { claseId: number; fecha: string },
+        ) => {
+          if (
+            contexto &&
+            sesiones.some(
+              (s) =>
+                s.claseId === contexto.claseId &&
+                s.fecha === contexto.fecha &&
+                s.estado === 'cancelada',
+            )
+          )
+            throw new ConflictException('Sesión cancelada');
           const s = cambiar(estados.get(id) ?? vacio());
           estados.set(id, s);
           return s;
@@ -519,5 +567,194 @@ describe('Perfiles y aislamiento de acceso (HTTP)', () => {
       .send({ revision: 1, password: 'restablecida-admin-123' })
       .expect(201);
     await request(app.getHttpServer()).get('/auth/me').set('Cookie', cookies.ana).expect(401);
+  });
+  it('las sesiones exigen sesión y excluyen el perfil alumno', async () => {
+    await request(app.getHttpServer()).get('/sesiones?fecha=2026-11-16').expect(401);
+    await request(app.getHttpServer())
+      .get('/sesiones?fecha=2026-11-16')
+      .set('Cookie', cookies.ana)
+      .expect(403);
+    await request(app.getHttpServer())
+      .post('/sesiones/11/2026-11-16')
+      .set('Cookie', cookies.ana)
+      .send({ accion: 'profesor', asistencia: 'presente', version: 0, motivo: 'Prueba' })
+      .expect(403);
+  });
+  it('el profesor ve solo sus sesiones y puede marcar su propia presencia', async () => {
+    const lista = await request(app.getHttpServer())
+      .get('/sesiones?fecha=2026-11-16')
+      .set('Cookie', cookies.sensei)
+      .expect(200);
+    expect(lista.body.sesiones.map((s: SesionClase) => s.claseId)).toEqual([11]);
+    expect(lista.body.sesiones[0].alumnos).toHaveLength(2);
+    expect(lista.body.profesores).toEqual([]);
+    await request(app.getHttpServer())
+      .post('/sesiones/11/2026-11-16')
+      .set('Cookie', cookies.sensei)
+      .send({ accion: 'profesor', asistencia: 'presente', version: 0, motivo: 'Asistencia propia' })
+      .expect(201);
+    expect(sesiones[0]).toMatchObject({ estado: 'realizada', asistenciaProfesor: 'presente' });
+    expect(estados.get(1)?.asistencias).toHaveLength(0);
+    await request(app.getHttpServer())
+      .post('/sesiones/12/2026-11-16')
+      .set('Cookie', cookies.sensei)
+      .send({ accion: 'profesor', asistencia: 'presente', version: 0, motivo: 'Prueba' })
+      .expect(403);
+    await request(app.getHttpServer())
+      .post('/sesiones/11/2026-11-16')
+      .set('Cookie', cookies.sensei)
+      .send({ accion: 'estado', estado: 'cancelada', version: 1, motivo: 'Prueba' })
+      .expect(403);
+  });
+  it('administración cancela y restituye a todos los alumnos del grupo sin tocar otro grupo', async () => {
+    for (const id of [1, 2, 3]) {
+      const s = estados.get(id) as Seguimiento;
+      estados.set(
+        id,
+        aplicarComando(
+          s,
+          comandoSchema.parse({
+            accion: 'asistencia',
+            version: s.version,
+            fecha: '2026-01-05',
+            estado: 'presente',
+          }),
+          ['Lunes', 'Miércoles'],
+        ),
+      );
+    }
+    await request(app.getHttpServer())
+      .post('/sesiones/11/2026-01-05')
+      .set('Cookie', cookies.admin)
+      .send({ accion: 'estado', estado: 'cancelada', version: 0, motivo: 'Cierre del dojo' })
+      .expect(201);
+    expect(estados.get(1)?.pagos[0].restantes).toBe(8);
+    expect(estados.get(3)?.pagos[0].restantes).toBe(8);
+    expect(estados.get(2)?.pagos[0].restantes).toBe(7);
+    const lista = await request(app.getHttpServer())
+      .get('/sesiones?fecha=2026-01-05')
+      .set('Cookie', cookies.admin)
+      .expect(200);
+    expect(lista.body.sesiones[0].alumnos[0].estado).toBe('cancelada');
+  });
+  it('el reemplazante obtiene la sesión y el profesor titular deja de poder marcarse', async () => {
+    await request(app.getHttpServer())
+      .post('/sesiones/11/2026-11-16')
+      .set('Cookie', cookies.admin)
+      .send({ accion: 'reemplazo', profesorId: 20, version: 0, motivo: 'Reemplazo autorizado' })
+      .expect(201);
+    await request(app.getHttpServer())
+      .post('/sesiones/11/2026-11-16')
+      .set('Cookie', cookies.sensei)
+      .send({ accion: 'profesor', asistencia: 'presente', version: 1, motivo: 'Prueba' })
+      .expect(403);
+    await request(app.getHttpServer())
+      .post('/alumnos/1')
+      .set('Cookie', cookies.sensei)
+      .send({
+        accion: 'asistencia',
+        estado: 'presente',
+        fecha: '2026-11-16',
+        version: estados.get(1)?.version,
+      })
+      .expect(403);
+    const lista = await request(app.getHttpServer())
+      .get('/sesiones?fecha=2026-11-16')
+      .set('Cookie', cookies.sensei)
+      .expect(200);
+    expect(lista.body.sesiones).toHaveLength(0);
+    cuentas.push({
+      id: randomUUID(),
+      usuario: 'suplente',
+      perfil: 'profesor',
+      profesorId: 20,
+      alumnoIds: [],
+      activo: true,
+      revision: 1,
+      ...claves,
+    });
+    const login = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ usuario: 'suplente', password: PASSWORD })
+      .expect(200);
+    const suplente = login.headers['set-cookie'][0];
+    const asignadas = await request(app.getHttpServer())
+      .get('/sesiones?fecha=2026-11-16')
+      .set('Cookie', suplente)
+      .expect(200);
+    expect(asignadas.body.sesiones.map((s: SesionClase) => s.claseId)).toContain(11);
+    await request(app.getHttpServer())
+      .post('/sesiones/11/2026-11-16')
+      .set('Cookie', suplente)
+      .send({
+        accion: 'profesor',
+        asistencia: 'presente',
+        version: 1,
+        motivo: 'Impartió reemplazo',
+      })
+      .expect(201);
+    await request(app.getHttpServer())
+      .post('/alumnos/1')
+      .set('Cookie', suplente)
+      .send({
+        accion: 'asistencia',
+        estado: 'presente',
+        fecha: '2026-11-16',
+        version: estados.get(1)?.version,
+      })
+      .expect(201);
+    await request(app.getHttpServer())
+      .post('/alumnos/1')
+      .set('Cookie', suplente)
+      .send({
+        accion: 'configurar',
+        cantidad: 4,
+        importe: 130,
+        dias: ['Lunes'],
+        version: estados.get(1)?.version,
+      })
+      .expect(403);
+  });
+  it('la cancelación bloquea nuevos descuentos y recuperaciones desde la API de alumnos', async () => {
+    await request(app.getHttpServer())
+      .post('/sesiones/11/2026-01-05')
+      .set('Cookie', cookies.admin)
+      .send({ accion: 'estado', estado: 'cancelada', version: 0, motivo: 'Cierre del dojo' })
+      .expect(201);
+    for (const accion of ['asistencia', 'recuperar']) {
+      await request(app.getHttpServer())
+        .post('/alumnos/1')
+        .set('Cookie', cookies.admin)
+        .send({
+          accion,
+          estado: accion === 'asistencia' ? 'presente' : undefined,
+          motivo: accion === 'recuperar' ? 'Justificada' : undefined,
+          fecha: '2026-01-05',
+          version: estados.get(1)?.version,
+        })
+        .expect(409);
+    }
+    expect(estados.get(1)?.pagos[0].restantes).toBe(8);
+  });
+  it('rechaza fechas inválidas, fuera de horario y cambios con versión obsoleta', async () => {
+    await request(app.getHttpServer())
+      .get('/sesiones?fecha=2026-02-30')
+      .set('Cookie', cookies.admin)
+      .expect(400);
+    await request(app.getHttpServer())
+      .post('/sesiones/11/2026-11-17')
+      .set('Cookie', cookies.admin)
+      .send({ accion: 'estado', estado: 'cancelada', version: 0, motivo: 'Prueba' })
+      .expect(400);
+    await request(app.getHttpServer())
+      .post('/sesiones/11/2026-11-16')
+      .set('Cookie', cookies.admin)
+      .send({ accion: 'profesor', asistencia: 'presente', version: 0, motivo: 'Primera marca' })
+      .expect(201);
+    await request(app.getHttpServer())
+      .post('/sesiones/11/2026-11-16')
+      .set('Cookie', cookies.admin)
+      .send({ accion: 'profesor', asistencia: 'ausente', version: 0, motivo: 'Marca obsoleta' })
+      .expect(409);
   });
 });

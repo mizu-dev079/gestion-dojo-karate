@@ -22,6 +22,7 @@ Los datos se guardan en una hoja de cálculo de Google. La estructura del almace
 
 - **Acceso por perfiles:** inicio de sesión y permisos diferenciados para administrador, profesor y alumno. Cada profesor accede a sus grupos y cada alumno consulta únicamente sus propias inscripciones.
 - **Inscripción manual de alumnos:** registro de datos, asignación a una clase oficial y creación de la cuenta de acceso en una sola operación, con comprobación de cupos.
+- **Sesiones y asistencia:** consulta por fecha, marcación propia del profesor y registro individual de alumnos. Administración puede asignar reemplazos, corregir la asistencia del profesor y cancelar una sesión sin consumir saldo ni recuperaciones de los alumnos.
 - **Portal del alumno:** consulta de horarios, planes, clases pendientes, pagos registrados, asistencia, recuperaciones y estado de las solicitudes de congelamiento.
 - **Planes continuos de 4, 8 o 12 clases:** registro de pagos y renovación del mismo plan, con conservación del saldo anterior y consumo de las clases del pago más antiguo primero.
 - **Control de asistencia:** registro y corrección de presencias y faltas, avisos de ausencia y filtros por profesor, clase y fecha para consultar los alumnos programados.
@@ -229,6 +230,8 @@ Las rutas privadas requieren autenticación y son exclusivas de administración 
 | `POST` | `/cuentas/:id` | Administrador | Activación/desactivación del acceso o restablecimiento de contraseña |
 | `GET` | `/alumnos` | Según perfil | Seguimiento de todos los alumnos para administración, grupos propios para profesor o inscripciones propias para alumno |
 | `POST` | `/alumnos/:id` | Según acción y asignación | Planes, pagos, asistencia, recuperaciones, solicitudes y congelamientos |
+| `GET` | `/sesiones?fecha=AAAA-MM-DD` | Administrador o profesor asignado | Sesiones, asistencia del profesor y alumnos del grupo |
+| `POST` | `/sesiones/:id/:fecha` | Administrador o profesor asignado | Marcación propia del profesor; administración corrige, asigna reemplazos o cancela |
 | `GET` | `/clases` | Administrador | Consulta de clases oficiales y cupos disponibles |
 | `GET` | `/clases/:id` | Público | Consulta de la clase del formulario o QR |
 | `POST` | `/clases` | Deshabilitado | Respuesta 405 para administración; las altas se realizan en Sheets |

@@ -18,6 +18,24 @@ Al elegir un plan se propone su precio oficial. Administración puede ajustar el
 
 **Renovar** conserva las clases pendientes y registra otro pago con el mismo formato. Primero se consumen los créditos del pago antiguo. **Cambiar próximos pagos** permite modificar cantidad, importe y días de próximas renovaciones, conservando el historial y el saldo anterior. Los formatos antiguos se conservan para lectura; antes de renovar uno que no sea 4/8/12, administración debe actualizar su formato.
 
+## Sesiones y asistencia del profesor
+
+Desde **Alumnos → Sesiones y asistencia** se selecciona una fecha. Cada grupo oficial tiene una sesión por fecha de su horario, con el horario, el profesor responsable y los estados **programada**, **realizada** o **cancelada**. Consultar sesiones no crea filas en Sheets; se guardan al realizar una operación. Un cambio posterior del horario del grupo no modifica los datos de una sesión ya guardada.
+
+La asistencia del profesor se registra por separado: **pendiente**, **presente** o **ausente**. El profesor marca su propia presencia en las sesiones asignadas; administración puede corregirla con motivo. Marcar presencia deja la sesión como realizada y no marca automáticamente a los alumnos. No se permite marcar asistencia del profesor en una fecha futura. Una sesión pendiente no genera faltas automáticamente.
+
+Administración puede asignar un profesor activo como responsable o reemplazante para esa fecha. El reemplazante puede consultar la sesión, marcar su presencia y tomar asistencia a sus alumnos; el titular deja de poder registrar asistencia en esa sesión. La asignación no modifica el profesor habitual del grupo ni concede acceso general a los planes o pagos de los alumnos. La nueva asignación reinicia la asistencia del profesor en pendiente para que se registre quién impartió realmente la sesión.
+
+El listado distingue alumnos programados, asistencia pendiente, avisos de ausencia, planes congelados e inscripciones sin sesión contratada para la fecha. La asistencia de los alumnos sigue las reglas del plan y debe marcarse individualmente.
+
+### Cancelación por el dojo
+
+Solo administración cancela una sesión, con motivo. La cancelación **no consume saldo ni recuperaciones**: elimina el descuento de presencia, falta o aviso de esa fecha y revoca las recuperaciones asociadas, liberando su límite sin duplicar créditos. Se conserva el registro de la cancelación en la auditoría y se recalcula el consumo de los pagos antiguos primero. También se revisan las inscripciones dadas de baja que conserven descuentos del grupo.
+
+El estado de la sesión y los saldos afectados se escriben en un único `spreadsheets.batchUpdate` atómico. Las cancelaciones y los cambios de seguimiento comparten una cola dentro de la instancia de API. Una sesión cancelada bloquea nuevas asistencias y recuperaciones para esa fecha, incluso desde la ficha individual. La sesión queda cerrada; si se reprograma, se utiliza otra fecha válida del horario del grupo.
+
+Los datos de la sesión se guardan en **SesionesDojo**, columnas `sesionId` y `sesionJson`, creada automáticamente en la primera escritura válida. La clave combina grupo y fecha (`claseId:AAAA-MM-DD`). Se conservan versión, profesor responsable, horario y auditoría. Los alumnos consultan su saldo y asistencia desde Mi plan; el panel de sesiones se reserva a profesores y administración.
+
 ## Asistencia y recuperación
 
 - **Presente:** consume una clase, sin duplicar el descuento al corregir el registro.
