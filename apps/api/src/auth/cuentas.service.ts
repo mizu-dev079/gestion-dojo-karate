@@ -90,6 +90,15 @@ export class CuentasService {
           horaFin: c.horaFin,
           frecuencia: c.frecuencia,
         })),
+      postulacionesPendientes: postulaciones
+        .filter((p) => p.estado === 'pendiente' && p.origen !== 'manual')
+        .map(({ id, nombre, telefono, correo, claseId }) => ({
+          id,
+          nombre,
+          telefono,
+          correo,
+          claseId,
+        })),
       aceptadosSinCuenta: postulaciones
         .filter((p) => !idsRegistrados.has(p.id) && ['aceptado', 'aprobado'].includes(p.estado))
         .map((p) => ({ id: p.id, nombre: p.nombre, claseId: p.claseId })),

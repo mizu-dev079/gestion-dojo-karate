@@ -2,6 +2,7 @@ import type { ClaseDto, PostulacionDto, ProfesorDto } from '@dojo/shared';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import type { AlumnoNuevo } from '../alumnos/dto/alumno.schema.js';
 import { hoyLima } from '../alumnos/seguimiento.js';
+import { revisarPostulaciones } from '../auth/revisar-postulaciones.js';
 import type { Fila, Libro } from './estructura.js';
 import { fecha, hora, nuevoId, numero, texto } from './libro.js';
 
@@ -327,6 +328,7 @@ export function aceptarPostulacion(
   recalcularCupos(l);
 }
 export function crearAlumnoManual(l: Libro, datos: AlumnoNuevo) {
+  revisarPostulaciones(datos, leerPostulaciones(l));
   const alumnoId = nuevoId(l.Alumnos);
   const inscripcionId = Math.max(
     nuevoId(l.Inscripciones),

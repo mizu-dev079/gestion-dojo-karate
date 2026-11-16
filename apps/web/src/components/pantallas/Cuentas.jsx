@@ -1,3 +1,4 @@
+import { posibleMismaPersona } from '@dojo/shared';
 import { useCallback, useRef, useState } from 'react';
 import { useActualizacionesCuentas } from '../../hooks/useActualizacionesCuentas.js';
 import { useOperacion } from '../../hooks/useOperacion.js';
@@ -65,7 +66,7 @@ function FichaPersona({ nombre, children }) {
   );
 }
 
-function Registro({ perfil, clases, ocupado, crear, cancelar, inscripcion }) {
+function Registro({ perfil, clases, ocupado, crear, cancelar, inscripcion, postulaciones = [] }) {
   const [usuario, setUsuario] = useState('');
   const [password, setPassword] = useState('');
   const [nombre, setNombre] = useState('');
@@ -73,9 +74,17 @@ function Registro({ perfil, clases, ocupado, crear, cancelar, inscripcion }) {
   const [correo, setCorreo] = useState('');
   const [claseId, setClaseId] = useState('');
   const [fechaNacimiento, setFechaNacimiento] = useState('');
+  const [confirmacion, setConfirmacion] = useState('');
+  const coincidencias =
+    perfil === 'alumno' && !inscripcion
+      ? postulaciones.filter((p) => posibleMismaPersona({ nombre, telefono, correo }, p))
+      : [];
+  const claveRevision = JSON.stringify({ nombre, telefono, correo, coincidencias });
+  const revisadas = confirmacion === claveRevision;
   async function enviar(e) {
     e.preventDefault();
     if (inscripcion) return crear({ usuario, password }, inscripcion.id);
+    if (coincidencias.length && !revisadas) return;
     await crear({
       usuario,
       password,
@@ -88,6 +97,7 @@ function Registro({ perfil, clases, ocupado, crear, cancelar, inscripcion }) {
               telefono,
               correo,
               fechaNacimiento,
+              postulacionesRevisadas: revisadas ? coincidencias.map((p) => p.id) : [],
               claseId: clases.find((c) => c.id === Number(claseId))?.claseBaseId ?? Number(claseId),
               ...(clases.find((c) => c.id === Number(claseId))?.turnoId !== undefined
                 ? { turnoId: Number(claseId) }
@@ -208,17 +218,62 @@ function Registro({ perfil, clases, ocupado, crear, cancelar, inscripcion }) {
             className={campo}
           />
         </div>
+        {coincidencias.length > 0 && (
+          <div
+            role="alert"
+            className="space-y-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-gray-800"
+          >
+            <p className="font-semibold">Hay postulaciones pendientes con datos coincidentes</p>
+            <p>
+              Si corresponde al mismo alumno, acepta su postulación y después crea su acceso.
+              Compartir nombre o contacto no significa que sea la misma persona.
+            </p>
+            {coincidencias.map((p) => (
+              <div key={p.id} className="space-y-1 border-t border-amber-200 pt-2">
+                <p className="font-semibold">
+                  {p.nombre} · SOL-{p.id}
+                </p>
+                <p className="break-words">{[p.telefono, p.correo].filter(Boolean).join(' · ')}</p>
+                <a
+                  href={`/postulaciones?clase=${p.claseId}&buscar=${encodeURIComponent(`SOL-${p.id}`)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex min-h-11 items-center font-semibold text-dojo-700 underline"
+                >
+                  Revisar postulación (otra pestaña)
+                </a>
+              </div>
+            ))}
+            <label className="flex items-start gap-2">
+              <input
+                type="checkbox"
+                checked={revisadas}
+                onChange={(e) => setConfirmacion(e.target.checked ? claveRevision : '')}
+                className="mt-1"
+              />
+              <span>
+                Revisé las coincidencias y confirmo que corresponde registrar un alumno diferente.
+              </span>
+            </label>
+          </div>
+        )}
         <div className="flex flex-wrap gap-2">
           <button
             type="submit"
-            disabled={ocupado || (!inscripcion && perfil === 'alumno' && !claseId)}
+            disabled={
+              ocupado ||
+              (!inscripcion && perfil === 'alumno' && !claseId) ||
+              (coincidencias.length > 0 && !revisadas)
+            }
             className={boton}
           >
             {ocupado
               ? 'Guardando…'
               : perfil === 'profesor'
                 ? 'Crear cuenta de profesor'
-                : 'Crear cuenta de alumno'}
+                : inscripcion
+                  ? 'Crear acceso'
+                  : 'Registrar alumno'}
           </button>
           <button type="button" onClick={cancelar} className={secundario}>
             Cancelar
@@ -290,6 +345,7 @@ export default function Cuentas({ vista = 'menu' }) {
   const [cuentas, setCuentas] = useState([]);
   const [profesores, setProfesores] = useState([]);
   const [alumnos, setAlumnos] = useState([]);
+  const [postulacionesPendientes, setPostulacionesPendientes] = useState([]);
   const [aceptados, setAceptados] = useState([]);
   const [clases, setClases] = useState([]);
   const [busquedaProfesores, setBusquedaProfesores] = useState('');
@@ -316,6 +372,7 @@ export default function Cuentas({ vista = 'menu' }) {
       setCuentas(lista);
       setProfesores(profesores);
       setAlumnos(opciones.alumnos);
+      setPostulacionesPendientes(opciones.postulacionesPendientes ?? []);
       setAceptados(opciones.aceptadosSinCuenta ?? []);
       setClases(opciones.clases ?? []);
       setListo(true);
@@ -333,14 +390,23 @@ export default function Cuentas({ vista = 'menu' }) {
   async function crear(datos, inscripcionId) {
     const ok = await ejecutar(async () => {
       versionDatos.current += 1;
-      const nueva = await leerRespuesta(
-        await apiFetch(inscripcionId ? `/cuentas/inscripciones/${inscripcionId}` : '/cuentas', {
+      const respuesta = await apiFetch(
+        inscripcionId ? `/cuentas/inscripciones/${inscripcionId}` : '/cuentas',
+        {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(datos),
-        }),
-        'No se pudo completar el registro.',
+        },
       );
+      if (respuesta.status === 409) {
+        const detalle = await respuesta
+          .clone()
+          .json()
+          .catch(() => ({}));
+        if (detalle.codigo === 'POSTULACION_PENDIENTE')
+          setPostulacionesPendientes(detalle.coincidencias ?? []);
+      }
+      const nueva = await leerRespuesta(respuesta, 'No se pudo completar el registro.');
       versionDatos.current += 1;
       setCuentas((anteriores) => [...anteriores, nueva]);
       if (nueva.profesorCreado)
@@ -451,6 +517,7 @@ export default function Cuentas({ vista = 'menu' }) {
             perfil={registro.perfil}
             inscripcion={registro.inscripcion}
             clases={clases}
+            postulaciones={postulacionesPendientes}
             ocupado={ocupado}
             crear={crear}
             cancelar={() => setRegistro(null)}
@@ -500,7 +567,7 @@ export default function Cuentas({ vista = 'menu' }) {
               className={boton}
               onClick={() => abrir(vista === 'profesores' ? 'profesor' : 'alumno')}
             >
-              {vista === 'profesores' ? 'Crear cuenta de profesor' : 'Crear cuenta de alumno'}
+              {vista === 'profesores' ? 'Crear cuenta de profesor' : 'Registrar alumno'}
             </button>
           )}
           {listo && vista !== 'menu' && (
@@ -596,7 +663,7 @@ export default function Cuentas({ vista = 'menu' }) {
                             disabled={ocupado}
                             onClick={() => setRegistro({ perfil: 'alumno', inscripcion: a })}
                           >
-                            Crear acceso del alumno
+                            Crear acceso
                           </button>
                         </FichaPersona>
                       ))}
@@ -605,8 +672,7 @@ export default function Cuentas({ vista = 'menu' }) {
 
                   {!cuentasAlumno.length && !aceptados.length && (
                     <p className="text-sm text-gray-600">
-                      No hay alumnos registrados. Usa Crear cuenta de alumno para añadir uno
-                      manualmente.
+                      No hay alumnos registrados. Usa Registrar alumno para añadir uno manualmente.
                     </p>
                   )}
                   {(cuentasAlumno.length > 0 || aceptados.length > 0) &&

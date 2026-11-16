@@ -22,6 +22,8 @@ import { libroNuevo } from '../portal/libro.js';
 import type { ProfesorNuevo } from '../profesores/dto/profesor.schema.js';
 import { type Cuenta, cuentaPublica, cuentaSchema } from './cuenta.js';
 
+import { revisarPostulaciones } from './revisar-postulaciones.js';
+
 export { type Cuenta, cuentaPublica } from './cuenta.js';
 
 const HOJA = 'CuentasDojo';
@@ -369,6 +371,18 @@ export class CuentasRepository {
         ]);
         const clases = respuestaClases.data.values ?? [],
           inscripciones = respuestaPost?.data.values ?? [];
+        revisarPostulaciones(
+          datos,
+          inscripciones.slice(1).map((f) => ({
+            id: Number(f[0]),
+            nombre: String(f[2] ?? ''),
+            telefono: String(f[3] ?? ''),
+            correo: String(f[4] ?? ''),
+            claseId: Number(f[8]),
+            estado: String(f[15] ?? ''),
+            origen: String(f[19] ?? ''),
+          })),
+        );
         const indice = clases.findIndex((f, i) => i > 0 && Number(f[0]) === datos.claseId);
         if (
           indice < 0 ||

@@ -166,6 +166,56 @@ describe('Portal sobre la nueva estructura de Sheets (HTTP y persistencia reales
       .expect(201);
     return r.body;
   }
+  it('avisa por coincidencias sin escribir y permite confirmar personas diferentes sin unirlas', async () => {
+    const id = await postular();
+    const opciones = await api().get('/cuentas/opciones').set('Cookie', cookie).expect(200);
+    expect(opciones.body.postulacionesPendientes.map((p: { id: number }) => p.id)).toEqual([id]);
+    const datos = {
+      usuario: 'otra.persona',
+      password: PASS,
+      perfil: 'alumno',
+      nuevoAlumno: {
+        nombre: 'Persona diferente',
+        telefono: '',
+        correo: 'ANA@example.com',
+        fechaNacimiento: '',
+        claseId: 11,
+      },
+    };
+    const anterior = structuredClone(tablas);
+    const r = await api().post('/cuentas').set('Cookie', cookie).send(datos).expect(409);
+    expect(r.body.codigo).toBe('POSTULACION_PENDIENTE');
+    expect(r.body.coincidencias[0].id).toBe(id);
+    expect(tablas).toEqual(anterior);
+    await api()
+      .post('/cuentas')
+      .set('Cookie', cookie)
+      .send({ ...datos, nuevoAlumno: { ...datos.nuevoAlumno, postulacionesRevisadas: [id] } })
+      .expect(201);
+    expect(tablas.Postulaciones[1][11]).toBe('Pendiente');
+    expect(tablas.Alumnos.filter((f) => f.length)).toHaveLength(2);
+  });
+  it('valida las coincidencias actuales aunque el formulario haya revisado otra solicitud', async () => {
+    const id = await postular();
+    const anterior = structuredClone(tablas);
+    await api()
+      .post('/cuentas')
+      .set('Cookie', cookie)
+      .send({
+        usuario: 'ana.manual',
+        password: PASS,
+        perfil: 'alumno',
+        nuevoAlumno: {
+          nombre: '  Ána   Oficial ',
+          telefono: '',
+          correo: '',
+          claseId: 11,
+          postulacionesRevisadas: [id + 1],
+        },
+      })
+      .expect(409);
+    expect(tablas).toEqual(anterior);
+  });
   it('lee clases y catálogo, sin crear hojas antiguas ni registros al consultar', async () => {
     const c = await api().get('/clases').set('Cookie', cookie).expect(200);
     expect(c.body[0]).toMatchObject({

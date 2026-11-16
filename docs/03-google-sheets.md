@@ -45,6 +45,8 @@ Cada turno tiene sus propios cupos y profesor. La sede y el profesor activo son 
 4. Desde Usuario → Profesores y alumnos → Alumnos aceptados sin acceso se crea la cuenta con usuario y contraseña. Esta acción no crea otra persona ni ocupa otro cupo.
 5. El registro manual continúa disponible y crea alumno, inscripción y cuenta juntos, sin inventar una postulación pública o un consentimiento.
 
+El alta **Registrar alumno** avisa si una postulación pendiente coincide en nombre, celular o correo. Permite abrir la solicitud en otra pestaña y conservar el formulario. Aceptar esa solicitud y usar **Crear acceso** conserva una sola persona e inscripción. Si corresponde a otra persona, administración debe confirmar expresamente que revisó las coincidencias; no se fusionan registros por compartir datos. La API vuelve a comprobar las solicitudes dentro de la operación de escritura para detectar también las recibidas mientras se completaba el formulario.
+
 Una postulación ya inscrita no se rechaza o elimina para dar de baja a la persona: se protege su historial. Los campos de baja están previstos en la hoja; una gestión completa de bajas y liquidación económica requiere definir sus reglas y su interfaz.
 
 ## Planes y seguimiento

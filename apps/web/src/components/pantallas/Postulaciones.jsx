@@ -44,6 +44,10 @@ export default function Postulaciones() {
   const [seleccionados, setSeleccionados] = useState([]);
   const { ocupado, aviso, setAviso, ejecutar } = useOperacion();
 
+  useEffect(() => {
+    const buscar = new URLSearchParams(window.location.search).get('buscar');
+    if (buscar) setBusqueda(buscar);
+  }, []);
   const cargar = useCallback(async () => {
     setCargando(true);
     setErrorCarga('');
@@ -101,7 +105,10 @@ export default function Postulaciones() {
   const filtradas = deClase.filter(
     (item) =>
       (estado === 'todas' || estadoGrupo(item.estado) === estado) &&
-      (!consulta || normalizar(`${item.nombre} ${item.correo} SOL-${item.id}`).includes(consulta)),
+      (!consulta ||
+        (/^sol-\d+$/.test(consulta)
+          ? consulta === `sol-${item.id}`
+          : normalizar(`${item.nombre} ${item.correo} SOL-${item.id}`).includes(consulta))),
   );
   const bloqueado = ocupado || cargando || Boolean(errorCarga);
   function cambiarClase(valor) {
