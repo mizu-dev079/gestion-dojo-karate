@@ -229,7 +229,16 @@ export default function Postulaciones() {
         )}
         {clase && (
           <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-800">{clase.frecuencia?.join(', ')}</p>
+            <p className="text-sm font-medium text-gray-800">
+              {clase.frecuencia?.join(', ')}
+              {clase.edadMinima != null && (
+                <span>
+                  {clase.edadMaxima == null
+                    ? ` (${clase.edadMinima} años a más)`
+                    : ` (${clase.edadMinima} a ${clase.edadMaxima} años)`}
+                </span>
+              )}
+            </p>
             <p className="text-sm text-gray-600">
               {clase.horaInicio} – {clase.horaFin} · Prof. {clase.profesor}
             </p>
