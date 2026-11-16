@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useOperacion } from '../../hooks/useOperacion.js';
 import { apiFetch, leerRespuesta } from '../../lib/api.js';
+import { agruparClases, idClase } from '../../lib/turnos.js';
 import IndicadorCupos from '../IndicadorCupos.jsx';
 import Mensaje from '../Mensaje.jsx';
 
@@ -62,10 +63,9 @@ export default function Postulaciones() {
       ]);
       const solicitada =
         seleccionClase.current || new URLSearchParams(window.location.search).get('clase');
-      const elegida =
-        solicitada === 'todas'
-          ? 'todas'
-          : String((lista.find((item) => String(item.id) === solicitada) ?? lista[0])?.id ?? '');
+      const elegida = String(
+        (lista.find((item) => String(item.id) === solicitada) ?? lista[0])?.id ?? '',
+      );
       if (
         solicitada &&
         solicitada !== 'todas' &&
@@ -97,7 +97,14 @@ export default function Postulaciones() {
     cargar();
   }, [cargar]);
 
+  const grupos = agruparClases(clases).map((g) => ({
+    ...g,
+    turnos: [...g.turnos].sort(
+      (a, b) => Number(!a.frecuencia?.includes('Lunes')) - Number(!b.frecuencia?.includes('Lunes')),
+    ),
+  }));
   const clase = clases.find((item) => String(item.id) === claseId);
+  const grupo = grupos.find((g) => g.id === (clase && idClase(clase)));
   const deClase = postulaciones.filter(
     (item) => claseId === 'todas' || String(item.claseId) === claseId,
   );
@@ -197,22 +204,43 @@ export default function Postulaciones() {
         </label>
         <select
           id="selectorClase"
-          value={claseId}
+          value={grupo ? String(grupo.id) : ''}
           disabled={bloqueado}
-          onChange={(event) => cambiarClase(event.target.value)}
+          onChange={(event) => {
+            const elegida = grupos.find((g) => String(g.id) === event.target.value);
+            cambiarClase(String(elegida?.turnos[0]?.id ?? ''));
+          }}
           className="rounded-xl border border-gray-200 bg-gray-50 px-3"
         >
           {!clases.length && <option value="">Sin clases disponibles</option>}
-          {clases.map((item) => (
+          {grupos.map((item) => (
             <option key={item.id} value={String(item.id)}>
-              {item.nivel}
-              {item.turno ? ` · ${item.turno}` : ''} · {item.sede}
+              {item.nombre}
             </option>
           ))}
-          {clases.length > 0 && <option value="todas">Todas las clases</option>}
         </select>
+        {grupo?.turnos.length > 1 && (
+          <fieldset className="space-y-2">
+            <legend className="mb-2 text-sm font-medium text-gray-700">Turno</legend>
+            <div className="flex gap-3">
+              {grupo.turnos.map((turno, indice) => (
+                <button
+                  key={turno.id}
+                  type="button"
+                  disabled={bloqueado}
+                  aria-pressed={String(turno.id) === claseId}
+                  onClick={() => cambiarClase(String(turno.id))}
+                  className={`min-h-12 flex-1 rounded-xl border-2 px-4 py-3 text-base font-semibold ${String(turno.id) === claseId ? 'border-dojo-600 bg-dojo-50 text-dojo-700' : 'border-gray-200 bg-white text-gray-700'}`}
+                >
+                  Turno {indice + 1}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+        )}
         {clase && (
           <div className="space-y-2">
+            <p className="text-sm font-medium text-gray-800">{clase.frecuencia?.join(', ')}</p>
             <p className="text-sm text-gray-600">
               {clase.horaInicio} – {clase.horaFin} · Prof. {clase.profesor}
             </p>
