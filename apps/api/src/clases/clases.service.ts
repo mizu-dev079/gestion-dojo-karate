@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { enClaseCompartida } from './cola-clases.js';
 import { CrearClaseDto } from './dto/crear-clase.dto.js';
 import { CrearPostulacionDto } from './dto/crear-postulacion.dto.js';
 import { comprobarDisponibilidad, validarHorarioClase } from './horarios-clase.js';
@@ -13,25 +14,10 @@ import { PostulacionesRepository } from './repositories/postulaciones.repository
 
 @Injectable()
 export class ClasesService {
-  private readonly operaciones = new Map<number, Promise<void>>();
   private ultimoId = 0;
 
-  // Serializa operaciones por clase. La clave 0 reserva la cola de programación
-  // para crear, editar y eliminar clases dentro de esta instancia de la API.
-  private async enClase<T>(claseId: number, operacion: () => Promise<T>): Promise<T> {
-    const anterior = this.operaciones.get(claseId) ?? Promise.resolve();
-    let liberar!: () => void;
-    const actual = new Promise<void>((resolve) => {
-      liberar = resolve;
-    });
-    this.operaciones.set(claseId, actual);
-    await anterior;
-    try {
-      return await operacion();
-    } finally {
-      liberar();
-      if (this.operaciones.get(claseId) === actual) this.operaciones.delete(claseId);
-    }
+  private enClase<T>(claseId: number, operacion: () => Promise<T>): Promise<T> {
+    return enClaseCompartida(claseId, operacion);
   }
 
   private hoyEnLima() {

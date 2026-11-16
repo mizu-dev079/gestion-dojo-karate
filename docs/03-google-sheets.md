@@ -87,3 +87,7 @@ El formulario público admite 5 intentos por IP cada 15 minutos, incluidos los i
 El aviso del formulario es un texto inicial para la demo. Antes de usar datos reales, el cliente debe confirmar responsable, contacto para ejercer derechos y plazos de conservación. No representa una validación legal del aviso.
 
 Las filas antiguas de Profesores con solo tres columnas siguen siendo compatibles. El alta combinada desde Profesores y alumnos agrega el contacto y la cuenta mediante un único lote atómico de Google Sheets. Si D/E ya contienen otros datos, rechaza el alta sin sobrescribirlos. Consultar [clases oficiales](08-clases-oficiales.md) antes de preparar los datos reales.
+
+### Altas manuales de alumnos
+
+El registro desde Profesores y alumnos añade una fila nueva en `Postulaciones` con estado `aceptado`, identificador nuevo y `origen` = `manual` en la columna **T**. No reutiliza IDs, nombres ni datos de las postulaciones anteriores. Cuenta, inscripción y cupo de la clase se guardan en un solo lote atómico. Las columnas A–S conservan su orden; R/S de consentimiento quedan vacías en un alta manual, sin simular consentimiento del formulario público. La cabecera T se añade sin sobrescribir otra columna ocupada; la consulta del seguimiento admite las filas anteriores sin T.

@@ -7,7 +7,7 @@ import { Postulacion } from '../interfaces/postulacion.interface.js';
 export class PostulacionesRepository {
   private readonly spreadsheetId = env.GOOGLE_SPREADSHEET_ID;
 
-  private readonly range = 'Postulaciones!A:S';
+  private readonly range = 'Postulaciones!A:T';
 
   private async obtenerSheets() {
     return crearClienteSheets();
@@ -43,6 +43,7 @@ export class PostulacionesRepository {
       fechaPostulacion: fila[16],
       consentimientoVersion: fila[17] ?? '',
       consentimientoFecha: fila[18] ?? '',
+      origen: fila[19] ?? '',
     }));
   }
 

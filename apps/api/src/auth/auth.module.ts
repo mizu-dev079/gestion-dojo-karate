@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
+import { ClasesRepository } from '../clases/repositories/clases.repository.js';
 import { PostulacionesRepository } from '../clases/repositories/postulaciones.repository.js';
 import { env } from '../config/env.js';
 import { ProfesoresRepository } from '../profesores/repositories/profesores.repository.js';
@@ -24,6 +25,7 @@ import { CuentasService } from './cuentas.service.js';
     CuentasRepository,
     ProfesoresRepository,
     PostulacionesRepository,
+    ClasesRepository,
   ],
   exports: [AuthService],
 })

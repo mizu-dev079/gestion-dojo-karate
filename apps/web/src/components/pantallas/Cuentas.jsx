@@ -11,20 +11,23 @@ const secundario =
   'min-h-11 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-semibold disabled:opacity-50';
 const tarjeta = 'space-y-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm';
 
-function Registro({ perfil, alumnos, inicial, ocupado, crear, cancelar }) {
+function Registro({ perfil, clases, ocupado, crear, cancelar }) {
   const [usuario, setUsuario] = useState('');
   const [password, setPassword] = useState('');
   const [nombre, setNombre] = useState('');
   const [telefono, setTelefono] = useState('');
   const [correo, setCorreo] = useState('');
-  const [alumnoIds, setAlumnoIds] = useState(inicial);
+  const [claseId, setClaseId] = useState('');
+  const [fechaNacimiento, setFechaNacimiento] = useState('');
   async function enviar(e) {
     e.preventDefault();
     await crear({
       usuario,
       password,
       perfil,
-      ...(perfil === 'profesor' ? { nuevoProfesor: { nombre, telefono, correo } } : { alumnoIds }),
+      ...(perfil === 'profesor'
+        ? { nuevoProfesor: { nombre, telefono, correo } }
+        : { nuevoAlumno: { nombre, telefono, correo, fechaNacimiento, claseId: Number(claseId) } }),
     });
   }
   return (
@@ -32,83 +35,77 @@ function Registro({ perfil, alumnos, inicial, ocupado, crear, cancelar }) {
       <h2 className="text-lg font-bold">
         {perfil === 'profesor' ? 'Registrar profesor' : 'Registrar alumno'}
       </h2>
-      <p className="text-sm text-gray-600">
-        {perfil === 'profesor'
-          ? 'Crea su perfil y su cuenta de acceso en un solo paso. Teléfono y correo son opcionales.'
-          : 'Crea el acceso del alumno a sus inscripciones aceptadas. Si aún no tiene una, acepta primero su postulación.'}
-      </p>
       <fieldset disabled={ocupado} className="space-y-4">
-        {perfil === 'profesor' ? (
+        <label className="block text-sm font-semibold">
+          {perfil === 'profesor' ? 'Nombre del profesor' : 'Nombre del alumno'}
+          <input
+            required
+            maxLength={120}
+            autoComplete="name"
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            className={campo}
+          />
+        </label>
+        <label className="block text-sm font-semibold">
+          Teléfono (opcional)
+          <input
+            type="tel"
+            maxLength={30}
+            autoComplete="tel"
+            value={telefono}
+            onChange={(e) => setTelefono(e.target.value)}
+            className={campo}
+          />
+        </label>
+        <label className="block text-sm font-semibold">
+          Correo (opcional)
+          <input
+            type="email"
+            maxLength={254}
+            autoComplete="email"
+            value={correo}
+            onChange={(e) => setCorreo(e.target.value)}
+            className={campo}
+          />
+        </label>
+        {perfil === 'alumno' && (
           <>
             <label className="block text-sm font-semibold">
-              Nombre del profesor
+              Fecha de nacimiento (opcional)
               <input
+                type="date"
+                value={fechaNacimiento}
+                onChange={(e) => setFechaNacimiento(e.target.value)}
+                max={new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(
+                  new Date(),
+                )}
+                className={campo}
+              />
+            </label>
+            <label className="block text-sm font-semibold">
+              Clase del alumno
+              <select
                 required
-                maxLength={120}
-                autoComplete="name"
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
+                value={claseId}
+                onChange={(e) => setClaseId(e.target.value)}
                 className={campo}
-              />
-            </label>
-            <label className="block text-sm font-semibold">
-              Teléfono (opcional)
-              <input
-                type="tel"
-                maxLength={30}
-                autoComplete="tel"
-                value={telefono}
-                onChange={(e) => setTelefono(e.target.value)}
-                className={campo}
-              />
-            </label>
-            <label className="block text-sm font-semibold">
-              Correo (opcional)
-              <input
-                type="email"
-                maxLength={254}
-                autoComplete="email"
-                value={correo}
-                onChange={(e) => setCorreo(e.target.value)}
-                className={campo}
-              />
-            </label>
-          </>
-        ) : (
-          <fieldset>
-            <legend className="text-sm font-semibold">Inscripciones del alumno</legend>
-            <p className="mt-1 text-sm text-gray-600">
-              Selecciona solo las que pertenecen a la misma persona.
-            </p>
-            {!alumnos.length ? (
-              <p className="mt-3 rounded-xl bg-gray-50 p-3 text-sm">
-                No hay inscripciones aceptadas disponibles.{' '}
-                <a href="/postulaciones" className="font-semibold text-dojo-700 underline">
-                  Revisar postulaciones
-                </a>
-              </p>
-            ) : (
-              <div className="mt-2 max-h-64 overflow-auto">
-                {alumnos.map((a) => (
-                  <label key={a.id} className="flex min-h-11 items-center gap-2 py-2">
-                    <input
-                      type="checkbox"
-                      checked={alumnoIds.includes(a.id)}
-                      onChange={(e) =>
-                        setAlumnoIds((anteriores) =>
-                          e.target.checked
-                            ? [...anteriores, a.id]
-                            : anteriores.filter((id) => id !== a.id),
-                        )
-                      }
-                      className="h-5 w-5 shrink-0 accent-dojo-600"
-                    />
-                    {a.nombre} · Clase #{a.claseId}
-                  </label>
+              >
+                <option value="">Selecciona una clase oficial</option>
+                {clases.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nivel} · {c.sede} · {c.horaInicio} – {c.horaFin} · {c.frecuencia?.join(', ')}
+                  </option>
                 ))}
-              </div>
+              </select>
+            </label>
+            {!clases.length && (
+              <p className="rounded-xl bg-gray-50 p-3 text-sm text-gray-600">
+                Carga primero los horarios oficiales del dojo en Google Sheets para asignar una
+                clase.
+              </p>
             )}
-          </fieldset>
+          </>
         )}
         <label className="block text-sm font-semibold">
           Usuario
@@ -142,13 +139,13 @@ function Registro({ perfil, alumnos, inicial, ocupado, crear, cancelar }) {
         <div className="flex flex-wrap gap-2">
           <button
             type="submit"
-            disabled={ocupado || (perfil === 'alumno' && !alumnoIds.length)}
+            disabled={ocupado || (perfil === 'alumno' && !claseId)}
             className={boton}
           >
             {ocupado
               ? 'Guardando…'
               : perfil === 'profesor'
-                ? 'Crear profesor y cuenta'
+                ? 'Crear cuenta de profesor'
                 : 'Crear cuenta de alumno'}
           </button>
           <button type="button" onClick={cancelar} className={secundario}>
@@ -221,6 +218,7 @@ export default function Cuentas() {
   const [cuentas, setCuentas] = useState([]);
   const [profesores, setProfesores] = useState([]);
   const [alumnos, setAlumnos] = useState([]);
+  const [clases, setClases] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [listo, setListo] = useState(false);
   const [registro, setRegistro] = useState(null);
@@ -239,6 +237,7 @@ export default function Cuentas() {
       setCuentas(lista);
       setProfesores(profesores);
       setAlumnos(opciones.alumnos);
+      setClases(opciones.clases ?? []);
       setListo(true);
     } catch (error) {
       setAviso({ tipo: 'error', texto: error.message });
@@ -249,9 +248,9 @@ export default function Cuentas() {
   useEffect(() => {
     cargar();
   }, [cargar]);
-  function abrir(perfil, ids = []) {
+  function abrir(perfil) {
     setAviso(null);
-    setRegistro({ perfil, ids });
+    setRegistro({ perfil });
   }
   async function crear(datos) {
     const ok = await ejecutar(async () => {
@@ -266,6 +265,7 @@ export default function Cuentas() {
       setCuentas((anteriores) => [...anteriores, nueva]);
       if (nueva.profesorCreado)
         setProfesores((anteriores) => [...anteriores, nueva.profesorCreado]);
+      if (nueva.alumnoCreado) setAlumnos((anteriores) => [...anteriores, nueva.alumnoCreado]);
       return 'Registro completado. Entrega el usuario y la contraseña a su titular por un medio privado.';
     });
     if (ok) setRegistro(null);
@@ -315,8 +315,6 @@ export default function Cuentas() {
     if (ok) setPendiente(null);
   }
   const cuentasAlumno = cuentas.filter((c) => c.perfil === 'alumno');
-  const asignadas = new Set(cuentasAlumno.flatMap((c) => c.alumnoIds));
-  const sinCuenta = alumnos.filter((a) => !asignadas.has(a.id));
   const cuentasSinProfesor = cuentas.filter(
     (c) => c.perfil === 'profesor' && !profesores.some((p) => p.id === c.profesorId),
   );
@@ -336,8 +334,7 @@ export default function Cuentas() {
           <Registro
             key={registro.perfil}
             perfil={registro.perfil}
-            inicial={registro.ids}
-            alumnos={sinCuenta}
+            clases={clases}
             ocupado={ocupado}
             crear={crear}
             cancelar={() => setRegistro(null)}
@@ -357,14 +354,14 @@ export default function Cuentas() {
               onClick={() => abrir('profesor')}
               className={boton}
             >
-              Crear profesor y cuenta
+              Crear cuenta de profesor
             </button>
           </section>
           <section className={tarjeta}>
             <h2 className="font-bold">Registrar alumno</h2>
             <p className="text-sm text-gray-600">
-              Crea su acceso para consultar su plan, asistencia y recuperaciones. Necesita una
-              postulación aceptada.
+              Registra sus datos, asígnale una clase y crea su cuenta para consultar su plan,
+              asistencia y recuperaciones.
             </p>
             <button
               type="button"
@@ -442,9 +439,10 @@ export default function Cuentas() {
               </section>
               <section className={tarjeta}>
                 <h2 className="font-bold">Alumnos registrados</h2>
-                {!cuentasAlumno.length && !sinCuenta.length && (
+                {!cuentasAlumno.length && (
                   <p className="text-sm text-gray-600">
-                    No hay alumnos para mostrar. Acepta sus postulaciones para registrarlos.
+                    No hay alumnos registrados. Usa Crear cuenta de alumno para añadir uno
+                    manualmente.
                   </p>
                 )}
                 {cuentasAlumno.map((c) => (
@@ -467,20 +465,6 @@ export default function Cuentas() {
                         .join(' · ')}
                     </p>
                     <Acceso cuenta={c} ocupado={ocupado} editar={editar} />
-                  </article>
-                ))}
-                {sinCuenta.map((a) => (
-                  <article key={a.id} className="space-y-3 rounded-xl border border-gray-200 p-3">
-                    <h3 className="break-words font-semibold">{a.nombre}</h3>
-                    <p className="text-sm text-gray-600">Clase #{a.claseId} · Cuenta pendiente</p>
-                    <button
-                      type="button"
-                      disabled={ocupado}
-                      onClick={() => abrir('alumno', [a.id])}
-                      className={secundario}
-                    >
-                      Crear acceso para {a.nombre}
-                    </button>
                   </article>
                 ))}
                 <a

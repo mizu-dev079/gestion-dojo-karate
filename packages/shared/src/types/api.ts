@@ -35,6 +35,7 @@ export interface CrearClaseInput {
 }
 
 export interface PostulacionDto {
+  origen?: string;
   id: number;
   nombre: string;
   telefono: string;

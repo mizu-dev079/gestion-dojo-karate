@@ -2,6 +2,8 @@ import { randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { z } from 'zod';
+import { alumnoNuevoSchema } from '../alumnos/dto/alumno.schema.js';
+import { ClasesRepository } from '../clases/repositories/clases.repository.js';
 import { PostulacionesRepository } from '../clases/repositories/postulaciones.repository.js';
 import { env } from '../config/env.js';
 import { profesorNuevoSchema } from '../profesores/dto/profesor.schema.js';
@@ -30,11 +32,7 @@ const crearSchema = z.discriminatedUnion('perfil', [
       usuario: usuarioSchema,
       password: passwordSchema,
       perfil: z.literal('alumno'),
-      alumnoIds: z
-        .array(z.number().int().positive())
-        .min(1)
-        .max(50)
-        .refine((v) => new Set(v).size === v.length),
+      nuevoAlumno: alumnoNuevoSchema,
     })
     .strict(),
 ]);
@@ -57,22 +55,44 @@ export class CuentasService {
     private readonly cuentas: CuentasRepository,
     private readonly profesores: ProfesoresRepository,
     private readonly postulaciones: PostulacionesRepository,
+    private readonly clases: ClasesRepository,
   ) {}
   async listar() {
     return (await this.cuentas.obtenerTodas()).map(cuentaPublica);
   }
   async opciones() {
-    const [profesores, postulaciones] = await Promise.all([
+    const [profesores, postulaciones, clases, cuentas] = await Promise.all([
       this.profesores.obtenerTodos(),
       this.postulaciones.obtenerTodas(),
+      this.clases.obtenerTodas(),
+      this.cuentas.obtenerTodas(),
     ]);
+    const idsRegistrados = new Set(
+      cuentas.filter((c) => c.perfil === 'alumno').flatMap((c) => c.alumnoIds),
+    );
     return {
+      clases: clases.map((c) => ({
+        id: c.id,
+        nivel: c.nivel,
+        sede: c.sede,
+        profesor: c.profesor,
+        horaInicio: c.horaInicio,
+        horaFin: c.horaFin,
+        frecuencia: c.frecuencia,
+      })),
       profesores: profesores
         .filter((p) => p.estado === 'activo')
         .map((p) => ({ id: p.id, nombre: p.nombre })),
       alumnos: postulaciones
-        .filter((p) => ['aceptado', 'aprobado'].includes(p.estado))
-        .map((p) => ({ id: p.id, nombre: p.nombre, claseId: p.claseId })),
+        .filter((p) => idsRegistrados.has(p.id) && ['aceptado', 'aprobado'].includes(p.estado))
+        .map((p) => ({
+          id: p.id,
+          nombre: p.nombre,
+          claseId: p.claseId,
+          telefono: p.telefono,
+          correo: p.correo,
+          fechaNacimiento: p.fechaNacimiento,
+        })),
     };
   }
   async crear(datos: unknown) {
@@ -96,23 +116,10 @@ export class CuentasService {
         d.nuevoProfesor,
       );
     }
-    {
-      const alumnos = await this.postulaciones.obtenerTodas();
-      if (
-        !d.alumnoIds.every((id) =>
-          alumnos.some((p) => p.id === id && ['aceptado', 'aprobado'].includes(p.estado)),
-        )
-      )
-        throw new BadRequestException('Selecciona solo alumnos aceptados.');
-    }
-    return this.cuentas.guardar({
-      usuario: d.usuario,
-      perfil: d.perfil,
-      profesorId: null,
-      alumnoIds: d.alumnoIds,
-      activo: true,
-      ...(await hashPassword(d.password)),
-    });
+    return this.cuentas.guardarConAlumno(
+      { usuario: d.usuario, perfil: 'alumno', activo: true, ...(await hashPassword(d.password)) },
+      d.nuevoAlumno,
+    );
   }
   async editar(id: string, datos: unknown) {
     const r = editarSchema.safeParse(datos);

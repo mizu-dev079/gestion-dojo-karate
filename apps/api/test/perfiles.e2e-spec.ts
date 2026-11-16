@@ -6,6 +6,7 @@ import { Test } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import { AlumnosRepository } from '../src/alumnos/alumnos.repository.js';
+import type { AlumnoNuevo } from '../src/alumnos/dto/alumno.schema.js';
 import {
   aplicarComando,
   comandoSchema,
@@ -28,6 +29,7 @@ describe('Perfiles y aislamiento de acceso (HTTP)', () => {
   let app: INestApplication;
   let cuentas: Cuenta[], estados: Map<number, Seguimiento>;
   let profesores: ProfesorDto[];
+  let matriculas: { id: number; nombre: string; claseId: number; estado: string }[];
   let claves: Awaited<ReturnType<typeof hashPassword>>;
   const cookies: Record<string, string> = {};
   beforeAll(async () => {
@@ -37,6 +39,11 @@ describe('Perfiles y aislamiento de acceso (HTTP)', () => {
     profesores = [
       { id: 10, nombre: 'Hiroshi', estado: 'activo' },
       { id: 20, nombre: 'Otro profesor', estado: 'activo' },
+    ];
+    matriculas = [
+      { id: 1, nombre: 'Ana', claseId: 11, estado: 'aceptado' },
+      { id: 2, nombre: 'Luis', claseId: 12, estado: 'aceptado' },
+      { id: 3, nombre: 'Eva', claseId: 11, estado: 'aprobado' },
     ];
     cuentas = [
       {
@@ -87,6 +94,22 @@ describe('Perfiles y aislamiento de acceso (HTTP)', () => {
           cuentas.push(c);
           return cuentaPublica(c);
         },
+        guardarConAlumno: async (
+          datos: Omit<Cuenta, 'id' | 'revision' | 'profesorId' | 'alumnoIds'>,
+          alumno: AlumnoNuevo,
+        ) => {
+          const alumnoCreado = { ...alumno, id: 50 };
+          matriculas.push({ ...alumnoCreado, estado: 'aceptado' });
+          const cuenta: Cuenta = {
+            ...datos,
+            id: randomUUID(),
+            revision: 1,
+            profesorId: null,
+            alumnoIds: [50],
+          };
+          cuentas.push(cuenta);
+          return { ...cuentaPublica(cuenta), alumnoCreado };
+        },
         guardarConProfesor: async (
           datos: Omit<Cuenta, 'id' | 'revision' | 'profesorId'>,
           nuevoProfesor: ProfesorNuevo,
@@ -112,13 +135,7 @@ describe('Perfiles y aislamiento de acceso (HTTP)', () => {
         },
       })
       .overrideProvider(PostulacionesRepository)
-      .useValue({
-        obtenerTodas: async () => [
-          { id: 1, nombre: 'Ana', claseId: 11, estado: 'aceptado' },
-          { id: 2, nombre: 'Luis', claseId: 12, estado: 'aceptado' },
-          { id: 3, nombre: 'Eva', claseId: 11, estado: 'aprobado' },
-        ],
-      })
+      .useValue({ obtenerTodas: async () => matriculas })
       .overrideProvider(ClasesRepository)
       .useValue({
         obtenerTodas: async () => [
@@ -329,7 +346,12 @@ describe('Perfiles y aislamiento de acceso (HTTP)', () => {
       .expect(401);
   });
   it('solo administrador crea cuentas, valida asignación y nunca devuelve hashes', async () => {
-    const nueva = { usuario: 'otra.alumna', password: PASSWORD, perfil: 'alumno', alumnoIds: [1] };
+    const nueva = {
+      usuario: 'otra.alumna',
+      password: PASSWORD,
+      perfil: 'alumno',
+      nuevoAlumno: { nombre: 'Alumno nuevo', claseId: 11 },
+    };
     await request(app.getHttpServer())
       .post('/cuentas')
       .set('Cookie', cookies.ana)
@@ -338,7 +360,7 @@ describe('Perfiles y aislamiento de acceso (HTTP)', () => {
     await request(app.getHttpServer())
       .post('/cuentas')
       .set('Cookie', cookies.admin)
-      .send({ ...nueva, alumnoIds: [999] })
+      .send({ ...nueva, alumnoIds: [1] })
       .expect(400);
     const r = await request(app.getHttpServer())
       .post('/cuentas')
@@ -353,6 +375,44 @@ describe('Perfiles y aislamiento de acceso (HTTP)', () => {
       .set('Cookie', cookies.admin)
       .expect(200);
     expect(JSON.stringify(lista.body)).not.toContain('"hash"');
+  });
+  it('el alta de alumno crea un registro propio sin reutilizar las inscripciones de prueba', async () => {
+    const r = await request(app.getHttpServer())
+      .post('/cuentas')
+      .set('Cookie', cookies.admin)
+      .send({
+        usuario: 'manual.nuevo',
+        password: PASSWORD,
+        perfil: 'alumno',
+        nuevoAlumno: { nombre: 'Alumno oficial', claseId: 11 },
+      })
+      .expect(201);
+    expect(r.body.alumnoCreado.nombre).toBe('Alumno oficial');
+    expect(r.body.alumnoIds).toEqual([50]);
+    expect(matriculas).toHaveLength(4);
+    const login = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ usuario: 'manual.nuevo', password: PASSWORD })
+      .expect(200);
+    const vista = await request(app.getHttpServer())
+      .get('/alumnos')
+      .set('Cookie', login.headers['set-cookie'][0])
+      .expect(200);
+    expect(vista.body.map((a: { nombre: string }) => a.nombre)).toEqual(['Alumno oficial']);
+    expect(vista.body[0].seguimiento.plan).toBe(null);
+  });
+  it('rechaza el selector anterior de alumnos y no ofrece postulaciones sin cuenta como candidatos', async () => {
+    await request(app.getHttpServer())
+      .post('/cuentas')
+      .set('Cookie', cookies.admin)
+      .send({ usuario: 'vinculo.alumno', password: PASSWORD, perfil: 'alumno', alumnoIds: [2] })
+      .expect(400);
+    const opciones = await request(app.getHttpServer())
+      .get('/cuentas/opciones')
+      .set('Cookie', cookies.admin)
+      .expect(200);
+    expect(opciones.body.alumnos.map((a: { id: number }) => a.id)).toEqual([1]);
+    expect(opciones.body.clases).toHaveLength(2);
   });
   it('crea profesor y su cuenta sin exigir teléfono ni correo, y permite iniciar sesión', async () => {
     const r = await request(app.getHttpServer())
