@@ -30,6 +30,6 @@ Los planes y pagos pertenecen a la inscripción del alumno. Los precios no se al
 
 ## Demostración con alumnos
 
-**Clases → Preparar demostración → Cargar clases y alumnos de prueba** prepara los horarios oficiales y cinco alumnos ficticios, uno por turno. La carga conserva los registros existentes y no duplica sus cuentas si se repite. Las cuentas nuevas utilizan `alumno.prueba01` a `alumno.prueba05`, con contraseña inicial igual al usuario.
+La carga inicial de demostración prepara los horarios oficiales y cinco alumnos ficticios, uno por turno. El botón de carga se retiró de la interfaz después de preparar la demostración; los datos ya registrados se conservan. La carga conserva los registros existentes y no duplica sus cuentas si se repite. Las cuentas nuevas utilizan `alumno.prueba01` a `alumno.prueba05`, con contraseña inicial igual al usuario.
 
 Solo completa asignaciones vacías: utiliza los profesores activos existentes por clase y, si no alcanzan, añade profesores identificados como prueba. La sede provisional es **Sede de prueba**. Estos datos deben reemplazarse antes del uso oficial. No registra pagos, movimientos de asistencia ni activa paquetes; los alumnos comienzan sin saldo. La operación requiere sesión de administración y se guarda en un único lote atómico. Un conflicto o falta de cupo cancela toda la operación.

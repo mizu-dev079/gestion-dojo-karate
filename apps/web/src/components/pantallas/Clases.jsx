@@ -11,7 +11,6 @@ export default function Clases() {
   const [clases, setClases] = useState([]);
   const [preparado, setPreparado] = useState(false);
   const [grupoSeleccionado, setGrupoSeleccionado] = useState(null);
-  const [confirmarPrueba, setConfirmarPrueba] = useState(false);
   const [confirmarTurnos, setConfirmarTurnos] = useState(false);
   const [vista, setVista] = useState('vigentes');
   const [cargando, setCargando] = useState(true);
@@ -592,21 +591,6 @@ export default function Clases() {
           </div>
         </section>
 
-        <details className="rounded-2xl border border-gray-200 bg-white p-4">
-          <summary className="cursor-pointer font-semibold">Preparar demostración</summary>
-          <p className="my-3 text-sm text-gray-600">
-            Carga los horarios oficiales y cinco alumnos ficticios, uno por turno. Usa sede y
-            profesores de prueba donde no estén asignados.
-          </p>
-          <button
-            type="button"
-            disabled={ocupado || cargando}
-            onClick={() => setConfirmarPrueba(true)}
-            className="min-h-11 rounded-xl bg-dojo-600 px-4 py-2 font-semibold text-white"
-          >
-            Cargar clases y alumnos de prueba
-          </button>
-        </details>
         {!preparado && !cargando && !errorCarga && (
           <section className="space-y-3 rounded-2xl border border-dojo-200 bg-white p-4">
             <h2 className="font-bold">Clases con turnos</h2>
@@ -739,34 +723,6 @@ export default function Clases() {
           </div>
         )}
       </main>
-      {confirmarPrueba && (
-        <ConfirmarAccion
-          titulo="¿Cargar la demostración?"
-          ocupado={ocupado}
-          aviso={aviso}
-          textoConfirmar="Cargar datos de prueba"
-          textoOcupado="Cargando…"
-          onCancelar={() => setConfirmarPrueba(false)}
-          onConfirmar={async () => {
-            const ok = await ejecutar(async () => {
-              const r = await leerRespuesta(
-                await apiFetch('/clases/datos-prueba', { method: 'POST' }),
-                'No se pudieron cargar los ejemplos.',
-              );
-              await cargarClases();
-              return r.mensaje;
-            });
-            if (ok) setConfirmarPrueba(false);
-          }}
-        >
-          <p>
-            Se conservarán los registros existentes. Los nuevos alumnos se llamarán Mateo,
-            Valentina, Lucas, Camila y Diego Prueba. Sus usuarios serán alumno.prueba01 a
-            alumno.prueba05; la contraseña inicial será igual al usuario. No se registrarán pagos ni
-            se activarán paquetes.
-          </p>
-        </ConfirmarAccion>
-      )}
       {confirmarTurnos && (
         <ConfirmarAccion
           titulo="¿Preparar clases y turnos?"
