@@ -1,56 +1,47 @@
 # Shinken Dojo - Hiroshi
 
-**Versión actual: 0.2.0 — en desarrollo.** Esta versión reúne el portal de alumnos, los tres perfiles de acceso y el seguimiento de planes, asistencia, recuperaciones y congelamientos. El número de versión se muestra en Usuario → Ayuda e información y se mantiene alineado en web, API y contratos compartidos.
+**Versión actual: 0.2.0 — en desarrollo.**
 
-Portal web para centralizar la inscripción y el seguimiento de los alumnos de Shinken Dojo - Hiroshi. La plataforma integra la consulta de horarios y planes, el registro de asistencia, la renovación de inscripciones y la gestión de recuperaciones y congelamientos.
+Portal web para centralizar la inscripción y el seguimiento de los alumnos de Shinken Dojo - Hiroshi. Integra horarios, planes continuos, asistencia, recuperaciones y congelamientos, con acceso diferenciado para administrador, profesor y alumno.
 
-El sistema contempla accesos diferenciados para administración, profesores y alumnos. Desde cada perfil se dispone de las funciones correspondientes para organizar la actividad del dojo, consultar el avance de las clases contratadas y dar seguimiento a las solicitudes de los alumnos.
-
-Su desarrollo se orienta a simplificar las tareas administrativas y mejorar el acceso a la información desde celulares y computadoras, manteniendo la continuidad de los planes y la conservación de las clases pendientes.
-
-La solución se organiza como un **monorepo**, con frontend, API y contratos compartidos administrados mediante **pnpm workspaces y Turborepo**. El portal se encuentra en desarrollo; su publicación y aceptación de uso en producción requieren validación independiente.
+La interfaz se adapta a celulares y computadoras y utiliza la identidad visual del dojo. La solución se organiza como un monorepo con frontend, API y contratos compartidos, administrados mediante pnpm workspaces y Turborepo.
 
 | Carpeta | Tecnología | Qué es |
 |---|---|---|
-| `apps/web` | Astro 7 + React 19 + Tailwind CSS 4 + Ant Design 6 | Portal de administración, profesores y alumnos, y formulario público |
+| `apps/web` | Astro 7 + React 19 + Tailwind CSS 4 | Portal de administración, profesores y alumnos, y formulario público |
 | `apps/api` | Node.js 24 + NestJS 12 + Google Sheets (`googleapis`) | API REST, autenticación, reglas de negocio y persistencia |
-| `packages/shared` | TypeScript | Tipos, estados y reglas compartidos que utiliza la API |
+| `packages/shared` | TypeScript | Tipos, estados y reglas compartidos entre web y API |
 
 Los datos se guardan en una hoja de cálculo de Google. La estructura del almacenamiento se detalla en [Datos en Google Sheets](docs/03-google-sheets.md).
 
 ## Funcionalidades principales
 
-- **Acceso por perfiles:** inicio de sesión y permisos diferenciados para administrador, profesor y alumno. Cada profesor accede a sus grupos y cada alumno consulta únicamente sus propias inscripciones.
-- **Inscripción manual de alumnos:** registro de datos, asignación a una clase oficial y creación de la cuenta de acceso en una sola operación, con comprobación de cupos.
-- **Sesiones y asistencia:** consulta por fecha, marcación propia del profesor y registro individual de alumnos. Administración puede asignar reemplazos, corregir la asistencia del profesor y cancelar una sesión sin consumir saldo ni recuperaciones de los alumnos.
-- **Admisión desde postulaciones:** en la estructura profesional, aceptar una solicitud crea alumno, inscripción y reserva de cupo juntos. El profesor ve al alumno al actualizar la lista; su cuenta puede crearse después sin duplicar la inscripción.
-- **Hoja profesional:** personas, inscripciones, planes, renovaciones, sesiones y seguimiento se guardan en pestañas legibles, conservando los formatos importados. Se mantiene compatibilidad con la estructura anterior.
-- **Portal del alumno:** consulta de horarios, planes, clases pendientes, renovaciones, asistencia, recuperaciones y estado de las solicitudes de congelamiento.
-- **Planes continuos de 4, 8 o 12 clases:** activación, renovación y cambio programado de plan, sin registrar cobros. Se conserva el saldo anterior y se consumen primero las clases del paquete más antiguo; el nuevo plan se muestra al terminar las pendientes.
-- **Control de asistencia:** registro y corrección de presencias y faltas, avisos de ausencia y filtros por profesor, clase y fecha para consultar los alumnos programados.
-- **Recuperaciones manuales:** autorización de clases pendientes en el horario habitual, sin añadir clases al plan. Se contempla una recuperación por paquete de 4 clases y dos por paquete de 8 o 12, con ajuste del límite y registro del motivo por el profesor o administrador.
-- **Congelamiento del plan:** solicitud del alumno y autorización del profesor asignado o administrador, con fecha de regreso o reactivación manual, manteniendo el cupo y las clases pendientes.
-- **Gestión unificada de profesores y alumnos:** alta de profesores junto con su cuenta, contacto opcional, administración de accesos, restablecimiento de contraseñas y cambio de contraseña por el titular.
-- **Consulta de clases oficiales:** visualización de tres clases con sus turnos por días y edades, cupos independientes. Los grupos permanentes pueden recibir inscripciones sin una fecha de finalización.
-- **Convocatorias y postulaciones:** enlaces y códigos QR descargables, formulario público de inscripción y revisión de solicitudes con control de cupos.
-- **Historial de seguimiento:** consulta de renovaciones, asistencia, congelamientos y recuperaciones, con registro de las autorizaciones y sus motivos.
-- **Interfaz adaptable:** navegación para celulares y computadoras, avisos dentro del portal, guía de uso y un único tema claro con la identidad visual del dojo.
+- **Acceso por perfiles:** permisos para administrador, profesor y alumno. Cada profesor accede a sus grupos y cada alumno consulta sus propias inscripciones.
+- **Clases oficiales:** consulta de Mini Samuráis, Jóvenes Guerreros y Avanzados, con turnos por días y edades, horarios y cupos independientes.
+- **Inscripción y postulaciones:** formulario público mediante enlace o QR y revisión de solicitudes. La aceptación crea alumno e inscripción y reserva el cupo; las solicitudes pendientes no ocupan vacante.
+- **Profesores y alumnos:** registro manual junto con su cuenta de acceso, búsqueda por nombre, administración de accesos y restablecimiento de contraseñas. El primer plan del alumno puede activarse en el mismo formulario.
+- **Planes continuos de 4, 8 o 12 clases:** activación y renovación con conservación del saldo anterior. El cambio de plan se programa para cuando se terminen las clases pendientes. Se consumen primero las clases del paquete más antiguo, sin vencimiento mensual.
+- **Calendario de asistencia:** marcación propia del profesor y registro de los alumnos por fecha. Administración puede asignar reemplazos, corregir registros y cancelar una sesión sin consumir saldo ni recuperaciones.
+- **Recuperaciones manuales:** autorización por inasistencias justificadas, sin añadir clases al plan. Se contempla una recuperación por paquete de 4 clases y dos por paquete de 8 o 12, con ajuste del límite y registro del motivo.
+- **Congelamiento del plan:** solicitud del alumno y autorización del profesor o administrador, con fecha de regreso o reactivación manual, conservando el cupo y las clases pendientes.
+- **Portal del alumno:** consulta de plan, saldo, horarios e historial; aviso o retiro de ausencias desde Calendario y seguimiento de solicitudes de congelamiento.
+- **Historial de seguimiento:** registro de activaciones, renovaciones, asistencia, recuperaciones, congelamientos y autorizaciones.
 
 ## Organización del portal
 
-La administración de personas se concentra en **Usuario → Profesores y alumnos**. Desde esta pantalla se registran profesores y alumnos nuevos junto con sus cuentas de acceso, sin seleccionar datos de prueba ni reutilizar postulaciones anteriores. El nombre es obligatorio; teléfono y correo son opcionales. En el alta de alumno también se indica la clase oficial y, opcionalmente, la fecha de nacimiento.
+La administración de personas se concentra en **Usuario → Profesores y alumnos**, con apartados individuales para profesores y alumnos. El nombre es obligatorio; teléfono y correo son opcionales. El registro manual del alumno incluye su clase y turno, y permite crear el acceso y activar el primer plan en una sola operación.
 
-Las clases se cargan directamente en Google Sheets. La creación desde la web y desde `POST /clases` está deshabilitada; se mantienen la consulta y la edición de los turnos. Las clases oficiales no se eliminan desde la aplicación. El calendario se utiliza para la asistencia de profesores y alumnos. La preparación de grupos permanentes se detalla en la [guía de clases oficiales](docs/08-clases-oficiales.md).
+Cuando el ingreso se realiza por postulación, administración acepta la solicitud y después puede crear el acceso y activar el plan sin duplicar la inscripción ni ocupar otro cupo.
+
+**Clases** permite consultar los grupos oficiales y editar los datos de sus turnos. **Calendario** concentra la asistencia de profesores y alumnos. **Alumnos** reúne los planes, renovaciones, recuperaciones y congelamientos. La guía de uso y la versión se consultan en **Usuario → Ayuda e información**.
 
 | Perfil | Funciones disponibles |
 |---|---|
-| Administrador | Registro y administración de cuentas, clases oficiales, inscripciones, planes, renovaciones, asistencia, recuperaciones y congelamientos |
-| Profesor | Consulta de sus grupos y alumnos asignados, asistencia, autorización de recuperaciones, ajuste de límites y gestión de congelamientos |
-| Alumno | Consulta de sus inscripciones, horarios, renovaciones e historial; aviso o retiro de ausencias actuales/futuras y solicitud de congelamiento |
+| Administrador | Administración de cuentas, turnos, postulaciones, inscripciones, planes, renovaciones, asistencia, recuperaciones y congelamientos |
+| Profesor | Consulta de sus grupos y alumnos, marcación de asistencia, autorización de recuperaciones y gestión de congelamientos |
+| Alumno | Consulta de plan e historial, aviso o retiro de ausencias actuales o futuras y solicitud de congelamiento |
 
-La inscripción manual crea un registro nuevo y reserva su cupo junto con la cuenta. El plan se activa después desde **Alumnos**. Cada renovación conserva el saldo anterior. Los cobros se gestionan fuera de la app; no se registran importes, medios de pago ni comprobantes. Sheets conserva los datos y la gestión se realiza desde la aplicación.
-
-El formulario público y las convocatorias por QR siguen disponibles como un flujo adicional de solicitudes. Las postulaciones pendientes no reservan cupo; la aceptación o aprobación sí lo hace. El registro manual no depende de una postulación previa ni elimina registros existentes.
+Google Sheets se utiliza como almacenamiento; la gestión cotidiana se realiza desde la aplicación. Las clases oficiales no se crean ni se eliminan desde el portal. Los cobros se coordinan fuera de la app: no se registran importes, medios de pago ni comprobantes.
 
 ## Guías del proyecto
 
@@ -92,9 +83,9 @@ Copy-Item apps/web/.env.example apps/web/.env
 New-Item -ItemType Directory -Force apps/api/credentials
 ```
 
-La llave JSON de la cuenta de servicio se guarda en `apps/api/credentials/google-service-account.json`, o se proporciona mediante `GOOGLE_CREDENTIALS_JSON`. La estructura de personas, inscripciones y movimientos se describe en la [guía de Google Sheets](docs/03-google-sheets.md). Desde **Clases → Preparar clases y turnos** se preparan las tres clases y sus cinco turnos, conservando los registros compatibles existentes. Después se completan sede y profesor por turno; no se admiten inscripciones hasta configurarlos.
+La llave JSON de la cuenta de servicio se guarda en `apps/api/credentials/google-service-account.json`, o se proporciona mediante `GOOGLE_CREDENTIALS_JSON`. La estructura de personas, inscripciones y movimientos se describe en la [guía de Google Sheets](docs/03-google-sheets.md). La hoja debe contener las tres clases oficiales y sus cinco turnos. La sede y el profesor se completan desde **Editar turno**; un turno sin configurar no admite inscripciones.
 
-Las pestañas **CuentasDojo** y **SeguimientoAlumnos** se crean en la primera operación válida de escritura que las requiere. La aplicación no carga datos de demostración ni elimina automáticamente registros anteriores.
+Las pestañas y encabezados de la hoja deben coincidir con la estructura documentada. Las fechas se muestran como **dd-mm-aaaa**, con zona horaria **America/Lima**; la API conserva las horas de registro internamente.
 
 Los dos archivos `.env` se configuran antes del arranque. La API valida las variables obligatorias y detiene el inicio cuando faltan valores o no se cumplen los requisitos.
 
@@ -184,8 +175,6 @@ Desde la raíz del proyecto:
 | `pnpm commit` | Asistente para escribir el commit con el formato correcto |
 | `postinstall` | Se ejecuta después de instalar dependencias: compila `packages/shared`, que usa la API |
 
-Las comprobaciones recientes de desarrollo incluyen las compilaciones de web y API, typecheck, pruebas unitarias y HTTP, y verificaciones de navegación con Playwright en tamaños móviles y de escritorio. Las verificaciones de navegador no forman parte de un comando de pruebas versionado del frontend. La validación de entrega se completa con pruebas de aceptación acordadas con el cliente.
-
 ## Estructura
 
 ```text
@@ -198,6 +187,7 @@ apps/
     clases/                  clases, postulaciones, cupos y validación de horarios
     profesores/              datos de profesores, contacto y estado del registro
     google/                  cliente de Google Sheets
+    portal/                  lectura y escritura de personas, inscripciones, movimientos y fechas
   api/test/                  pruebas HTTP con repositorios simulados
   web/
     src/
@@ -228,8 +218,8 @@ Las rutas privadas requieren autenticación y son exclusivas de administración 
 | `POST` | `/auth/password` | Profesor y alumno | Cambio de contraseña propia y cierre de las sesiones anteriores |
 | `GET` | `/cuentas` | Administrador | Consulta de cuentas, sin contraseñas ni hashes |
 | `GET` | `/cuentas/opciones` | Administrador | Consulta de clases y referencias de los registros con cuenta |
-| `POST` | `/cuentas` | Administrador | Alta manual de profesor o alumno nuevo junto con su cuenta |
-| `POST` | `/cuentas/inscripciones/:id` | Administrador | Crea el acceso de un alumno ya inscrito sin duplicar persona ni cupo |
+| `POST` | `/cuentas` | Administrador | Alta manual de profesor o alumno junto con su cuenta y plan inicial opcional |
+| `POST` | `/cuentas/inscripciones/:id` | Administrador | Crea acceso y plan inicial opcional para un alumno inscrito, sin duplicar persona ni cupo |
 | `GET` | `/planes` | Los tres perfiles | Catálogo activo de paquetes, precios y recuperaciones |
 | `POST` | `/cuentas/:id` | Administrador | Activación/desactivación del acceso o restablecimiento de contraseña |
 | `GET` | `/alumnos` | Según perfil | Seguimiento de todos los alumnos para administración, grupos propios para profesor o inscripciones propias para alumno |
@@ -237,96 +227,20 @@ Las rutas privadas requieren autenticación y son exclusivas de administración 
 | `GET` | `/sesiones?fecha=AAAA-MM-DD` | Administrador o profesor asignado | Sesiones, asistencia del profesor y alumnos del grupo |
 | `POST` | `/sesiones/:id/:fecha` | Administrador o profesor asignado | Marcación propia del profesor; administración corrige, asigna reemplazos o cancela |
 | `GET` | `/clases/catalogo` | Público | Clases agrupadas con sus turnos |
-| `POST` | `/clases/turnos/preparar` | Administrador | Preparación de clases y turnos conservando registros compatibles |
 | `GET` | `/clases` | Administrador | Consulta de clases oficiales y cupos disponibles |
 | `GET` | `/clases/:id` | Público | Consulta de la clase del formulario o QR |
-| `POST` | `/clases` | Deshabilitado | Respuesta 405 para administración; las altas se realizan en Sheets |
-| `POST` | `/clases/:id` | Administrador | Edición de una clase y validación de cruces de horario |
-| `DELETE` | `/clases/:id` | Administrador | Deshabilitado (405): se conservan las clases oficiales |
+| `POST` | `/clases/:id` | Administrador | Edición de un turno y validación de cruces de horario |
 | `GET` | `/clases/postulaciones` | Administrador | Consulta de solicitudes |
 | `POST` | `/clases/postulaciones` | Público | Registro de una postulación pendiente con validaciones y consentimiento |
 | `POST` | `/clases/postulaciones/estado` | Administrador | Cambio de estado y actualización de cupos |
 | `DELETE` | `/clases/postulaciones/:id` | Administrador | Eliminación de una solicitud y recálculo de cupos |
 | `GET` | `/profesores` | Administrador | Consulta de registros de profesor y contacto opcional |
-| `POST` | `/profesores` | Administrador | Alta independiente heredada de un registro; el portal utiliza `/cuentas` para crear también su acceso |
 | `POST` | `/profesores/estado` | Administrador | Activación o desactivación del profesor |
 | `DELETE` | `/profesores/:id` | Administrador | Eliminación del registro de profesor |
 
 Las acciones y reglas de `/alumnos/:id` se detallan en la [guía de seguimiento](docs/06-alumnos-asistencia.md). Administración activa y renueva los planes; el profesor gestiona asistencia y autorizaciones de sus alumnos; el alumno solo avisa o retira ausencias permitidas y solicita congelamiento.
 
-Las clases se identifican por id, pero actualmente guardan al profesor por nombre. Al eliminar un profesor, sus clases y solicitudes existentes conservan el nombre guardado; no se eliminan en cascada. Las postulaciones también conservan una copia de los datos de su clase al momento de enviarse.
-
-## Historial de desarrollo
-
-Las entradas fechadas describen etapas anteriores. Las referencias históricas a Mi Dojo, al modo oscuro o a la creación de clases no representan funciones vigentes: el nombre actual es Shinken Dojo - Hiroshi, se mantiene un único tema claro y las clases se cargan desde Sheets.
-
-### Evolución actual
-
-- Se incorporaron perfiles de administrador, profesor y alumno con permisos en la API y cuentas individuales.
-- Se unificó el registro y la administración de personas en Profesores y alumnos, con altas manuales desde cero.
-- Se añadieron planes continuos, pagos registrados, renovaciones con conservación del saldo, asistencia y recuperaciones manuales.
-- Se integraron solicitudes de congelamiento, autorización por el profesor o administrador y reactivación manual o con fecha acordada.
-- Se adoptaron el nombre, el logo y la paleta del dojo, y se retiraron la selección de temas y el formulario de creación de clases.
-
-### Cambios realizados (2026-10-07)
-
-- Se corrigió la consulta de postulaciones para utilizar `GET /clases/postulaciones` en lugar de `GET /profesores`.
-- Se ajustó el acceso a la API desde la pantalla de postulaciones y se verificó la compilación del frontend.
-
-### Cambios realizados (2026-10-09)
-
-- Se corrigió el tipado de la prueba e2e de la API, eliminando la importación no válida de `supertest/types`.
-- Se actualizaron las pruebas unitarias de `ClasesController` y `ClasesService` para registrar sus dependencias mediante mocks.
-- Se ejecutó Biome sobre los archivos modificados mediante los hooks de Git.
-
-### Cambios realizados (2026-10-27)
-
-- Se incorporó la validación de postulaciones, el consentimiento y los datos del apoderado para menores, junto con controles de cupos y solicitudes duplicadas.
-- Se unificó la navegación inferior y se ajustaron los formularios y tarjetas para pantallas móviles.
-- Se organizó la consulta de clases vigentes, próximas y finalizadas, con accesos a postulaciones y convocatoria de cada clase.
-- Se permitió compartir convocatorias y recibir postulaciones antes de la fecha de inicio de las clases.
-- Se cambió el QR a negro sobre fondo blanco y se corrigió la copia del enlace al acceder mediante una dirección de red local con HTTP.
-
-### Cambios realizados (2026-10-29)
-
-- Se añadieron mensajes de estado dentro de la app y protección contra envíos repetidos durante las operaciones.
-- Se incorporaron búsqueda y filtros de postulaciones, indicadores de últimos cupos y número de solicitud al completar el formulario.
-- Se agregaron los temas claro, oscuro y automático, junto con la guía rápida y la información del sistema.
-- Se centralizaron la cuenta, los ajustes y el cierre de sesión en la sección Usuario de la barra inferior. La creación de clases quedó dentro de Clases.
-- Se adoptó el nombre provisional Mi Dojo y se configuró el login como entrada a la aplicación.
-- Se reemplazó la confirmación del navegador al eliminar clases por una confirmación dentro de la app.
-
-### Cambios realizados (2026-11-12)
-
-- Se incorporó la eliminación de profesores desde la app y la API, con confirmación y conservación de los nombres en clases y solicitudes existentes.
-- Se corrigió la interacción táctil de los botones Editar y Eliminar del menú de clases.
-- Se ajustaron los selectores de profesor y duración para mostrar su indicación inicial sin ofrecerla como opción seleccionable.
-- Se corrigió la descarga del QR como archivo PNG y se añadió una alternativa para abrir y guardar la imagen desde el celular.
-- Se ajustó el campo de nacimiento del formulario público y se pasaron las fechas del aviso y resumen al formato español.
-- Se agregó la detección de horarios superpuestos del mismo profesor al crear y editar clases, considerando fechas, días y horas entre sedes.
-
-Las fechas del registro corresponden a la zona horaria de Perú (`America/Lima`).
-
-## Pendiente de mejorar
-
-### Frontend
-
-- Incorporar un script propio de typecheck y una suite de pruebas de navegador versionada, para que las verificaciones móviles puedan repetirse mediante un comando del proyecto.
-- Evaluar el uso directo de `@dojo/shared` en el frontend; actualmente sus contratos se utilizan desde la API.
-
-### Backend
-
-- Migrar la relación de profesor en las clases a un identificador estable, en lugar de depender del nombre.
-- Optimizar las lecturas completas de Google Sheets y ampliar el almacenamiento del seguimiento si crece el volumen de datos. La implementación actual detiene la escritura antes de superar 45 000 caracteres por historial, sin truncarlo.
-- Si se utilizan varias réplicas de la API, reemplazar las colas y límites en memoria por coordinación compartida. Las protecciones actuales se aplican dentro de una instancia y no coordinan ediciones manuales simultáneas en Sheets.
-
-### Entrega y publicación
-
-- Realizar un ensayo de restauración de respaldos en una copia de la hoja del cliente y asignar un responsable a los respaldos manuales.
-- Completar las pruebas de aceptación y acordar las condiciones de soporte y la conformidad de entrega con el cliente.
-- Completar la carga de los datos oficiales del dojo y confirmar la configuración de los servicios de alojamiento. La identidad del portal ya está definida como Shinken Dojo - Hiroshi.
-- Verificar HTTPS, cookies de sesión, CORS y conexión entre frontend y backend con las direcciones definitivas antes de usar datos reales en producción.
-- Acordar con el cliente el responsable, el contacto y los plazos de conservación del aviso de datos personales.
+Al eliminar un profesor, las clases y solicitudes existentes conservan el nombre guardado. Las postulaciones mantienen los datos de la clase elegida al momento de su envío.
 
 ## Automatizaciones en GitHub
 
@@ -339,12 +253,6 @@ El repositorio contiene las siguientes configuraciones. Su ejecución depende de
 | `.github/dependabot.yml` | Propone actualizaciones de GitHub Actions hacia `develop` |
 | `renovate.json` | Configura actualizaciones de dependencias de npm hacia `develop`; requiere habilitar la app Renovate |
 
-El workflow de CI no se dispara por un push aislado a `construccion` ni a `feature/postulaciones-movil`; se ejecuta al abrir o actualizar un PR. El bloque `env` del paso de pruebas e2e requiere corregir la indentación de sus variables. Antes de utilizar el CI como requisito de entrega se debe corregir esa configuración y verificar su ejecución en Actions.
-
 ### Flujo de ramas vigente
 
 Los cambios nuevos se desarrollan en **`construccion`**. Su integración posterior en **`feature/postulaciones-movil`** se realiza cuando la versión se considera lista y se autoriza el traslado. La existencia de `main`, `develop` u otras ramas no implica que deban actualizarse automáticamente.
-
-La [guía de Gitflow](docs/01-gitflow.md) y la validación de ramas del workflow de títulos se conservan como referencias técnicas. Los PR deben revisarse frente a las reglas que realmente estén configuradas; no se presupone que esas reglas acepten el flujo actual ni se modifican las ramas o la configuración de GitHub desde esta documentación.
-
-Las protecciones de ramas, los requisitos de revisión, los permisos y los servicios de actualización de dependencias se verifican en la configuración del repositorio antes de utilizarlos como controles de entrega.
