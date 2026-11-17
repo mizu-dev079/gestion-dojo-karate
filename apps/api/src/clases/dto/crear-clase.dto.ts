@@ -1,4 +1,13 @@
-import { IsArray, IsDateString, IsIn, IsNotEmpty, IsNumber, IsString, Min } from 'class-validator';
+import {
+  IsArray,
+  IsDateString,
+  IsIn,
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+  Min,
+  ValidateIf,
+} from 'class-validator';
 
 export class CrearClaseDto {
   @IsString()
@@ -33,9 +42,12 @@ export class CrearClaseDto {
   @Min(1)
   cupos: number;
 
+  // Los turnos permanentes no tienen vigencia; el servicio exige estos campos para clases temporales.
+  @ValidateIf((_objeto, valor) => valor !== undefined && valor !== '')
   @IsDateString()
   fechaInicio: string;
 
+  @ValidateIf((_objeto, valor) => valor !== undefined && valor !== '')
   @IsString()
   @IsIn(['1 semana', '2 semanas', '3 semanas', '1 mes'])
   duracion: string;

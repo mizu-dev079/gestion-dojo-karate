@@ -94,7 +94,7 @@ export class ClasesController {
     @Param('id')
     id: string,
 
-    @Body()
+    @Body(new ValidationPipe({ transform: true, whitelist: true, expectedType: CrearClaseDto }))
     datos: CrearClaseDto,
   ) {
     return this.clasesService.actualizarClase(Number(id), datos);

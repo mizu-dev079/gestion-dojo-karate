@@ -384,6 +384,39 @@ describe('Portal sobre la nueva estructura de Sheets (HTTP y persistencia reales
     await api().get('/alumnos').set('Cookie', cookie).expect(409);
     expect(tablas).toEqual(original);
   });
+  it('guarda sede y profesor de un turno permanente con fecha y duración vacías u omitidas', async () => {
+    await prepararCincoTurnos();
+    const datos = {
+      nivel: 'Mini Samuráis',
+      sede: 'Sede actualizada',
+      profesor: 'Hiroshi',
+      frecuencia: ['Lunes', 'Miércoles', 'Viernes'],
+      horaInicio: '16:00',
+      horaFin: '17:00',
+      tarifa: 0,
+      cupos: 12,
+    };
+    await api()
+      .post('/clases/1')
+      .set('Cookie', cookie)
+      .send({ ...datos, fechaInicio: '', duracion: '' })
+      .expect(201);
+    expect(tablas.Turnos[1][3]).toBe('Sede actualizada');
+    expect(tablas.Turnos[1][9]).toBe(10);
+    await api()
+      .post('/clases/1')
+      .set('Cookie', cookie)
+      .send({ ...datos, sede: 'Otra sede' })
+      .expect(201);
+    expect(tablas.Turnos[1][3]).toBe('Otra sede');
+    const original = structuredClone(tablas);
+    await api()
+      .post('/clases/1')
+      .set('Cookie', cookie)
+      .send({ ...datos, fechaInicio: 'fecha inválida', duracion: 'sin límite' })
+      .expect(400);
+    expect(tablas).toEqual(original);
+  });
   it('lee clases y catálogo, sin crear hojas antiguas ni registros al consultar', async () => {
     const c = await api().get('/clases').set('Cookie', cookie).expect(200);
     expect(c.body[0]).toMatchObject({

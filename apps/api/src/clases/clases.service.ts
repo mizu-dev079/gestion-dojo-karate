@@ -362,9 +362,9 @@ export class ClasesService {
 
         cupos: datos.cupos,
 
-        fechaInicio: datos.fechaInicio,
+        fechaInicio: permanente ? '' : datos.fechaInicio,
 
-        duracion: datos.duracion,
+        duracion: permanente ? '' : datos.duracion,
 
         fechaFin: fechaFin,
       };
