@@ -53,6 +53,7 @@ Google Sheets se utiliza como almacenamiento; la gestión cotidiana se realiza d
 6. [Alumnos, planes y asistencia](docs/06-alumnos-asistencia.md): activaciones, renovaciones, recuperaciones y congelamientos.
 7. [Cuentas y perfiles](docs/07-cuentas-y-perfiles.md): altas manuales, autenticación y permisos.
 8. [Clases oficiales](docs/08-clases-oficiales.md): preparación de los grupos y horarios en Sheets.
+9. [Colaboración con API simulada](docs/09-colaboracion-simulada.md): preparación de Live Share sin credenciales ni conexión con Sheets.
 
 ## Requisitos
 
@@ -163,6 +164,9 @@ Desde la raíz del proyecto:
 |---|---|
 | `pnpm dev` | Compila shared, mantiene sus cambios e inicia frontend y backend en una terminal |
 | `pnpm dev:web` / `pnpm dev:api` | Levanta solo una app |
+| `pnpm preparar:colaboracion` | Genera una copia independiente del frontend para Live Share, sin backend ni credenciales |
+| `pnpm dev:simulado` / `pnpm stop:simulado` | Inicia o detiene el frontend con API ficticia en el puerto 4322 |
+| `pnpm test:simulado` | Verifica la simulación y la exportación de la copia de colaboración |
 | `pnpm stop:web` | Detiene el frontend si se inició en segundo plano |
 | `pnpm build` | Compila los tres paquetes |
 | `pnpm typecheck` | Revisa los tipos de la API y shared; web no tiene actualmente un script propio de typecheck |

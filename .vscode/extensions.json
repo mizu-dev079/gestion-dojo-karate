@@ -3,7 +3,8 @@
     "biomejs.biome",
     "astro-build.astro-vscode",
     "editorconfig.editorconfig",
-    "vivaxy.vscode-conventional-commits"
+    "vivaxy.vscode-conventional-commits",
+    "MS-vsliveshare.vsliveshare"
   ],
   "unwantedRecommendations": ["esbenp.prettier-vscode", "dbaeumer.vscode-eslint", "oxc.oxc-vscode"]
 }

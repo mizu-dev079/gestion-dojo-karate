@@ -38,6 +38,9 @@ jobs:
       - name: Tests unitarios
         run: pnpm test
 
+      - name: Pruebas del entorno simulado
+        run: pnpm test:simulado
+
       - name: Build
         run: pnpm build
 
@@ -64,7 +67,7 @@ jobs:
       - name: Tests e2e
         run: pnpm --filter api test:e2e
         env:
-        JWT_SECRET: secreto-solo-para-ci-con-mas-de-32-caracteres
-        ADMIN_USUARIO: admin
-        ADMIN_PASSWORD: clave-solo-para-ci-123
-        GOOGLE_SPREADSHEET_ID: id-falso-solo-para-ci
+          JWT_SECRET: secreto-solo-para-ci-con-mas-de-32-caracteres
+          ADMIN_USUARIO: admin
+          ADMIN_PASSWORD: clave-solo-para-ci-123
+          GOOGLE_SPREADSHEET_ID: id-falso-solo-para-ci

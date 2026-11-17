@@ -14,5 +14,10 @@
   },
   "[typescript]": {
     "editor.defaultFormatter": "vscode.typescript-language-features"
-  }
+  },
+  "liveshare.autoShareServers": false,
+  "liveshare.autoShareTerminals": false,
+  "liveshare.shareExternalFiles": false,
+  "liveshare.allowGuestTaskControl": false,
+  "liveshare.allowGuestDebugControl": false
 }

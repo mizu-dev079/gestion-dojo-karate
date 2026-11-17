@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json.schemastore.org/vsls",
+  "excludeFiles": [
+    "**/.env",
+    "**/.env.*",
+    "**/credentials/**",
+    "**/*service-account*.json",
+    "**/*.pem",
+    "**/*.key",
+    "apps/api/**",
+    "**/node_modules/**",
+    "**/.git/**",
+    "**/.astro/**",
+    "**/dist/**"
+  ]
+}

@@ -20,7 +20,11 @@
     "ci:check": "biome ci .",
     "commit": "cz",
     "prepare": "husky",
-    "postinstall": "turbo run build --filter=@dojo/shared --output-logs=errors-only"
+    "postinstall": "turbo run build --filter=@dojo/shared --output-logs=errors-only",
+    "dev:simulado": "node scripts/iniciar-simulacion.mjs",
+    "stop:simulado": "node scripts/iniciar-simulacion.mjs --detener",
+    "preparar:colaboracion": "node scripts/preparar-colaboracion.mjs",
+    "test:simulado": "node --test apps/web/simulacion/*.test.mjs scripts/*.test.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
