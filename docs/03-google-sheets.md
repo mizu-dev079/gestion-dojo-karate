@@ -84,3 +84,9 @@ Antes de usar datos oficiales se deben completar la carga de grupos, asignacione
 ## Nombres de las pestañas de asistencia
 
 Las pestañas visibles se llaman **Asistencias de alumnos** (antes Asistencias) y **Sesiones y profesores** (antes Sesiones). Los encabezados, identificadores y relaciones no cambian. La API admite tanto los nombres anteriores como los nuevos y escribe en la pestaña existente, sin crear copias. No deben coexistir ambos nombres para el mismo tipo de registro. La asistencia del profesor continúa vinculada a su sesión; no se duplica en la tabla de alumnos.
+
+## Fechas y zona horaria
+
+La hoja utiliza **America/Lima** y las columnas de fecha muestran únicamente **dd-mm-aaaa**. Se guardan como fechas nativas de Sheets, con formato `dd-mm-yyyy`. Las horas de registro se conservan internamente aunque no aparezcan en la celda; la API convierte los instantes entre UTC y Lima. Por ejemplo, `2026-11-17T02:49:32.130Z` se muestra como **16-11-2026**.
+
+Las fechas de nacimiento, sesiones, activaciones y regresos son fechas civiles: no se les restan cinco horas. La API sigue entregando fechas ISO para los formularios y admite tanto los valores ISO anteriores como las fechas nativas. Los identificadores y los JSON internos no se reformatean. Tras actualizar la hoja, las instancias de la aplicación deben utilizar esta versión de la API antes de registrar movimientos.

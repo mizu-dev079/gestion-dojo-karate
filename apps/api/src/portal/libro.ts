@@ -11,6 +11,13 @@ import {
   type Tabla,
 } from './estructura.js';
 
+import {
+  columnasFecha,
+  escribirFechaSheets,
+  FORMATO_FECHA_SHEETS,
+  leerFechaSheets,
+} from './fechas.js';
+
 const nombresAsistencia: Record<string, string> = {
   Asistencias: 'Asistencias de alumnos',
   Sesiones: 'Sesiones y profesores',
@@ -138,9 +145,10 @@ export class LibroPortal {
       );
       if (ids.some((id) => !id) || new Set(ids).size !== ids.length)
         throw new InternalServerErrorException(`Hay identificadores vacíos o duplicados en ${t}.`);
+      const normalizadas = datos.map((f) => f.map((v, j) => leerFechaSheets(t, j, v))) as Fila[];
       libro[t] =
         t === 'Pagos' && usaRenovaciones
-          ? datos.map((f) => [
+          ? normalizadas.map((f) => [
               f[0],
               f[1],
               f[2],
@@ -155,7 +163,7 @@ export class LibroPortal {
               f[8] ?? '',
               f[9] ?? '',
             ])
-          : datos;
+          : normalizadas;
     });
     if (!libro.clasesConTurnos && libro.Turnos.length)
       throw new ConflictException(
@@ -331,9 +339,9 @@ export class LibroPortal {
             });
         }
         const filas: Fila[] = [cabecera, ...filasFisicas(libro, tabla)];
-        const rows = filas.map((f) => ({
+        const rows = filas.map((f, fila) => ({
           values: Array.from({ length: ancho }, (_, i) => {
-            const valor = f[i] ?? '';
+            const valor = (fila === 0 ? f[i] : escribirFechaSheets(tabla, i, f[i])) ?? '';
             if (typeof valor === 'string' && valor.length > 45000)
               throw new ConflictException(
                 `Un registro de ${tabla} requiere ampliar el almacenamiento.`,
@@ -348,6 +356,23 @@ export class LibroPortal {
             };
           }),
         }));
+        for (const columna of columnasFecha(tabla))
+          requests.push({
+            repeatCell: {
+              range: {
+                sheetId,
+                startRowIndex: 1,
+                startColumnIndex: columna,
+                endColumnIndex: columna + 1,
+              },
+              cell: {
+                userEnteredFormat: {
+                  numberFormat: { type: 'DATE', pattern: FORMATO_FECHA_SHEETS },
+                },
+              },
+              fields: 'userEnteredFormat.numberFormat',
+            },
+          });
         requests.push({
           updateCells: {
             range: {

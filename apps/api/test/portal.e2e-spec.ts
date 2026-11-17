@@ -148,6 +148,34 @@ describe('Portal sobre la nueva estructura de Sheets (HTTP y persistencia reales
       .expect(201);
     return r.body.id as number;
   }
+  it('guarda fechas nativas, conserva el instante UTC y devuelve fechas ISO válidas por HTTP', async () => {
+    const id = await postular();
+    const fila = tablas.Postulaciones.find((f) => f[0] === id);
+    if (!fila) throw new Error('Falta la postulación creada por la prueba.');
+    expect(typeof fila[1]).toBe('number');
+    expect(typeof fila[3]).toBe('number');
+    const instante = '2026-11-17T02:49:32.130Z';
+    fila[1] = (Date.parse('2026-11-16T21:49:32.130Z') - Date.UTC(1899, 11, 30)) / 86400000;
+    const respuesta = await api().get('/clases/postulaciones').set('Cookie', cookie).expect(200);
+    expect(respuesta.body.find((p: { id: number }) => p.id === id)).toMatchObject({
+      fechaPostulacion: instante,
+      fechaNacimiento: '2000-01-01',
+    });
+    await aceptar(id);
+    const trasAceptar = await api().get('/clases/postulaciones').set('Cookie', cookie).expect(200);
+    expect(trasAceptar.body.find((p: { id: number }) => p.id === id).fechaPostulacion).toBe(
+      instante,
+    );
+    expect(
+      batchUpdate.mock.calls
+        .flatMap(([c]) => c.requestBody.requests)
+        .some(
+          (r: {
+            repeatCell?: { cell?: { userEnteredFormat?: { numberFormat?: { pattern?: string } } } };
+          }) => r.repeatCell?.cell?.userEnteredFormat?.numberFormat?.pattern === 'dd-mm-yyyy',
+        ),
+    ).toBe(true);
+  });
   async function aceptar(id: number) {
     return api()
       .post('/clases/postulaciones/estado')
