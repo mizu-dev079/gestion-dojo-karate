@@ -1,6 +1,6 @@
 import type { ClaseDto } from '@dojo/shared';
 import { ClasesService } from './clases.service.js';
-import { CrearClaseDto } from './dto/crear-clase.dto.js';
+import { EditarClaseDto } from './dto/editar-clase.dto.js';
 import { comprobarDisponibilidad, validarHorarioClase } from './horarios-clase.js';
 import { ClasesRepository } from './repositories/clases.repository.js';
 import { PostulacionesRepository } from './repositories/postulaciones.repository.js';
@@ -20,7 +20,7 @@ const base: ClaseDto = {
   fechaFin: '2026-12-16',
   duracion: '1 mes',
 };
-const datos = (cambios: Partial<CrearClaseDto> = {}): CrearClaseDto => ({ ...base, ...cambios });
+const datos = (cambios: Partial<EditarClaseDto> = {}): EditarClaseDto => ({ ...base, ...cambios });
 
 describe('Disponibilidad de profesores', () => {
   it.each([
@@ -81,15 +81,10 @@ describe('Disponibilidad de profesores', () => {
 describe('Persistencia de programación de clases', () => {
   let clases: ClaseDto[];
   let service: ClasesService;
-  const guardar = vi.fn();
   const actualizar = vi.fn();
   beforeEach(() => {
     vi.resetAllMocks();
     clases = [{ ...base }];
-    guardar.mockImplementation(async (clase: ClaseDto) => {
-      clases.push(clase);
-      return clase;
-    });
     actualizar.mockImplementation(async (clase: ClaseDto) => {
       clases = clases.map((item) => (item.id === clase.id ? clase : item));
       return clase;
@@ -97,18 +92,10 @@ describe('Persistencia de programación de clases', () => {
     service = new ClasesService(
       {
         obtenerTodas: async () => clases.map((item) => ({ ...item })),
-        guardar,
         actualizar,
       } as unknown as ClasesRepository,
       {} as PostulacionesRepository,
     );
-  });
-  it('rechaza la creación antes de escribir y libera la cola para reintentar con otro horario', async () => {
-    await expect(service.crearClase(datos())).rejects.toMatchObject({ status: 409 });
-    expect(guardar).not.toHaveBeenCalled();
-    await expect(
-      service.crearClase(datos({ horaInicio: '17:30', horaFin: '19:00' })),
-    ).resolves.toMatchObject({ profesor: base.profesor });
   });
   it('impide editar una segunda clase hacia un horario ocupado sin modificarla', async () => {
     clases.push({ ...base, id: 2, horaInicio: '18:00', horaFin: '19:00' });
@@ -117,36 +104,18 @@ describe('Persistencia de programación de clases', () => {
     expect(clases[1].horaInicio).toBe('18:00');
     await expect(service.actualizarClase(1, datos())).resolves.toMatchObject({ id: 1 });
   });
-  it('solo guarda una de dos creaciones simultáneas incompatibles', async () => {
-    clases = [];
-    const resultados = await Promise.allSettled([
-      service.crearClase(datos()),
-      service.crearClase(datos()),
-    ]);
-    expect(resultados.filter((item) => item.status === 'fulfilled')).toHaveLength(1);
-    expect(resultados.filter((item) => item.status === 'rejected')).toHaveLength(1);
-    expect(guardar).toHaveBeenCalledTimes(1);
-  });
-  it('serializa la edición con la creación y detecta el horario recién ocupado', async () => {
+  it('serializa dos ediciones incompatibles y conserva solo la primera', async () => {
+    clases = [{ ...base }, { ...base, id: 2, profesor: 'Luis' }];
     const resultados = await Promise.allSettled([
       service.actualizarClase(1, datos({ frecuencia: ['Martes'] })),
-      service.crearClase(datos({ frecuencia: ['Martes'] })),
+      service.actualizarClase(2, datos({ frecuencia: ['Martes'] })),
     ]);
-    expect(resultados[0].status).toBe('fulfilled');
-    expect(resultados[1].status).toBe('rejected');
-    expect(guardar).not.toHaveBeenCalled();
+    expect(resultados.map((r) => r.status)).toEqual(['fulfilled', 'rejected']);
+    expect(actualizar).toHaveBeenCalledTimes(1);
+    expect(clases[1].profesor).toBe('Luis');
   });
-  it('calcula la vigencia en UTC y genera ids distintos incluso con el mismo reloj', async () => {
-    vi.useFakeTimers();
-    try {
-      vi.setSystemTime(new Date('2026-11-12T15:00:00Z'));
-      clases = [];
-      const a = await service.crearClase(datos());
-      const b = await service.crearClase(datos({ profesor: 'Luis' }));
-      expect(a.fechaFin).toBe('2026-12-16');
-      expect(a.id).not.toBe(b.id);
-    } finally {
-      vi.useRealTimers();
-    }
+  it('conserva el cálculo UTC al editar una clase histórica con vigencia', async () => {
+    const editada = await service.actualizarClase(1, datos());
+    expect(editada.fechaFin).toBe('2026-12-16');
   });
 });

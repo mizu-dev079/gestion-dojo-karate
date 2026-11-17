@@ -60,7 +60,7 @@ jobs:
       - name: Compilar el paquete compartido
         run: pnpm turbo run build --filter=@dojo/shared
 
-      # No usa Google Sheets: el e2e solo comprueba que la API arranca y responde.
+      # Los flujos HTTP se prueban con Google Sheets simulado, sin modificar datos reales.
       - name: Tests e2e
         run: pnpm --filter api test:e2e
         env:

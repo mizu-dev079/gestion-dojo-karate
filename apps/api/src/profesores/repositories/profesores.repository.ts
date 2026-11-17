@@ -1,9 +1,9 @@
+import type { ProfesorDto as Profesor } from '@dojo/shared';
 import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { env } from '../../config/env.js';
 import { crearClienteSheets } from '../../google/sheets.client.js';
 import { libroNuevo, nuevoId, numero } from '../../portal/libro.js';
 import { leerProfesores } from '../../portal/registros.js';
-import { Profesor } from '../interfaces/profesor.interface.js';
 
 @Injectable()
 export class ProfesoresRepository {

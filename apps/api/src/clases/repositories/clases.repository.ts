@@ -1,9 +1,9 @@
+import type { ClaseDto as Clase } from '@dojo/shared';
 import { ConflictException, Injectable } from '@nestjs/common';
 import { env } from '../../config/env.js';
 import { crearClienteSheets } from '../../google/sheets.client.js';
 import { libroNuevo, numero, texto } from '../../portal/libro.js';
 import { leerClases, recalcularCupos } from '../../portal/registros.js';
-import { Clase } from '../interfaces/clase.interface.js';
 
 @Injectable()
 export class ClasesRepository {
@@ -54,56 +54,6 @@ export class ClasesRepository {
 
       fechaFin: fila[12] ?? '',
     }));
-  }
-
-  async guardar(clase: Clase) {
-    if (await libroNuevo())
-      throw new ConflictException(
-        'Las clases oficiales se cargan en la hoja; no se crean desde la app.',
-      );
-    const sheets = await this.obtenerSheets();
-
-    await sheets.spreadsheets.values.append({
-      spreadsheetId: this.spreadsheetId,
-
-      range: this.range,
-
-      valueInputOption: 'USER_ENTERED',
-
-      requestBody: {
-        values: [
-          [
-            clase.id,
-
-            clase.nivel,
-
-            clase.sede,
-
-            clase.frecuencia.join(', '),
-
-            clase.profesor,
-
-            clase.horaInicio,
-
-            clase.horaFin,
-
-            clase.tarifa,
-
-            clase.cupos,
-
-            clase.cuposDisponibles,
-
-            clase.fechaInicio,
-
-            clase.duracion,
-
-            clase.fechaFin,
-          ],
-        ],
-      },
-    });
-
-    return clase;
   }
 
   async actualizar(clase: Clase) {

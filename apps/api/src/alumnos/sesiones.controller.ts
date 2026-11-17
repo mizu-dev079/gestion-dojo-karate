@@ -1,3 +1,4 @@
+import type { ClaseDto as Clase } from '@dojo/shared';
 import {
   BadRequestException,
   Body,
@@ -12,7 +13,6 @@ import {
   Req,
 } from '@nestjs/common';
 import { Perfiles, type SolicitudAutenticada } from '../auth/sesion.js';
-import type { Clase } from '../clases/interfaces/clase.interface.js';
 import { ClasesRepository } from '../clases/repositories/clases.repository.js';
 import { PostulacionesRepository } from '../clases/repositories/postulaciones.repository.js';
 import { ProfesoresRepository } from '../profesores/repositories/profesores.repository.js';

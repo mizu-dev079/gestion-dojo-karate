@@ -1,6 +1,6 @@
+import type { ProfesorDto as Profesor } from '@dojo/shared';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { profesorNuevoSchema } from './dto/profesor.schema.js';
-import { Profesor } from './interfaces/profesor.interface.js';
 import { ProfesoresRepository } from './repositories/profesores.repository.js';
 
 @Injectable()

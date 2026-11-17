@@ -209,7 +209,7 @@ apps/
       lib/                   acceso a la API y enlaces de formularios
       styles/                estilos globales y paleta del dojo
 packages/shared/src/
-  enums/                     estados, duraciones y reglas compartidas
+  enums/                     estados de postulación y reglas de cupos
   types/api.ts               contratos de datos entre web y API
 docs/                        documentación técnica del proyecto
 ```

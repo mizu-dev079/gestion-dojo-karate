@@ -29,8 +29,8 @@ export interface ClaseDto {
   fechaFin: string;
 }
 
-/** Cuerpo de POST /clases y POST /clases/:id. */
-export interface CrearClaseInput {
+/** Cuerpo de edición de un turno: POST /clases/:id. */
+export interface EditarClaseInput {
   nivel: string;
   sede: string;
   frecuencia: string[];

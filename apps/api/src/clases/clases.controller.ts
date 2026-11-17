@@ -15,9 +15,8 @@ import type { SolicitudAutenticada } from '../auth/sesion.js';
 import { Public } from '../common/decorators/public.decorator.js';
 
 import { ClasesService } from './clases.service.js';
-
-import { CrearClaseDto } from './dto/crear-clase.dto.js';
 import { CrearPostulacionDto } from './dto/crear-postulacion.dto.js';
+import { EditarClaseDto } from './dto/editar-clase.dto.js';
 import { PostulacionesRateLimitGuard } from './postulaciones-rate-limit.guard.js';
 
 @Controller('clases')
@@ -94,8 +93,8 @@ export class ClasesController {
     @Param('id')
     id: string,
 
-    @Body(new ValidationPipe({ transform: true, whitelist: true, expectedType: CrearClaseDto }))
-    datos: CrearClaseDto,
+    @Body(new ValidationPipe({ transform: true, whitelist: true, expectedType: EditarClaseDto }))
+    datos: EditarClaseDto,
   ) {
     return this.clasesService.actualizarClase(Number(id), datos);
   }

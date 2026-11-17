@@ -9,15 +9,15 @@ import { libroNuevo } from '../portal/libro.js';
 import { validarEdadTurno } from '../portal/registros.js';
 import { catalogo, prepararTurnos } from '../portal/turnos.js';
 import { enClaseCompartida } from './cola-clases.js';
-import { CrearClaseDto } from './dto/crear-clase.dto.js';
 import { CrearPostulacionDto } from './dto/crear-postulacion.dto.js';
+import { EditarClaseDto } from './dto/editar-clase.dto.js';
 import { comprobarDisponibilidad, validarHorarioClase } from './horarios-clase.js';
 import { ClasesRepository } from './repositories/clases.repository.js';
 import { PostulacionesRepository } from './repositories/postulaciones.repository.js';
 
 @Injectable()
 export class ClasesService {
-  private ultimoId = 0;
+  private ultimoIdPostulacion = 0;
 
   private enClase<T>(claseId: number, operacion: () => Promise<T>): Promise<T> {
     return enClaseCompartida(claseId, operacion);
@@ -120,46 +120,6 @@ export class ClasesService {
     return (await this.postulacionesRepository.obtenerTodas()).filter((p) => p.origen !== 'manual');
   }
 
-  async crearClase(datos: CrearClaseDto) {
-    return this.enClase(0, async () => {
-      validarHorarioClase(datos);
-      const clases = await this.clasesRepository.obtenerTodas();
-      const fechaFin = this.calcularFechaFin(datos.fechaInicio, datos.duracion);
-
-      comprobarDisponibilidad({ ...datos, fechaFin }, clases);
-      this.ultimoId = Math.max(Date.now(), this.ultimoId + 1);
-      const nuevaClase = {
-        id: this.ultimoId,
-
-        nivel: datos.nivel,
-
-        sede: datos.sede,
-
-        frecuencia: datos.frecuencia,
-
-        profesor: datos.profesor,
-
-        horaInicio: datos.horaInicio,
-
-        horaFin: datos.horaFin,
-
-        tarifa: datos.tarifa,
-
-        cupos: datos.cupos,
-
-        cuposDisponibles: datos.cupos,
-
-        fechaInicio: datos.fechaInicio,
-
-        duracion: datos.duracion,
-
-        fechaFin: fechaFin,
-      };
-
-      return this.clasesRepository.guardar(nuevaClase);
-    });
-  }
-
   async crearPostulacion(datos: CrearPostulacionDto) {
     return this.enClase(datos.turnoId ?? datos.claseId, async () => {
       const clase = await this.obtenerClase(datos.turnoId ?? datos.claseId);
@@ -222,13 +182,13 @@ export class ClasesService {
         );
       }
 
-      this.ultimoId = Math.max(
+      this.ultimoIdPostulacion = Math.max(
         Date.now(),
-        this.ultimoId + 1,
+        this.ultimoIdPostulacion + 1,
         ...postulaciones.map((p) => p.id + 1),
       );
       const postulacion = {
-        id: this.ultimoId,
+        id: this.ultimoIdPostulacion,
         nombre: datos.nombre,
         telefono: datos.telefono,
         correo,
@@ -326,7 +286,7 @@ export class ClasesService {
     };
   }
 
-  async actualizarClase(id: number, datos: CrearClaseDto) {
+  async actualizarClase(id: number, datos: EditarClaseDto) {
     return this.enClase(0, async () => {
       const clases = await this.clasesRepository.obtenerTodas();
 

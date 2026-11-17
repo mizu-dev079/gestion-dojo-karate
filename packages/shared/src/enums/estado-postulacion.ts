@@ -12,14 +12,6 @@ export const ESTADOS_POSTULACION = [
 
 export type EstadoPostulacion = (typeof ESTADOS_POSTULACION)[number];
 
-export const ETIQUETA_ESTADO_POSTULACION: Record<EstadoPostulacion, string> = {
-  pendiente: 'Pendiente',
-  aceptado: 'Aceptado',
-  aprobado: 'Aprobado',
-  rechazado: 'Rechazado',
-  ignorado: 'Ignorado',
-};
-
 /** Estados que descuentan un cupo de la clase. */
 export const ESTADOS_QUE_OCUPAN_CUPO: readonly EstadoPostulacion[] = ['aceptado', 'aprobado'];
 

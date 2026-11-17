@@ -1,3 +1,4 @@
+import type { PostulacionDto as Postulacion } from '@dojo/shared';
 import { ConflictException, Injectable } from '@nestjs/common';
 import { env } from '../../config/env.js';
 import { crearClienteSheets } from '../../google/sheets.client.js';
@@ -7,7 +8,6 @@ import {
   guardarPostulacion,
   leerPostulaciones,
 } from '../../portal/registros.js';
-import { Postulacion } from '../interfaces/postulacion.interface.js';
 
 @Injectable()
 export class PostulacionesRepository {

@@ -19,7 +19,7 @@ const limpiarTexto = ({ value }: { value: unknown }) =>
   typeof value === 'string' ? value.trim() : value;
 const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
-export class CrearClaseDto {
+export class EditarClaseDto {
   @Transform(limpiarTexto)
   @IsString()
   @IsNotEmpty({ message: 'Completa este campo.' })

@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
+import type { ClaseDto as Clase } from '@dojo/shared';
 import { BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { z } from 'zod';
 import type { Sesion as Acceso } from '../auth/sesion.js';
-import type { Clase } from '../clases/interfaces/clase.interface.js';
 import { hoyLima, recalcular, type Seguimiento, seguimientoSchema } from './seguimiento.js';
 
 export const fechaSesion = z

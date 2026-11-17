@@ -1,4 +1,4 @@
-import type { ClaseDto, CrearClaseInput } from '@dojo/shared';
+import type { ClaseDto, EditarClaseInput } from '@dojo/shared';
 import { BadRequestException, ConflictException } from '@nestjs/common';
 
 type Horario = Pick<
@@ -18,7 +18,7 @@ function fechaUtc(valor: string): number | null {
     : fecha.getTime();
 }
 
-export function validarHorarioClase(datos: CrearClaseInput, permanente = false) {
+export function validarHorarioClase(datos: EditarClaseInput, permanente = false) {
   if (!permanente && fechaUtc(datos.fechaInicio) === null)
     throw new BadRequestException('La fecha de inicio no es válida.');
   if (!permanente && !['1 semana', '2 semanas', '3 semanas', '1 mes'].includes(datos.duracion))

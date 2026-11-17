@@ -47,6 +47,6 @@ La dirección pública `/formulario?clase=ID` se conserva para que sigan funcion
 
 ## Backend y código compartido
 
-La API conserva la convención de NestJS por módulo: `apps/api/src/clases/`, `profesores/` y `auth/`. Dentro de cada módulo, los sufijos `.controller.ts`, `.service.ts`, `.module.ts`, `.dto.ts` y `.repository.ts` indican la función del archivo. Los tipos y estados comunes están en `packages/shared/src/`.
+La API conserva la convención de NestJS por módulo: `apps/api/src/clases/`, `profesores/` y `auth/`. Dentro de cada módulo, los sufijos `.controller.ts`, `.service.ts`, `.module.ts`, `.dto.ts` y `.repository.ts` indican la función del archivo. Los tipos y estados comunes están en `packages/shared/src/` y se importan directamente desde `@dojo/shared`. La edición de turnos utiliza `EditarClaseDto`; no existe un servicio interno de creación de clases.
 
 La navegación inferior incluye **Alumnos**. El registro y la gestión de ambos perfiles se unifican en **Usuario → Profesores y alumnos**. Consulta [planes y asistencia](06-alumnos-asistencia.md) para conocer los planes, recuperaciones y permisos.

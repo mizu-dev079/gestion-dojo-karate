@@ -1,5 +1,5 @@
+import type { ClaseDto as Clase } from '@dojo/shared';
 import type { Sesion } from '../auth/sesion.js';
-import type { Clase } from '../clases/interfaces/clase.interface.js';
 import { aplicarComando, comandoSchema, resumir, type Seguimiento, vacio } from './seguimiento.js';
 import {
   cambiarSesion,
