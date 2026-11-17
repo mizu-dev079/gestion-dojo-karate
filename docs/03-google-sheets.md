@@ -1,92 +1,115 @@
 # 3. Datos en Google Sheets
 
-La API utiliza la hoja configurada en `GOOGLE_SPREADSHEET_ID`. La estructura profesional separa personas, solicitudes, inscripciones y movimientos en pestañas relacionadas. La pestaña Guía es informativa y no la modifica la app.
+La API utiliza la hoja indicada en `GOOGLE_SPREADSHEET_ID`. Esta guía describe la **estructura vigente**, con clases y turnos separados, renovaciones de paquetes y pestañas individuales para asistencia de alumnos y profesores. Sheets conserva los datos; la operación cotidiana se realiza desde la app.
 
-## Encabezados y relaciones
+## Pestañas y encabezados actuales
 
-La fila 1 contiene los encabezados del Excel importado. Su orden y nombre deben conservarse. Se ignoran las filas sin valores, aunque tengan formato. Una cabecera incorrecta, un identificador vacío o duplicado, o columnas adicionales desconocidas detienen las escrituras antes de modificar datos.
+La fila 1 contiene los encabezados. Deben conservarse el nombre y el orden de las columnas. Las filas completamente vacías se ignoran aunque tengan formato. No cambiar identificadores ni agregar columnas de uso personal dentro de las tablas administradas por la app.
 
-Los IDs de clases, profesores, postulaciones, alumnos e inscripciones son números enteros positivos. Los genera la aplicación, salvo los grupos oficiales que se cargan en Sheets: para ellos se asignan IDs estables, por ejemplo 1, 2 y 3, mostrando temporalmente la columna oculta. Los IDs no deben cambiar al ordenar o renombrar un registro. Los IDs de pagos, cuentas, recuperaciones y congelamientos son UUID; el de sesión combina turno y fecha.
+El orden de la tabla corresponde al de las pestañas de la hoja; `ControlSistema` es una pestaña oculta. `Guía` contiene instrucciones y no la administra la API.
 
 | Pestaña | Columnas, en orden |
 | --- | --- |
-| Clases | ID clase · Nombre del grupo · Sede · Días · Hora inicio · Hora fin · ID profesor · Profesor habitual · Cupos totales · Cupos ocupados · Cupos disponibles · Estado |
-| Profesores | ID profesor · Nombre completo · Celular · Correo · Estado · Fecha de registro |
-| Postulaciones | ID postulación · Fecha de envío · Nombre completo · Fecha de nacimiento · Celular · Correo · Nombre del apoderado · Celular del apoderado · Correo del apoderado · ID clase solicitada · Clase solicitada · Estado · Fecha de revisión · Revisado por · Observaciones · Versión del consentimiento · Fecha del consentimiento · ID alumno generado |
-| Alumnos | ID alumno · Nombre completo · Fecha de nacimiento · Celular · Correo · Nombre del apoderado · Celular del apoderado · Correo del apoderado · Estado · Fecha de registro · Origen · ID postulación |
-| Inscripciones | ID inscripción · ID alumno · Alumno · ID clase · Clase · Fecha de ingreso · ID plan actual · Plan actual · Días contratados · Estado · Clases pendientes · Fecha de baja · Motivo de baja |
+| Clases | ID clase · Nombre de la clase · Estado |
+| Turnos | ID turno · ID clase · Turno · Sede · Días · Hora inicio · Hora fin · Edad mínima · Edad máxima · ID profesor · Profesor habitual · Cupos totales · Cupos ocupados · Cupos disponibles · Estado |
 | Planes | ID plan · Nombre · Cantidad de clases · Precio S/ · Recuperaciones predeterminadas · Estado |
-| Pagos | ID pago · ID inscripción · Alumno · Fecha de pago · Plan contratado · Clases contratadas · Importe pagado S/ · Medio de pago · Referencia · Límite de recuperaciones · Clases pendientes · Registrado por · Observaciones |
-| Sesiones | ID sesión · ID clase · Clase · Fecha · Hora inicio · Hora fin · Profesor habitual · ID profesor responsable · Profesor responsable · Asistencia del profesor · Estado de sesión · Motivo de cancelación · Actualizado por · Fecha de actualización |
-| Asistencias | ID asistencia · ID sesión · ID inscripción · Alumno · Estado · ID pago utilizado · Registrado por · Fecha de registro · Observaciones |
-| Recuperaciones | ID recuperación · ID asistencia original · ID inscripción · Alumno · ID pago · Fecha de la inasistencia · Motivo de justificación · Estado · Autorizado por · Fecha de autorización · Motivo de revocación · Fecha de revocación |
+| Profesores | ID profesor · Nombre completo · Celular · Correo · Estado · Fecha de registro |
+| Alumnos | ID alumno · Nombre completo · Fecha de nacimiento · Celular · Correo · Nombre del apoderado · Celular del apoderado · Correo del apoderado · Estado · Fecha de registro · Origen · ID postulación |
+| Sesiones y profesores | ID sesión · ID clase · Clase · Fecha · Hora inicio · Hora fin · Profesor habitual · ID profesor responsable · Profesor responsable · Asistencia del profesor · Estado de sesión · Motivo de cancelación · Actualizado por · Fecha de actualización |
+| Asistencias de alumnos | ID asistencia · ID sesión · ID inscripción · Alumno · Estado · ID renovación utilizada · Registrado por · Fecha de registro · Observaciones |
+| Postulaciones | ID postulación · Fecha de envío · Nombre completo · Fecha de nacimiento · Celular · Correo · Nombre del apoderado · Celular del apoderado · Correo del apoderado · ID clase solicitada · Clase solicitada · Estado · Fecha de revisión · Revisado por · Observaciones · Versión del consentimiento · Fecha del consentimiento · ID alumno generado · ID turno · Turno |
+| Inscripciones | ID inscripción · ID alumno · Alumno · ID clase · Clase · Fecha de ingreso · ID plan actual · Plan actual · Días contratados · Estado · Clases pendientes · Fecha de baja · Motivo de baja · ID turno · Turno |
+| Renovaciones | ID renovación · ID inscripción · Alumno · Fecha de activación · Plan · Clases otorgadas · Límite de recuperaciones · Clases pendientes · Registrado por · Observaciones |
+| Recuperaciones | ID recuperación · ID asistencia original · ID inscripción · Alumno · ID renovación · Fecha de la inasistencia · Motivo de justificación · Estado · Autorizado por · Fecha de autorización · Motivo de revocación · Fecha de revocación |
 | Congelamientos | ID congelamiento · ID inscripción · Alumno · Fecha de solicitud · Motivo · Estado · Fecha de inicio · Fecha prevista de regreso · Fecha real de reactivación · Autorizado por · Fecha de resolución · Respuesta u observaciones |
 | CuentasDojo | Nombre completo · Perfil · Usuario · Correo · Celular · Estado de cuenta · Fecha de creación · ID cuenta · ID profesor · ID alumno · cuentaJson |
+| Guía | Contenido de ayuda; sin encabezados de datos exigidos por la API |
+| ControlSistema | Tipo · ID · Versión · Datos internos |
 
-`Clases` utiliza grupos permanentes, días separados por comas y horas HH:mm. El profesor se relaciona por ID; su nombre se consulta desde Profesores. Los precios pertenecen a Planes, no al grupo. La edición de grupos en la app no exige vigencia ni tarifa para esta estructura. Desactivar un grupo o profesor conserva sus registros históricos; un grupo con inscripciones activas no se puede desactivar mediante Eliminar.
+### Columnas técnicas añadidas al registrar movimientos
 
-Los estados se escriben con las etiquetas de la plantilla: Activa/Inactiva, Activo/Inactivo, Pendiente/Aceptada/Rechazada/Cancelada, Programada/Realizada/Cancelada, etc. No introducir filas ficticias para preparar una pestaña vacía.
+La API amplía las tablas que lo necesitan sin que el usuario tenga que crear estas columnas:
 
-## Clases con turnos
+| Pestaña | Columnas adicionales | Uso |
+| --- | --- | --- |
+| Sesiones y profesores | O: ID turno · P: Turno | Relación de la sesión con su horario concreto; las columnas actuales A:N se conservan |
+| Asistencias de alumnos | J: Política interna | Conserva la política aplicada al registro de asistencia |
+| Congelamientos | M: Tipo de registro | Distingue `Solicitud` y `Período` |
 
-Al confirmar **Clases → Preparar clases y turnos**, Clases pasa a contener `ID clase · Nombre de la clase · Estado`. Se crea Turnos con las columnas `ID turno · ID clase · Turno · Sede · Días · Hora inicio · Hora fin · Edad mínima · Edad máxima · ID profesor · Profesor habitual · Cupos totales · Cupos ocupados · Cupos disponibles · Estado`.
+Estas columnas pueden no aparecer mientras no haya movimientos que requieran guardarlas. No deben rellenarse ni eliminarse manualmente. `Postulaciones` e `Inscripciones` ya incluyen sus columnas de turno en la estructura actual.
 
-La tabla anterior describe el formato compatible previo a esa preparación. Con Turnos, las relaciones originales de Postulaciones, Inscripciones y Sesiones apuntan a la categoría. Se añaden `ID turno · Turno` en Postulaciones S/T, Inscripciones N/O y Sesiones O/P. La preparación mantiene los IDs anteriores como IDs de turno y conserva sus movimientos; no migra automáticamente al consultar.
+## Catálogos y relaciones
 
-Cada turno tiene sus propios cupos y profesor. La sede y el profesor activo son obligatorios para admitir inscripciones. Los horarios oficiales y el procedimiento se detallan en [Clases oficiales](08-clases-oficiales.md).
+- **Clases:** contiene únicamente Mini Samuráis, Jóvenes Guerreros y Avanzados. Sus tres columnas identifican la categoría; aquí no se guardan horarios, profesor, sede ni precios.
+- **Turnos:** contiene los cinco horarios oficiales, con días, edades, sede, profesor y cupos propios. El campo `ID clase` apunta a Clases; `ID profesor`, a Profesores. Los nombres de turno pueden ser breves porque días y edades tienen columnas separadas.
+- **Planes:** contiene los paquetes de 4, 8 y 12 clases, su precio de referencia y el límite predeterminado de recuperaciones. No representa pagos realizados.
+- **Profesores y Alumnos:** identifican personas. **Inscripciones** relaciona a cada alumno con su clase, turno y plan.
+- **Postulaciones:** conserva la solicitud original y su revisión. La aceptación crea alumno e inscripción y reserva el cupo sin borrar la solicitud.
+- **Renovaciones:** conserva los paquetes habilitados, sus clases pendientes y sus límites de recuperación. No guarda importes cobrados, medios de pago ni comprobantes.
+- **Sesiones y profesores:** registra la sesión por turno y fecha y la asistencia del profesor responsable. **Asistencias de alumnos** registra la participación individual de cada inscrito en esa sesión.
+- **Recuperaciones y Congelamientos:** registran las autorizaciones, solicitudes y períodos relacionados con cada inscripción.
+- **CuentasDojo:** relaciona el acceso con el profesor o alumno. **ControlSistema** conserva versiones, auditoría y metadatos internos del seguimiento.
 
-`GET /clases/catalogo` devuelve las tres clases con sus turnos. Por compatibilidad, `GET /clases`, `/clases/:id` y los DTO de seguimiento siguen identificando el horario concreto con `id` o `claseId`. El alta pública y manual envía `claseId` de la categoría y `turnoId` del horario; se valida que correspondan entre sí.
+Los identificadores principales de clases, turnos, profesores, postulaciones, alumnos e inscripciones son numéricos. Los IDs de cuentas y movimientos como renovaciones, recuperaciones y congelamientos se generan como UUID. El ID de sesión combina `ID turno:AAAA-MM-DD`; el de asistencia relaciona inscripción y fecha. No modificar IDs al ordenar filas o cambiar nombres.
 
-## Postulación, inscripción y acceso
+Los días del turno se guardan separados por comas y las horas en `HH:mm`. Los cupos se calculan por inscripción aceptada en cada turno; una postulación pendiente no reserva vacante. Un alumno congelado conserva su cupo.
 
-1. El formulario público registra solo una postulación pendiente, con consentimiento y datos del apoderado cuando corresponde. No reserva cupo.
-2. Aceptar crea el alumno, la inscripción y la reserva del cupo, y actualiza la postulación en una sola operación atómica. Repetir la aceptación no duplica registros. No se unen personas únicamente por correo, ya que puede ser compartido por familiares.
-3. El profesor ve la inscripción aceptada al actualizar Alumnos o Sesiones. La identidad del alumno y la de la inscripción están separadas; la API de seguimiento utiliza el ID de inscripción.
-4. Desde Usuario → Profesores y alumnos → Alumnos aceptados sin acceso se crea la cuenta con usuario y contraseña. Esta acción no crea otra persona ni ocupa otro cupo.
-5. El registro manual continúa disponible y crea alumno, inscripción y cuenta juntos, sin inventar una postulación pública o un consentimiento.
+## Configuración y registros de uso diario
 
-El alta **Registrar alumno** avisa si una postulación pendiente coincide en nombre, celular o correo. Permite abrir la solicitud en otra pestaña y conservar el formulario. Aceptar esa solicitud y usar **Crear acceso** conserva una sola persona e inscripción. Si corresponde a otra persona, administración debe confirmar expresamente que revisó las coincidencias; no se fusionan registros por compartir datos. La API vuelve a comprobar las solicitudes dentro de la operación de escritura para detectar también las recibidas mientras se completaba el formulario.
+| Tipo de información | Gestión |
+| --- | --- |
+| Clases y Planes | Catálogos oficiales ya cargados; no se agregan clases desde la app |
+| Turnos | Sede, días, horario, profesor y cupos se ajustan desde Editar turno |
+| Profesores, Alumnos y CuentasDojo | Alta y administración desde Usuario → Profesores y alumnos |
+| Postulaciones e Inscripciones | Se generan al enviar y aceptar solicitudes o registrar alumnos manualmente |
+| Renovaciones | Se generan al activar o renovar un plan desde la app |
+| Sesiones y profesores y Asistencias de alumnos | Se registran desde Calendario |
+| Recuperaciones y Congelamientos | Se generan mediante las acciones y solicitudes del plan |
+| ControlSistema | Uso automático de la API; no editar |
+| Guía | Ayuda para consultar la hoja; no contiene registros operativos |
 
-Una postulación ya inscrita no se rechaza o elimina para dar de baja a la persona: se protege su historial. Los campos de baja están previstos en la hoja; una gestión completa de bajas y liquidación económica requiere definir sus reglas y su interfaz.
+Las columnas de ID o datos internos pueden estar ocultas o recortadas por presentación; siguen formando parte de las relaciones. No borrar una fila de persona, cuenta o inscripción para corregir un saldo o un cupo.
 
-## Planes y seguimiento
+## Postulación, inscripción y cuenta
 
-Sheets se utiliza como almacenamiento. Administración gestiona activaciones y renovaciones desde la app; profesores gestionan asistencia y autorizaciones. No se requiere que el cliente edite celdas.
+1. El formulario público guarda una postulación pendiente, con consentimiento y datos del apoderado cuando corresponde.
+2. Aceptar crea alumno e inscripción, reserva el cupo y actualiza la solicitud en una única operación. Repetir la aceptación no duplica registros.
+3. El profesor consulta al alumno aceptado dentro de su turno, aunque todavía no se haya creado su cuenta.
+4. En Usuario → Profesores y alumnos → Alumnos, el apartado de aceptados sin acceso permite **Crear acceso y activar plan** sin registrar de nuevo a la persona ni ocupar otro cupo. El plan inicial es opcional; si ya existe, se conserva su saldo.
+5. El registro manual permite crear persona, inscripción, cuenta y plan inicial opcional en una sola operación. No inventa una postulación pública ni su consentimiento.
 
-Planes conserva los paquetes oficiales y sus precios de referencia. La activación y renovación solo habilitan clases; los cobros se coordinan externamente.
+La aplicación avisa si el registro manual coincide con solicitudes pendientes. La revisión se hace antes de guardar; no se unen personas solo por compartir correo o celular. La postulación ya inscrita se protege frente a rechazo o eliminación para conservar su historial.
 
-La tabla inicial **Pagos** de la plantilla se admite por compatibilidad. En la primera acción `activarPlan`, `renovarPlan` o `configurarPlan`, se reemplaza por **Renovaciones** con estas columnas: `ID renovación · ID inscripción · Alumno · Fecha de activación · Plan · Clases otorgadas · Límite de recuperaciones · Clases pendientes · Registrado por · Observaciones`. También se actualizan los encabezados relacionados a `ID renovación utilizada` en Asistencias y `ID renovación` en Recuperaciones, conservando los mismos IDs.
+## CuentasDojo y datos internos
 
-La creación de Renovaciones, copia de paquetes y relaciones, eliminación de la pestaña anterior y operación del alumno se ejecutan en un único lote atómico. Si falla, la hoja conserva la estructura anterior. No crear ambas pestañas manualmente. La lectura no inicia la adaptación y las instancias antiguas de la API deben detenerse antes de la primera operación nueva.
+En CuentasDojo, **A:G** muestran nombre, perfil, usuario, contacto, estado y fecha de creación; **H:J** contienen los IDs; **K** contiene `cuentaJson`.
 
-Los movimientos se guardan como filas legibles en Renovaciones, Asistencias, Recuperaciones y Congelamientos. Se reconstruye el seguimiento por inscripción y se recalcula el consumo de los paquetes más antiguos primero. Las clases se conservan hasta completarlas; renovar mantiene el saldo. Cancelar una sesión del dojo devuelve descuentos y libera las recuperaciones de esa fecha.
+El JSON conserva usuario, perfil, asignaciones, revisión y la contraseña derivada mediante scrypt y una sal aleatoria; no contiene la contraseña en texto claro. La API no devuelve hashes ni sales en sus respuestas de consulta. No editar el JSON ni las columnas legibles para cambiar permisos: utilizar la gestión de cuentas de la app.
 
-La app añade dos columnas cuando hay movimientos que las necesitan: `Asistencias!J`, Política interna, conserva la política aplicada al registro; `Congelamientos!M`, Tipo de registro, distingue Solicitud y Período. Una solicitud aprobada se conserva como Aprobada y el período autorizado como Activo/Finalizado. Esto permite conservar el historial de ambas operaciones.
-
-En la primera operación que necesite auditoría se crea automáticamente la pestaña oculta `ControlSistema`, con Tipo, ID, Versión y Datos internos. Conserva versiones, auditorías y metadatos de compatibilidad del plan; no sustituye las tablas legibles de movimientos. No se crean SeguimientoAlumnos ni SesionesDojo en la estructura nueva.
-
-Consultar no crea registros. Las escrituras actualizan únicamente valores, conservando el formato del Excel importado. Las cadenas se escriben como texto literal, incluso si empiezan por `=`. Los lotes relacionados se envían mediante un único `spreadsheets.batchUpdate` atómico. Todas las escrituras de esta estructura comparten una cola dentro de la instancia de API; no se proporciona coordinación distribuida ni protección frente a ediciones manuales concurrentes. Se requiere una sola instancia escritora y evitar editar datos simultáneamente desde Sheets.
-
-Las lecturas concurrentes se agrupan cuando es posible para reducir solicitudes a Google. No hay una caché temporal persistente de saldos. Se detiene una escritura si una celda supera el límite preventivo de 45 000 caracteres. Los historiales de auditoría extensos y el crecimiento del volumen requieren una base de datos.
-
-## Compatibilidad
-
-Se detecta la nueva estructura por Inscripciones y se validan las doce pestañas antes de escribir. Se mantiene lectura y escritura de la estructura anterior si la hoja sigue utilizándola; no se migran ni eliminan filas automáticamente. No mezclar encabezados antiguos y nuevos. Si aparecen pestañas nuevas y falta Inscripciones, se informa el error en lugar de iniciar escrituras antiguas.
-
-## Autenticación de Google
-
-La edición anónima por enlace en el navegador no sustituye la autenticación que necesita la API. Se mantiene el mismo `GOOGLE_SPREADSHEET_ID` si se reemplazó el contenido de la hoja original.
-
-La API utiliza `GOOGLE_CREDENTIALS_JSON`, con credenciales disponibles directamente en el proceso, o el archivo privado indicado en `GOOGLE_CREDENTIALS_PATH` (por defecto `credentials/google-service-account.json`, relativo a apps/api). La cuenta de servicio debe tener permiso de Editor. No subir llaves a Git ni escribirlas en celdas. Los secretos de proxy que solo sustituyen credenciales en solicitudes de red no sirven para firmar localmente un JWT con una llave JSON.
-
-Antes de usar datos oficiales se deben completar la carga de grupos, asignaciones de profesores, pruebas de aceptación y respaldo de la hoja. Las pruebas automatizadas usan Google simulado y no modifican la hoja real.
-
-## Nombres de las pestañas de asistencia
-
-Las pestañas visibles se llaman **Asistencias de alumnos** (antes Asistencias) y **Sesiones y profesores** (antes Sesiones). Los encabezados, identificadores y relaciones no cambian. La API admite tanto los nombres anteriores como los nuevos y escribe en la pestaña existente, sin crear copias. No deben coexistir ambos nombres para el mismo tipo de registro. La asistencia del profesor continúa vinculada a su sesión; no se duplica en la tabla de alumnos.
+`ControlSistema` guarda versiones y auditorías, el cambio de plan programado y los días propios de cada paquete. Los nombres internos `pagos` o `pagoId` de algunos DTO representan paquetes y renovaciones; no implican una pestaña Pagos ni un módulo de cobros.
 
 ## Fechas y zona horaria
 
-La hoja utiliza **America/Lima** y las columnas de fecha muestran únicamente **dd-mm-aaaa**. Se guardan como fechas nativas de Sheets, con formato `dd-mm-yyyy`. Las horas de registro se conservan internamente aunque no aparezcan en la celda; la API convierte los instantes entre UTC y Lima. Por ejemplo, `2026-11-17T02:49:32.130Z` se muestra como **16-11-2026**.
+La hoja utiliza **America/Lima** y las columnas de fecha muestran **dd-mm-aaaa**. Se guardan como fechas nativas de Sheets, con formato técnico `dd-mm-yyyy`. Las horas de registro se conservan aunque no aparezcan en pantalla.
 
-Las fechas de nacimiento, sesiones, activaciones y regresos son fechas civiles: no se les restan cinco horas. La API sigue entregando fechas ISO para los formularios y admite tanto los valores ISO anteriores como las fechas nativas. Los identificadores y los JSON internos no se reformatean. Tras actualizar la hoja, las instancias de la aplicación deben utilizar esta versión de la API antes de registrar movimientos.
+Un instante como `2026-11-17T02:49:32.130Z` corresponde al **16-11-2026** en Lima. Las fechas civiles de nacimiento, sesión, activación o regreso no se desplazan cinco horas. La API entrega fechas ISO para los formularios y normaliza la lectura y escritura de las fechas nativas.
+
+## Escrituras y consistencia
+
+Consultar no crea sesiones, asistencias ni movimientos. Las operaciones relacionadas se guardan en un lote atómico de `spreadsheets.batchUpdate`: un fallo no debe dejar un alta o una activación parcial. Se conservan los formatos, salvo los ajustes de fecha o de estructura que realiza la propia API; las cadenas de texto se escriben literalmente, sin ejecutarlas como fórmulas.
+
+Las escrituras se serializan dentro de una instancia de API y el seguimiento exige una versión para detectar cambios concurrentes. Estas protecciones no coordinan varias instancias ni ediciones manuales simultáneas en Sheets. Tras un conflicto se actualizan los datos antes de reintentar. Existe un límite preventivo de 45 000 caracteres por celda interna; no se truncan historiales para forzar su guardado.
+
+Los estados se escriben con las etiquetas utilizadas por cada tabla: Activa/Inactiva, Activo/Inactivo, Pendiente/Aceptada/Rechazada/Cancelada y Programada/Realizada/Cancelada. Las solicitudes de congelamiento y los períodos se distinguen por su tipo de registro.
+
+## Conexión de Google
+
+La hoja se identifica mediante `GOOGLE_SPREADSHEET_ID`. Si se reemplaza el contenido de la misma hoja, el ID se mantiene. Debe compartirse como Editor con el correo de la cuenta de servicio y tener habilitada Google Sheets API.
+
+La API utiliza `GOOGLE_CREDENTIALS_JSON` o el archivo indicado en `GOOGLE_CREDENTIALS_PATH`, por defecto `credentials/google-service-account.json`, relativo a `apps/api`. La credencial se conserva en privado, fuera de Git, celdas y carpetas compartidas. Un enlace editable en el navegador no sustituye esta autenticación.
+
+## Compatibilidad interna
+
+El backend conserva lectores y adaptadores de formatos antiguos. Algunas constantes de `estructura.ts` mantienen sus nombres anteriores por ese motivo; no deben utilizarse como plantilla de la hoja actual. La escritura selecciona los encabezados vigentes de Clases y Renovaciones y los nombres actuales de asistencia.
+
+No crear pestañas Pagos, Sesiones, Asistencias, SeguimientoAlumnos o SesionesDojo para reproducir una plantilla anterior. La hoja vigente utiliza los nombres de la tabla de esta guía. La [API simulada de colaboración](09-colaboracion-simulada.md) no consulta ni modifica esta hoja.

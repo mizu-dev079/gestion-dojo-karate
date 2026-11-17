@@ -1,71 +1,80 @@
-> En la estructura profesional, los datos legibles de CuentasDojo ocupan A:G, los identificadores H:J y cuentaJson K. La compatibilidad con A/B descrita más abajo corresponde a la hoja anterior. Consultar [estructura actual](03-google-sheets.md).
-
 # Cuentas y perfiles
 
-Hay tres perfiles: **administrador, profesor y alumno**. El rol no se elige en el login: se obtiene de la cuenta autenticada.
+La aplicación tiene tres perfiles: **administrador, profesor y alumno**. El perfil se obtiene de la cuenta autenticada y no se elige en el login. Esta guía describe las cuentas del sistema real; las cuentas ficticias de colaboración se detallan [por separado](09-colaboracion-simulada.md).
 
-## Activación
+## Registro y acceso
 
-1. El administrador continúa ingresando con `ADMIN_USUARIO` y `ADMIN_PASSWORD` configurados en el entorno. Las sesiones de ese administrador mantienen compatibilidad.
-2. Entrar a **Usuario → Profesores y alumnos** y elegir Profesores o Alumnos. Cada apartado reúne sus registros y permite crear cuentas.
-3. Para Profesor, pulsar **Crear cuenta de profesor**: nombre obligatorio, teléfono y correo opcionales. Para un alumno nuevo, usar **Registrar alumno** y completar sus datos, clase, turno y credenciales. Si ya tiene una postulación aceptada, usar **Crear acceso y activar plan** desde la lista de aceptados sin acceso: se conserva su inscripción y su cupo.
+El administrador inicial utiliza `ADMIN_USUARIO` y `ADMIN_PASSWORD`. Las cuentas de profesor y alumno se administran en **Usuario → Profesores y alumnos**:
 
-   En ambos caminos del alumno se ofrece **Activar plan al crear el acceso**, marcado por defecto. Se elige el paquete de 4, 8 o 12 clases, los días del turno y la fecha de activación. Cuenta y plan se guardan en un único lote atómico; un error no deja registros parciales. Se puede desmarcar para crear solo el acceso. Si el alumno ya tiene un plan, se crea únicamente el acceso y se conserva su saldo. Una activación recibida desde otra pantalla mientras el formulario estaba abierto se vuelve a comprobar antes de guardar.
-4. Entregar usuario y contraseña inicial por un medio privado. El titular puede cambiar su contraseña desde **Usuario**. Las contraseñas requieren al menos 8 caracteres. No hay registro público ni contraseñas compartidas predeterminadas.
-5. Desactivar acceso o restablecer contraseña desde la cuenta. Ambas acciones invalidan sesiones existentes inmediatamente; el usuario debe volver a ingresar.
+| Apartado | Ruta | Operaciones |
+| --- | --- | --- |
+| Profesores | `/profesores` | Listado por nombre, creación de profesor y cuenta, estado del registro, acceso y contraseña |
+| Alumnos | `/cuentas/alumnos` | Listado por nombre, registro manual, creación de acceso para aceptados y administración de sus cuentas |
 
-El administrador configurado en el entorno no se desactiva ni cambia de contraseña mediante esta pantalla. La gestión permite crear cuentas de profesor y alumno; no crea administradores adicionales.
+El menú `/cuentas` ofrece esos dos apartados. Cada ficha despliega sus datos al pulsar el nombre. El nombre es obligatorio; celular y correo son opcionales. Cuando se ingresa celular, debe contener exactamente nueve dígitos.
 
-Cada cuenta de profesor queda asociada al registro nuevo creado en esa misma operación. No existe la opción de vincular profesores anteriores ni de reasignar la cuenta a otra persona. Para recuperar el acceso de un profesor ya creado se restablece su contraseña, sin duplicar su perfil. Las cuentas de alumno conservan la inscripción nueva creada con su alta manual.
+### Profesor
 
-## Permisos
+**Crear cuenta de profesor** crea el registro y su cuenta en una misma operación. No selecciona profesores anteriores para vincularlos ni reasigna la cuenta a otra persona. La recuperación de una cuenta existente se realiza mediante restablecimiento de contraseña.
 
-Todas las rutas privadas son **solo de administración por defecto**. Solo `/auth/me`, cierre de sesión, cambio de contraseña propio y las rutas de alumnos declaran acceso a los otros perfiles. Las rutas públicas existentes del formulario QR continúan públicas.
+La asignación a sus grupos se realiza en **Clases → Editar turno**, seleccionando al profesor activo. La hoja vigente relaciona `Turnos!J` (ID profesor) con `Profesores!A`; el nombre habitual se muestra en `Turnos!K`. Los permisos utilizan el ID del profesor.
 
-El profesor no puede consultar postulaciones generales, gestionar cuentas/profesores, modificar clases ni registrar pagos. Sus alumnos se filtran según el registro de profesor y el nombre de profesor de cada clase. Se exige que ese nombre sea único: la estructura actual de clases almacena nombres, no IDs de profesor. Desactivar/eliminar un profesor o una ambigüedad de nombre bloquea su acceso. Para eliminar esa dependencia se requiere migrar el vínculo de clases a un identificador.
+### Alumno
 
-El alumno solo consulta las inscripciones explícitamente asignadas. Cambiar el ID en la URL no permite ver ni modificar otro alumno. Los permisos se validan en la API; ocultar botones o redirigir páginas solo adapta la navegación.
+El registro manual crea alumno, inscripción y cuenta y reserva el cupo. El formulario solicita los datos personales, la clase, el turno y las credenciales. Si hay solicitudes pendientes coincidentes, se revisan antes de confirmar otra persona.
 
-Inicio por perfil:
+Cuando ya existe una postulación aceptada, se utiliza **Crear acceso y activar plan** desde los aceptados sin acceso. El formulario utiliza esa inscripción y no vuelve a pedir los datos personales ni ocupa otro cupo.
 
-- Administrador: clases y navegación de administración.
-- Profesor: **Mis alumnos y clases**, con filtros de clase/fecha y asistencia.
-- Alumno: **Mi plan y asistencia**, con sus solicitudes e historial.
+En ambos casos, **Activar plan al crear el acceso** está marcado por defecto. Permite elegir paquete de 4, 8 o 12 clases, días del turno y fecha. Cuenta y plan se guardan en un único lote; un error no deja altas parciales. Se puede crear solo el acceso. Si el plan ya existe, se conserva y no se activa otro por error.
 
-## Almacenamiento y seguridad
+El ID alumno de Sheets identifica a la persona. Los `alumnoIds` internos de la cuenta o sesión representan sus inscripciones y se obtienen de la relación con esa persona; no se asignan por coincidencia de correo. La API no acepta seleccionar arbitrariamente `alumnoIds` en un alta manual.
 
-La pestaña `CuentasDojo` conserva las columnas técnicas A/B (`id` y `cuentaJson`) y añade una vista legible en C:H: **Nombre, Correo, Celular, Usuario, Perfil y Estado**. Al crear una cuenta junto con el profesor o alumno se copian sus datos de contacto, incluidos los campos opcionales vacíos. Al actualizar la cuenta se actualiza también su fila visible. Las columnas visibles son una vista de consulta; la configuración de acceso sigue almacenada en el JSON. Los registros anteriores de dos columnas siguen siendo compatibles. La primera fila queda fija y la columna `cuentaJson` se presenta con 110 píxeles y texto recortado para no extender la fila. Se rechaza una escritura si C:H contiene cabeceras ajenas, para no sobrescribir datos del usuario. Se crea solo al guardar la primera cuenta, sin cambiar las pestañas anteriores. Conserva usuario, perfil, asignaciones, estado, revisión y contraseña derivada con **scrypt y una sal aleatoria por cuenta**. No almacena contraseñas en texto claro. Los hashes y sales no se devuelven en los endpoints de consulta o creación.
+## Credenciales y estado
 
-Quien tenga acceso directo a la hoja puede ver/modificar esta información: restringir ese acceso como ya se hace con los datos personales del dojo. No publicar ni compartir la hoja.
+El usuario admite de 3 a 60 caracteres: letras minúsculas, números, punto, guion y guion bajo. Las contraseñas requieren de 8 a 200 caracteres. El contacto no se utiliza obligatoriamente como usuario; no se necesita un correo de Google para ingresar.
 
-El JWT guarda el identificador de cuenta y su revisión. En cada petición se comprueban de nuevo el estado, la revisión y el perfil guardados; no se confía en un rol proporcionado por el cliente. El cambio de contraseña, restablecimiento o desactivación aumenta la revisión. Las cookies mantienen `HttpOnly`, `SameSite=Lax` y `Secure` en producción. Se conserva el límite de intentos de login por IP.
+El login y los formularios de registro permiten mostrar u ocultar la contraseña mientras se escribe. Profesor y alumno pueden cambiar su contraseña desde **Usuario**. Administración puede restablecerla o desactivar el acceso desde su ficha. El cambio, restablecimiento o desactivación invalida las sesiones previas.
 
-Las escrituras de cuentas, como el seguimiento, requieren una sola instancia de la API y no edición manual simultánea de las pestañas. Consultar no crea hojas, y las cabeceras o datos inválidos provocan un error sin sobrescribir el contenido.
+El administrador del entorno no se cambia ni desactiva desde estas pantallas, y el sistema no crea administradores adicionales. El entorno real no incluye cuentas de prueba predeterminadas.
 
-No se han creado cuentas reales ni modificado datos privados durante las pruebas. Se verifican login por perfil, acceso a objetos ajenos, contraseñas, revocación de sesiones y denegación de rutas administrativas usando repositorios simulados.
+## Permisos e inicio por perfil
 
-El contacto del profesor no se usa como usuario de acceso: no necesita teléfono ni correo para iniciar sesión. La lectura de Profesores admite registros anteriores de tres columnas; el alta combinada añade D `telefono` y E `correo` respetando A–C. Para que el profesor vea sus grupos, el nombre en la columna E de `Clases` debe coincidir con su nombre registrado.
+| Perfil | Inicio | Alcance |
+| --- | --- | --- |
+| Administrador | `/clases` | Gestión de clases y turnos, postulaciones, cuentas, planes, asistencia y autorizaciones |
+| Profesor | `/alumnos` | Sus alumnos y turnos, asistencia propia y de alumnos, recuperaciones y congelamientos |
+| Alumno | `/alumnos` | Su plan e historial, avisos o retiro de ausencia en Calendario y solicitudes de congelamiento |
 
-La pantalla **Profesores y alumnos** (`/cuentas`) ofrece únicamente dos accesos: **Profesores** (`/profesores`) y **Alumnos** (`/cuentas/alumnos`). Cada página reúne la consulta y la creación de cuentas. El menú no hace lecturas de registros ni abre el canal de actualizaciones; la sincronización se activa al entrar a un listado. Son páginas separadas, con buscador por nombre siempre visible y actualización automática; los datos de cada persona se despliegan al pulsar su nombre. Desde cada listado también se puede crear una cuenta y regresar al listado correspondiente. En cada registro se administra su acceso y contraseña; en profesores también se conserva la activación/desactivación de su registro y la eliminación con confirmación. La lista de alumnos muestra cuentas registradas, sin convertir postulaciones anteriores sin cuenta en candidatos de alta.
+En `/alumnos`, `InicioPerfil.jsx` selecciona `PanelProfesor.jsx`, `PanelAlumno.jsx` o la gestión administrativa. Los componentes propios de cada perfil están en `apps/web/src/components/perfiles/` y reutilizan la pantalla actual como punto de partida.
 
-El alumno manual y su cuenta se guardan con un único lote atómico: se añade una inscripción nueva aceptada con origen `manual` y se reserva su cupo. La API rechaza `alumnoIds` en el alta y comprueba la clase, sus horarios, cupos y período antes de escribir. La reserva comparte la cola por clase con las aprobaciones de postulaciones de esta instancia para evitar una doble asignación del último cupo. Los datos de prueba existentes no se borran ni se copian al formulario.
+Las rutas privadas son administrativas por defecto. Las de identidad y sesión, cambio de contraseña propio, planes y seguimiento declaran los perfiles admitidos; las sesiones se reservan a profesor y administración. El catálogo, la consulta del turno del formulario y el envío de postulaciones son públicos.
 
-## Acceso después de aceptar una postulación
+El profesor no administra cuentas, no consulta postulaciones generales, no cambia el plan ni renueva paquetes y no cancela sesiones por el dojo. Solo marca su propia presencia en una sesión asignada. Un reemplazante puede tomar asistencia en la sesión concreta que le asignó administración, sin adquirir permisos generales sobre los planes del grupo.
 
-En la estructura profesional, aceptar una solicitud crea el alumno y su inscripción antes de crear su cuenta. En Profesores y alumnos se muestran los alumnos aceptados sin acceso, cada uno con su botón Crear acceso del alumno. El formulario solicita solo usuario y contraseña; usa la inscripción seleccionada y no vuelve a pedir datos personales ni grupo. El endpoint administrativo es `POST /cuentas/inscripciones/:id`.
+El alumno no cambia saldos, asistencias registradas por el profesor ni datos de otra persona. El backend comprueba permisos y asignaciones en cada petición; los botones ocultos y las redirecciones no sustituyen esos controles.
 
-El ID alumno de la hoja identifica a la persona; los `alumnoIds` internos de la sesión identifican sus inscripciones. La API obtiene las inscripciones del alumno al iniciar o comprobar su sesión, y no concede acceso a otra persona por compartir correo. Los hashes siguen siendo privados en las respuestas de la API. El administrador inicial continúa configurado mediante variables del entorno.
+## Almacenamiento y sesión
 
-## Actualización automática de los listados
+La [estructura vigente de CuentasDojo](03-google-sheets.md) muestra sus datos legibles en A:G, IDs en H:J y `cuentaJson` en K. La contraseña se conserva mediante scrypt con una sal aleatoria por cuenta. Las respuestas de consulta y creación omiten hashes y sales. Los permisos y contraseñas se modifican desde la app, no editando celdas o JSON.
 
-Profesores y alumnos se sincronizan sin botón de recarga. El canal autenticado `GET /cuentas/cambios` utiliza SSE y solo está disponible para administración. Tras una operación HTTP de escritura exitosa se anuncia una revisión, sin nombres, contactos ni credenciales. La página vuelve a consultar sus datos y conserva los filtros, fichas desplegadas y formularios.
+El JWT se guarda en una cookie HttpOnly, SameSite=Lax y Secure en producción. La API comprueba la cuenta activa, su revisión y perfil en cada petición. Se limita el número de intentos de inicio de sesión por IP. Desactivar o eliminar un profesor impide su acceso.
 
-Una comprobación cada 30 segundos mientras la página está visible permite recuperar cambios hechos directamente en Sheets o notificaciones perdidas. También se sincroniza al volver a la pestaña, recuperar la conexión y terminar una operación local. Las lecturas anteriores a una modificación propia se descartan para no sobrescribirla con datos viejos. El canal se cierra al salir de la página y envía latidos para evitar conexiones inactivas.
+La compatibilidad con hojas antiguas puede resolver asignaciones por nombre cuando no existe ID de profesor, exigiendo una coincidencia única. Esa ruta de compatibilidad no cambia el vínculo por ID de la hoja actual.
 
-Las notificaciones se comparten dentro de una instancia de la API. Varias réplicas necesitan un canal compartido; la comprobación periódica permite recuperar cambios, pero no sustituye esa coordinación para una entrega inmediata.
+## Sincronización de los listados
 
-## Alta conjunta por API
+Los listados de cuentas se actualizan sin botón de recarga. El canal SSE autenticado `GET /cuentas/cambios`, exclusivo de administración, anuncia revisiones después de escrituras exitosas, sin incluir nombres, contactos o credenciales.
 
-`POST /cuentas` con perfil alumno y `POST /cuentas/inscripciones/:id` aceptan `planInicial` opcional: `{ cantidad: 4 | 8 | 12, dias: [...], fecha: "AAAA-MM-DD" }`. No admite importes ni referencias. La activación se valida con las mismas reglas de Alumnos y registra al administrador autenticado. La respuesta indica `planActivado` y, si corresponde, `clasesPendientes`.
+También se comprueban cambios cada 30 segundos mientras la página está visible, al volver a ella y al recuperar la conexión. Se conservan filtros, fichas desplegadas y formularios; el canal se cierra al salir. El menú `/cuentas` no abre el canal ni consulta los listados hasta entrar a un apartado.
 
-`GET /cuentas/opciones` indica `permiteActivacionInicial` y si cada aceptado sin cuenta `tienePlan`, para ofrecer el formulario adecuado. La estructura anterior de Sheets conserva la creación de cuentas sin plan; el alta conjunta requiere la estructura profesional.
+Las notificaciones y la serialización se aplican dentro de una instancia de la API; no coordinan varias réplicas o ediciones manuales simultáneas de Sheets.
+
+## Operaciones HTTP principales
+
+- `GET /cuentas` y `GET /cuentas/opciones`: consulta administrativa sin contraseñas ni hashes.
+- `POST /cuentas`: alta manual de profesor o alumno con su cuenta.
+- `POST /cuentas/inscripciones/:id`: acceso para una inscripción ya aceptada.
+- `POST /cuentas/:id`: estado del acceso o restablecimiento de contraseña.
+- `POST /auth/password`: cambio de contraseña del titular, profesor o alumno.
+
+Las dos altas de alumno aceptan `planInicial` opcional: `{ cantidad: 4 | 8 | 12, dias: [...], fecha: "AAAA-MM-DD" }`. No recibe importes ni referencias. La respuesta indica `planActivado` y, si corresponde, `clasesPendientes`. Las opciones incluyen `permiteActivacionInicial` y `tienePlan` para adaptar el formulario.

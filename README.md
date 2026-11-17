@@ -45,14 +45,14 @@ Google Sheets se utiliza como almacenamiento; la gestión cotidiana se realiza d
 
 ## Guías del proyecto
 
-1. [Referencia de Gitflow](docs/01-gitflow.md): convenciones generales de ramas. El flujo vigente del proyecto utiliza `construccion`, según lo indicado más adelante.
+1. [Flujo de trabajo con Git](docs/01-gitflow.md): trabajo en `construccion` e integración coordinada en la rama móvil.
 2. [Commits convencionales](docs/02-commits-convencionales.md): cómo escribir los mensajes de commit.
 3. [Datos en Google Sheets](docs/03-google-sheets.md): pestañas, columnas, credenciales y validación de postulaciones.
 4. [Calidad de código](docs/04-calidad-de-codigo.md): Biome, Husky, pruebas con Vitest y CI.
 5. [Mapa de pantallas](docs/05-mapa-de-pantallas.md): rutas y archivos de cada sección.
 6. [Alumnos, planes y asistencia](docs/06-alumnos-asistencia.md): activaciones, renovaciones, recuperaciones y congelamientos.
 7. [Cuentas y perfiles](docs/07-cuentas-y-perfiles.md): altas manuales, autenticación y permisos.
-8. [Clases oficiales](docs/08-clases-oficiales.md): preparación de los grupos y horarios en Sheets.
+8. [Clases oficiales](docs/08-clases-oficiales.md): grupos, turnos, horarios y cupos.
 9. [Colaboración con API simulada](docs/09-colaboracion-simulada.md): preparación de Live Share sin credenciales ni conexión con Sheets.
 
 ## Requisitos

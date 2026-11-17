@@ -1,52 +1,65 @@
-# Mapa de pantallas de Mi Dojo
+# Mapa de pantallas de Shinken Dojo - Hiroshi
 
-Las rutas están en `apps/web/src/pages/`. El contenido interactivo de cada pantalla está en `apps/web/src/components/pantallas/`.
+Las rutas están en `apps/web/src/pages/`. Los componentes indicados en la tabla son relativos a `apps/web/src/components/`.
 
-| Pantalla | Ruta | Archivo en `pages/` | Archivo en `components/pantallas/` |
+| Pantalla | Ruta | Página Astro | Componente o comportamiento |
 | --- | --- | --- | --- |
-| Entrada al login | `/` | `index.astro` | Redirige a `/login` |
-| Clases | `/clases` | `clases.astro` | `Clases.jsx` |
-| Ruta antigua de alta | `/nueva-clase` → `/clases` | `nueva-clase.astro` | Redirección, sin formulario |
-| Postulaciones | `/postulaciones` | `postulaciones.astro` | `Postulaciones.jsx` |
-| Calendario de asistencia | `/calendario` | `calendario.astro` | `Calendario.jsx` |
-| Profesores y alumnos | `/cuentas` | `cuentas.astro` | `Cuentas.jsx` |
-| Alumnos | `/alumnos` | `alumnos.astro` | `Alumnos.jsx` |
-| Ruta anterior de profesores | `/profesores` → `/cuentas` | `profesores.astro` | Redirección |
-| Usuario | `/usuario` | `usuario.astro` | `Usuario.jsx` |
-| Ayuda e información | `/ajustes` | `ajustes.astro` | `Ajustes.jsx` |
-| Enlace anterior de convocatoria | `/configurar-convocatoria` | `configurar-convocatoria.astro` | Reutiliza CompartirConvocatoria |
-| Compartir convocatoria | `/compartir-convocatoria` | `compartir-convocatoria.astro` | `CompartirConvocatoria.jsx` |
-| Formulario de postulación público | `/formulario?clase=ID` | `formulario.astro` | `FormularioPostulacion.jsx` |
-| Iniciar sesión | `/login` | `login.astro` | `Login.jsx` |
+| Entrada | `/` | `index.astro` | Redirige a `/login` |
+| Login | `/login` | `login.astro` | `pantallas/Login.jsx` |
+| Clases | `/clases` | `clases.astro` | `pantallas/Clases.jsx` |
+| Postulaciones | `/postulaciones` | `postulaciones.astro` | `pantallas/Postulaciones.jsx` |
+| Calendario de asistencia | `/calendario` | `calendario.astro` | `pantallas/Calendario.jsx` |
+| Alumnos y planes por perfil | `/alumnos` | `alumnos.astro` | `perfiles/InicioPerfil.jsx` |
+| Profesores y alumnos | `/cuentas` | `cuentas.astro` | `pantallas/Cuentas.jsx`, menú |
+| Profesores | `/profesores` | `profesores.astro` | `pantallas/Cuentas.jsx`, vista profesores |
+| Cuentas de alumnos | `/cuentas/alumnos` | `cuentas/alumnos.astro` | `pantallas/Cuentas.jsx`, vista alumnos |
+| Usuario | `/usuario` | `usuario.astro` | `pantallas/Usuario.jsx` |
+| Ayuda e información | `/ajustes` | `ajustes.astro` | `pantallas/Ajustes.jsx` |
+| Compartir inscripción | `/compartir-convocatoria` | `compartir-convocatoria.astro` | `pantallas/CompartirConvocatoria.jsx` |
+| Formulario público | `/formulario?clase=ID&turno=ID` | `formulario.astro` | `pantallas/FormularioPostulacion.jsx` |
+| Entrada antigua de clases | `/nueva-clase` | `nueva-clase.astro` | Redirige a `/clases` |
+| Entrada antigua de asistencia | `/asistencia` | `asistencia.astro` | Redirige a `/calendario` |
+| Enlace anterior de convocatoria | `/configurar-convocatoria` | `configurar-convocatoria.astro` | Reutiliza la página de compartir y conserva la consulta |
+| Enlace anterior del formulario generado | `/formulario-generado` | `formulario-generado.astro` | Reutiliza la página de compartir y conserva la consulta |
 
-El calendario se dedica a la asistencia. Profesores y administración seleccionan una fecha, consultan las sesiones y registran la presencia del profesor y de los alumnos. El alumno consulta su propia asistencia y puede avisar o retirar una ausencia futura. La gestión de clases y las convocatorias se realizan en sus apartados respectivos.
+## Función de cada sección
 
-La ruta anterior `/asistencia` redirige a `/calendario`. Alumnos concentra los planes, recuperaciones y congelamientos; la toma de asistencia no se duplica en esa pantalla. Los accesos de ayuda se reúnen en Usuario → Ayuda e información.
+**Clases** muestra los tres grupos oficiales y sus turnos. Permite editar sede, frecuencia, horario, profesor y cupos. No incluye altas, eliminación de clases, vigencia, duración ni tarifa. Cada turno ofrece Ver postulaciones y Compartir.
 
-## Componentes compartidos
+**Postulaciones** permite seleccionar clase, elegir turno cuando hay más de uno y filtrar por estado. No incluye un filtro de búsqueda por nombre, correo o código. La aceptación genera inscripción y reserva de cupo; los enlaces y QR se comparten desde la clase, sin una pantalla de vista previa adicional.
 
-En `apps/web/src/components/` quedan las piezas que pueden usarse en varias pantallas:
+**Calendario** concentra la asistencia. Profesor y administración registran las sesiones y la participación de alumnos. El alumno consulta su asistencia propia y puede avisar o retirar una ausencia actual o futura. El calendario no administra clases ni genera convocatorias.
 
-- `NavegacionInferior.astro`: barra inferior.
-- `ProtegerPagina.astro`: comprobación de sesión de las páginas privadas.
-- `CerrarSesion.astro`: botón para cerrar sesión.
-- `styles/tema.css`: define el único tema claro con los colores del dojo.
-- `TarjetaClase.jsx` e `IndicadorCupos.jsx`: resumen de una clase y disponibilidad.
-- `QrFormulario.jsx` y `CopiarEnlace.jsx`: QR y copia de enlaces.
-- `Mensaje.jsx`: avisos de éxito y error.
+**Alumnos** concentra planes, saldo, renovaciones, cambio de plan programado, recuperaciones y congelamientos. El listado administrativo de cuentas y contactos se encuentra en Usuario → Profesores y alumnos, no en esta gestión del plan.
 
-`apps/web/src/layouts/LayoutAdministracion.astro` reúne el encabezado, la navegación y la protección de las pantallas privadas. Los hooks permanecen en `hooks/`, las utilidades en `lib/` y los estilos en `styles/`.
+**Usuario** muestra la cuenta, el cambio de contraseña propio cuando corresponde, el cierre de sesión y los accesos de administración y ayuda. La guía y la versión se reúnen en Ayuda e información.
 
-## Enlaces anteriores
+## Inicio y permisos
 
-`pages/formulario-generado.astro` es un alias de compatibilidad: renderiza `compartir-convocatoria.astro`, sin duplicar su contenido ni perder parámetros como `?clase=ID`.
+Administración inicia en `/clases` o en una ruta interna válida pendiente en `volver`. Profesor y alumno inician en `/alumnos`. `InicioPerfil.jsx` selecciona el componente correspondiente:
 
-La ruta principal `/` lleva siempre al login. Al iniciar sesión se abre `/clases`, salvo que haya una pantalla privada pendiente en `?volver=...`. Las páginas privadas solo se muestran después de comprobar la sesión; si la comprobación falla, llevan al login. Las clases oficiales se cargan en Google Sheets. La ruta antigua `/nueva-clase` redirige a `/clases` y no permite altas.
+- Profesor: `perfiles/profesor/PanelProfesor.jsx`.
+- Alumno: `perfiles/alumno/PanelAlumno.jsx`.
+- Administrador: `pantallas/Alumnos.jsx`.
 
-La dirección pública `/formulario?clase=ID` se conserva para que sigan funcionando los QR compartidos.
+Los paneles de profesor y alumno reutilizan actualmente `Alumnos.jsx` como punto de partida y tienen carpetas separadas para desarrollar sus interfaces. No son cuentas nuevas ni pantallas con permisos distintos. Ver [colaboración simulada](09-colaboracion-simulada.md).
 
-## Backend y código compartido
+`ProtegerPagina.astro` comprueba la sesión antes de mostrar una página privada y adapta la navegación. La autorización real y las asignaciones se validan en la API. Para profesor y alumno, la navegación incluye Calendario, Alumnos/Mi plan y Usuario; Clases y Postulaciones quedan para administración.
 
-La API conserva la convención de NestJS por módulo: `apps/api/src/clases/`, `profesores/` y `auth/`. Dentro de cada módulo, los sufijos `.controller.ts`, `.service.ts`, `.module.ts`, `.dto.ts` y `.repository.ts` indican la función del archivo. Los tipos y estados comunes están en `packages/shared/src/` y se importan directamente desde `@dojo/shared`. La edición de turnos utiliza `EditarClaseDto`; no existe un servicio interno de creación de clases.
+## Piezas compartidas
 
-La navegación inferior incluye **Alumnos**. El registro y la gestión de ambos perfiles se unifican en **Usuario → Profesores y alumnos**. Consulta [planes y asistencia](06-alumnos-asistencia.md) para conocer los planes, recuperaciones y permisos.
+- `LayoutAdministracion.astro`, en `layouts/`: encabezado, navegación y protección de páginas privadas.
+- `NavegacionInferior.astro`, `ProtegerPagina.astro` y `CerrarSesion.astro`: navegación y sesión.
+- `TarjetaClase.jsx`, `SelectorClaseTurno.jsx` e `IndicadorCupos.jsx`: clases y selección de turno.
+- `SelectorFechaAsistencia.jsx`: calendario de fechas.
+- `CampoContrasena.jsx`: visualización de contraseñas al escribir.
+- `ConfirmarAccion.jsx` y `Mensaje.jsx`: confirmaciones y resultado de operaciones.
+- `QrFormulario.jsx` y `CopiarEnlace.jsx`: descarga del QR y copia del enlace.
+
+Los hooks se mantienen en `hooks/`, el acceso a la API y las utilidades en `lib/`, y la paleta y estilos en `styles/`. Se utiliza un solo tema claro, con blanco, negro y rojo. Las pantallas priorizan títulos, datos y acciones; la ayuda extensa se concentra en su apartado y los mensajes operativos aparecen cuando son necesarios.
+
+## Backend y contratos
+
+La API se organiza en módulos de autenticación, clases, profesores, alumnos y actualizaciones; `portal/` concentra la persistencia de la estructura vigente de Sheets. Los contratos se importan directamente desde `@dojo/shared`. La edición de turnos utiliza `EditarClaseDto`.
+
+La API ficticia se activa únicamente en el [modo de colaboración](09-colaboracion-simulada.md). El modo real conserva la configuración de `PUBLIC_API_URL` y la autenticación del backend.

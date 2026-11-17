@@ -1,57 +1,47 @@
 # Guía de contribución
 
-Resumen de las reglas del proyecto. El detalle está en la carpeta [`docs/`](docs/).
+El desarrollo se realiza en **`construccion`**, sin crear ramas nuevas. El pase a la rama existente `feature/postulaciones-movil` se coordina cuando la versión esté lista. No se actualizan automáticamente `main`, `develop` ni otras ramas.
 
-## 1. Ramas (Gitflow)
+## Preparar el trabajo
 
-- `main` es producción y `develop` es integración. Nadie hace commits directos en ellas.
-- Crea tu rama desde `develop` con el formato `feature/<descripcion>` o `bugfix/<descripcion>`, en minúsculas y con guiones: `feature/filtro-por-sede`.
-- Ramas cortas: un cambio que se termine en un día o menos.
-- Las versiones se preparan en `release/<version>` y los arreglos urgentes en `hotfix/<descripcion>`.
-
-Ver [Gitflow](docs/01-gitflow.md).
-
-## 2. Commits (Conventional Commits)
-
-```
-<tipo>(<scope>): <descripción en imperativo y minúsculas>
+```powershell
+git status
+git fetch origin
+git switch construccion
+git pull --ff-only origin construccion
+pnpm install --frozen-lockfile
 ```
 
+Conservar los cambios locales antes de actualizar. La instalación, las variables de entorno y el inicio de la app real se describen en el [README](README.md).
+
+Para colaborar en las interfaces de profesor y alumno sin credenciales, utilizar la [copia de colaboración con API simulada](docs/09-colaboracion-simulada.md). El anfitrión revisa e incorpora los cambios de esa copia al repositorio original.
+
+## Commits y revisión
+
+```text
+<tipo>(<scope>): <descripción>
 ```
-feat(api): agregar el estado inactivo a los profesores
-fix(web): mostrar los cupos disponibles después de aceptar una postulación
-docs: explicar cómo configurar la cuenta de servicio de Google
-build(deps): actualizar astro
-ci: ejecutar los tests e2e en cada pull request
-feat(api)!: devolver las clases paginadas
+
+Ejemplos:
+
+```text
+feat(web): mejorar la consulta del plan del alumno
+fix(api): conservar el saldo al renovar
+docs(sheets): actualizar la estructura de la hoja
 ```
 
-- Scopes permitidos: `web`, `api`, `shared`, `sheets`, `ci`, `deps`, `config`, `docs`, `release`.
-- Si no recuerdas el formato, usa `pnpm commit`.
+Los scopes permitidos son `web`, `api`, `shared`, `sheets`, `ci`, `deps`, `config`, `docs` y `release`. Se puede utilizar `pnpm commit` como asistente. Ver [Commits convencionales](docs/02-commits-convencionales.md).
 
-Ver [Commits convencionales](docs/02-commits-convencionales.md).
+Preparar únicamente los archivos del cambio. Antes de subir a `construccion`, revisar el diff y ejecutar las comprobaciones relevantes de [Calidad de código](docs/04-calidad-de-codigo.md). No forzar pushes ni saltar los hooks para ocultar errores.
 
-## 3. Pull Requests
+Si se utiliza un PR, describir el resultado, el motivo y las validaciones. El workflow de ramas conserva reglas antiguas de Gitflow; no se deben crear ramas nuevas para satisfacerlo. El flujo vigente se detalla en [Trabajo con Git](docs/01-gitflow.md).
 
-1. Sube tu rama y abre un PR hacia `develop`.
-2. El título del PR sigue el mismo formato que los commits (al unir con *Squash and merge* se convierte en el commit final).
-3. Completa la plantilla: qué cambia, por qué y cómo probarlo.
-4. Espera el CI en verde y al menos una aprobación.
+## Documentación y datos
 
-## 4. Antes de pedir revisión
+- Mantener las guías alineadas con las rutas, permisos, comandos y columnas actuales.
+- Documentar cambios en Sheets en [Datos en Google Sheets](docs/03-google-sheets.md) y cambios de configuración en los `.env.example` correspondientes.
+- Utilizar datos simulados para las pruebas automatizadas y el desarrollo compartido de interfaces.
+- Mantener `.env`, credenciales JSON, contraseñas y datos personales fuera de Git y de las carpetas compartidas.
+- Actualizar web, API y shared de forma coordinada cuando cambie un contrato.
 
-- [ ] `pnpm check` no muestra errores.
-- [ ] `pnpm typecheck` y `pnpm test` pasan (el hook `pre-push` lo revisa por ti).
-- [ ] Si cambiaste las columnas de una hoja de Google Sheets, actualizaste [`docs/03-google-sheets.md`](docs/03-google-sheets.md).
-- [ ] Si agregaste variables de entorno, actualizaste el `.env.example`.
-- [ ] Nunca subas `apps/api/credentials/`: contiene la llave privada de Google.
-
-## Qué validan los hooks de Git
-
-| Hook | Qué revisa |
-|---|---|
-| `pre-commit` | Biome formatea y revisa los archivos del commit |
-| `commit-msg` | commitlint rechaza mensajes que no sigan el formato |
-| `pre-push` | Tipos y pruebas unitarias antes de subir a GitHub |
-
-No uses `--no-verify`: el CI hace las mismas validaciones y el PR quedará bloqueado igual. Ver [Calidad de código](docs/04-calidad-de-codigo.md).
+Los hooks revisan formato/lint de archivos preparados, mensajes convencionales, tipos y unitarias. La compilación, las pruebas HTTP y la simulación se ejecutan por separado según el cambio.

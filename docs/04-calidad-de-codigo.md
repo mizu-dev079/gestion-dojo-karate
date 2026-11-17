@@ -1,89 +1,64 @@
-# 4. Calidad de código: linter, Husky y Vitest
+# 4. Calidad de código
 
-El proyecto revisa el código en tres momentos: **mientras escribes** (VS Code), **antes de cada commit o push** (Husky) y **en cada Pull Request** (GitHub Actions). Si algo se escapa en un paso, lo atrapa el siguiente.
+Las comprobaciones se ejecutan desde la raíz del repositorio. pnpm y Turborepo administran las tareas de los paquetes; las versiones de Node.js y pnpm se indican en el [README](../README.md).
 
-```
-Escribes código ──► Guardas (Ctrl+S) ──► git commit ──► git push ──► Pull Request
-                    Biome formatea       pre-commit      pre-push     CI completo
-                                         commit-msg
-```
+## Formato y análisis estático
 
-## Linter y formateador: Biome
+Biome utiliza la configuración de `biome.json`: dos espacios, comillas simples en JavaScript y ancho de línea de 100 caracteres.
 
-- Un **linter** lee el código y avisa de errores y malas prácticas **sin ejecutarlo**.
-- Un **formateador** deja el código con el mismo estilo sin importar quién lo escribió (espacios, comillas, saltos de línea). Así los PR muestran solo cambios reales.
+| Comando | Función |
+| --- | --- |
+| `pnpm lint` | Revisa el código sin modificarlo |
+| `pnpm format` | Aplica formato |
+| `pnpm check` | Aplica formato y correcciones automáticas disponibles |
+| `pnpm ci:check` | Comprueba formato y lint sin escribir cambios |
+| `pnpm typecheck` | Revisa los tipos de la API y `@dojo/shared` |
 
-**Biome** hace las dos cosas en una sola herramienta. Su configuración está en `biome.json`: 2 espacios, comillas simples, líneas de hasta 100 caracteres y las reglas recomendadas de lint.
+Los archivos `.astro` están excluidos de Biome y se editan con la extensión de Astro. Los componentes React sí se revisan con Biome. La web no tiene un script propio de typecheck: su compilación se comprueba mediante `pnpm build`. Las preferencias de formato del editor están en `.vscode/settings.json`.
 
-| Comando | Qué hace |
-|---|---|
-| `pnpm lint` | Muestra los problemas de lint, sin cambiar nada |
-| `pnpm format` | Formatea todos los archivos |
-| `pnpm check` | Formatea y corrige todo lo que se pueda corregir solo |
-| `pnpm ci:check` | Igual que `check` pero sin modificar nada (es lo que usa el CI) |
+## Hooks de Git
 
-En VS Code, con la extensión **Biome** instalada, el código se formatea y se ordenan los imports **cada vez que guardas**.
+La instalación ejecuta `prepare` para activar Husky en el repositorio original.
 
-> **Archivos `.astro`:** Biome no los revisa (están excluidos en `biome.json`). Se editan con la extensión de Astro. Los componentes de React (`.jsx`) sí pasan por Biome.
+| Hook | Comprobación |
+| --- | --- |
+| `pre-commit` | lint-staged ejecuta Biome sobre los archivos preparados que coinciden con su configuración |
+| `commit-msg` | commitlint valida el mensaje |
+| `pre-push` | Turborepo ejecuta typecheck y pruebas unitarias de los paquetes |
 
-Además del linter, **TypeScript** revisa los tipos con `pnpm typecheck` (hoy en `api` y `shared`).
+Las pruebas HTTP, la simulación y la compilación no forman parte del hook pre-push. Se ejecutan cuando corresponden al cambio. No omitir los hooks para evitar un fallo: revisar su causa y corregirla.
 
-## Husky: revisiones automáticas con Git
+## Pruebas disponibles
 
-**Husky** ejecuta scripts en ciertos momentos de Git, llamados **hooks**. Se activan solos al hacer `pnpm install` (con el script `prepare`), siempre que antes exista el repositorio (`git init` o `git clone`).
+| Área | Archivos | Comando |
+| --- | --- | --- |
+| API: reglas, servicios y repositorios | `apps/api/src/**/*.spec.ts` | `pnpm --filter api test` |
+| Contratos y reglas compartidas | `packages/shared/src/**/*.test.ts` | `pnpm --filter @dojo/shared test` |
+| API: flujos HTTP y permisos | `apps/api/test/**/*.e2e-spec.ts` | `pnpm --filter api test:e2e` |
+| API ficticia y exportación de la copia | `apps/web/simulacion/*.test.mjs`, `scripts/*.test.mjs` | `pnpm test:simulado` |
+| Compilación de los paquetes | Web, API y shared | `pnpm build` |
 
-| Hook | Cuándo corre | Qué hace | Archivo |
-|---|---|---|---|
-| `pre-commit` | Antes de guardar el commit | Ejecuta **lint-staged**: Biome formatea y revisa **solo los archivos que vas a commitear**. Si hay un error que no puede corregir, cancela el commit. | `.husky/pre-commit` |
-| `commit-msg` | Después de escribir el mensaje | Ejecuta **commitlint**: rechaza el mensaje si no sigue Conventional Commits. | `.husky/commit-msg` |
-| `pre-push` | Antes de subir a GitHub | Revisa los tipos y ejecuta las **pruebas unitarias**. Turborepo reutiliza resultados anteriores, así que si nada cambió tarda segundos. | `.husky/pre-push` |
+`pnpm test` ejecuta las pruebas unitarias de API y shared. `pnpm --filter api test:watch` permite repetir las unitarias durante el desarrollo.
 
-> Git permite saltarse los hooks con `--no-verify`, pero no sirve de nada: el CI de GitHub repite las mismas revisiones y el PR quedará bloqueado igual.
+Las unitarias y las pruebas HTTP utilizan repositorios o clientes de Google simulados y variables de prueba, sin escribir en la hoja real. Las configuraciones de Vitest comparten sus ajustes a través de `apps/api/vitest.config.ts`; la configuración e2e cambia el patrón de archivos.
 
-## Pruebas con Vitest
+La simulación utiliza el ejecutor de pruebas de Node.js y verifica permisos, versiones, saldos, congelamientos, recuperaciones y exclusión de archivos sensibles en la exportación. En la copia de colaboración, `pnpm test:simulado` ejecuta únicamente las pruebas de su API ficticia, porque el exportador no se incluye allí.
 
-**Vitest** ejecuta pruebas automáticas: pequeños programas que usan tu código y comprueban que el resultado sea el esperado. Si alguien rompe algo sin querer, la prueba falla y avisa antes de llegar a producción.
+La revisión de navegación y diseño en navegador se realiza adicionalmente; todavía no hay una suite de navegador versionada del frontend. Para cambios visuales, comprobar los perfiles afectados, estados vacíos, carga, errores y tamaños de celular y escritorio.
 
-| Paquete | Archivos | Qué prueban | Comando |
-|---|---|---|---|
-| `packages/shared` | `src/**/*.test.ts` | Reglas compartidas (por ejemplo, qué estados ocupan cupo) | `pnpm --filter @dojo/shared test` |
-| `apps/api` (unitarias) | `src/**/*.spec.ts` | Controllers y services | `pnpm --filter api test` |
-| `apps/api` (e2e) | `test/**/*.e2e-spec.ts` | La API arrancando completa | `pnpm --filter api test:e2e` |
-| `apps/web` | — | Todavía sin pruebas | |
+## Comprobación antes de integrar
 
-`pnpm test` en la raíz ejecuta todas las unitarias. Mientras programas, el modo vigilancia vuelve a ejecutarlas cada vez que guardas:
-
-```bash
-pnpm --filter api test:watch
-```
-
-Toda prueba sigue tres pasos: **preparar**, **ejecutar** y **comprobar**:
-
-```ts
-import { describe, expect, it } from 'vitest';
-import { ocupaCupo } from './estado-postulacion.js';
-
-describe('ocupaCupo', () => {
-  it('cuenta las postulaciones aceptadas', () => {
-    // Preparar y ejecutar
-    const resultado = ocupaCupo('aceptado');
-
-    // Comprobar
-    expect(resultado).toBe(true);
-  });
-});
+```powershell
+pnpm ci:check
+pnpm typecheck
+pnpm test
+pnpm test:simulado
+pnpm --filter api test:e2e
+pnpm build
 ```
 
-Para probar un service de la API sin tocar Google Sheets, se reemplaza el repositorio por uno falso (un **mock**), de modo que la prueba nunca llame a la hoja real.
+Seleccionar las comprobaciones según el alcance: una edición de documentación necesita revisión de enlaces y coherencia; un cambio de reglas o permisos necesita las pruebas correspondientes. No probar operaciones de escritura contra los datos reales para verificar el código.
 
-## En GitHub: el CI
+## GitHub Actions
 
-El workflow `.github/workflows/ci.yml` se ejecuta en cada Pull Request y repite todo en un servidor limpio:
-
-1. `pnpm ci:check`: Biome.
-2. `pnpm typecheck`: tipos.
-3. `pnpm test`: pruebas unitarias.
-4. `pnpm build`: compilación.
-5. Pruebas e2e de la API.
-
-Si cualquier paso falla, el PR no se puede unir.
+`ci.yml` ejecuta lint, tipos, unitarias, pruebas de simulación, compilación y pruebas HTTP. Se activa en PR y pushes a `main` y `develop`. Los requisitos para unir un PR dependen de las protecciones configuradas en GitHub. El trabajo habitual continúa en `construccion`, según la [guía de Git](01-gitflow.md).

@@ -49,7 +49,7 @@ La contraseña inicial es igual al usuario:
 
 Cada navegador tiene su propia sesión; los cambios de los datos son comunes a los invitados del mismo servidor. Para probar dos perfiles desde un solo equipo, usar ventanas de incógnito separadas o navegadores diferentes.
 
-Las fechas de ejemplo se calculan al iniciar con zona **America/Lima**. Los turnos mantienen sus días oficiales: lunes/miércoles/viernes o martes/jueves. En Calendario se debe elegir una fecha del turno; no se registra presencia en fechas futuras.
+Las fechas de ejemplo se calculan al iniciar con zona **America/Lima** y la validación de las operaciones utiliza el día actual de esa zona. Los turnos mantienen sus días oficiales: lunes/miércoles/viernes o martes/jueves. En Calendario se debe elegir una fecha del turno; no se registra presencia en fechas futuras.
 
 ## Archivos para cada compañero
 
@@ -73,7 +73,7 @@ Coordinar con el anfitrión cualquier cambio en `InicioPerfil.jsx`, `Alumnos.jsx
 - Solicitud, aprobación o rechazo de congelamientos y reactivación.
 - Autorización y revocación de recuperaciones y ajuste de sus límites.
 
-La simulación respeta la separación de perfiles y controla versiones para evitar sobrescribir cambios concurrentes. No incluye administración de cuentas, renovaciones ni integración con Google; sirve para desarrollar la interfaz de profesor y alumno. La validación definitiva de reglas y permisos se realiza contra la API real después de integrar los cambios.
+Solo se puede ingresar como profesor o alumno; no existe una cuenta de administrador en esta simulación. La simulación respeta la separación de perfiles y controla versiones para evitar sobrescribir cambios concurrentes. No incluye administración de cuentas, renovaciones ni integración con Google; sirve para desarrollar la interfaz de profesor y alumno. La validación definitiva de reglas y permisos se realiza contra la API real después de integrar los cambios.
 
 ## Reiniciar y terminar
 

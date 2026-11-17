@@ -12,11 +12,11 @@ La configuración pendiente y los días de cada paquete se conservan en los meta
 
 Los cobros se coordinan y verifican fuera de la aplicación. No se solicitan ni registran importes, medios de pago, referencias o comprobantes al activar o renovar. Los precios oficiales del catálogo son informativos; no se copian a las activaciones.
 
-| Paquete | Recuperaciones autorizables por inasistencia justificada |
-| --- | --- |
-| 4 clases | Hasta 1 |
-| 8 clases | Hasta 2 |
-| 12 clases | Hasta 2 |
+| Paquete | Precio de referencia | Recuperaciones por inasistencia justificada |
+| --- | --- | --- |
+| 4 clases | S/ 130 | Hasta 1 |
+| 8 clases | S/ 150 | Hasta 2 |
+| 12 clases | S/ 180 | Hasta 2 |
 
 Los límites del catálogo se copian a cada paquete. Las recuperaciones requieren autorización manual y sus ajustes mantienen auditoría.
 
@@ -36,7 +36,7 @@ Solo administración cancela una sesión, con motivo. La cancelación **no consu
 
 El estado de la sesión y los saldos afectados se escriben en un único `spreadsheets.batchUpdate` atómico. Las cancelaciones y los cambios de seguimiento comparten una cola dentro de la instancia de API. Una sesión cancelada bloquea nuevas asistencias y recuperaciones para esa fecha, también para los avisos del alumno. La sesión queda cerrada; si se reprograma, se utiliza otra fecha válida del horario del grupo.
 
-En la estructura profesional los datos de la sesión se guardan en **Sesiones**, con columnas legibles, y su versión y auditoría en ControlSistema. En la estructura anterior se utiliza **SesionesDojo**, con `sesionId` y `sesionJson`. La clave combina grupo y fecha (`claseId:AAAA-MM-DD`). Se conservan versión, profesor responsable, horario y auditoría. Los alumnos consultan su saldo desde Mi plan y su asistencia propia desde Calendario, donde también pueden avisar o retirar ausencias futuras; el registro de asistencia y el panel de sesiones se reservan a profesores y administración.
+Los registros se guardan en **Sesiones y profesores**, con versión y auditoría en **ControlSistema**. La clave de la sesión combina turno y fecha (`turnoId:AAAA-MM-DD`). Los alumnos consultan su saldo en Mi plan y la asistencia propia en Calendario, donde pueden avisar o retirar ausencias actuales o futuras. La toma de asistencia se reserva a profesor y administración.
 
 ## Asistencia y recuperación
 
@@ -44,29 +44,21 @@ En la estructura profesional los datos de la sesión se guardan en **Sesiones**,
 - **Faltó:** ocupa la sesión contratada. Para reponerla se necesita autorización manual.
 - **Avisó que faltará:** reserva esa sesión del plan; no autoriza una recuperación. Los avisos futuros pueden retirarse para devolver esa reserva antes de la sesión. Un alumno no puede modificar una presencia ni una falta registrada por el profesor, ni avisar retroactivamente.
 
-En la ficha del alumno o junto a su asistencia, **Gestionar plan → Brindar recuperación** permite elegir una falta ya ocurrida, escribir el motivo y autorizarla. Una recuperación **no añade clases al plan**: devuelve la sesión perdida al saldo pendiente para completarla en el siguiente día del horario habitual.
+Desde **Alumnos**, en la ficha del alumno, **Gestionar plan → Brindar recuperación** permite elegir una falta ya ocurrida, escribir el motivo y autorizarla. Una recuperación **no añade clases al plan**: devuelve la sesión perdida al saldo pendiente para completarla en el siguiente día del horario habitual.
 
 Ejemplo: faltó a la octava clase del martes, se autoriza recuperar, y completa esa misma clase el jueves. Termina con ocho presencias, no nueve clases contratadas. Si renovó antes, primero termina el saldo del paquete anterior.
-
-Límites predeterminados **por paquete**:
-
-| Clases del paquete | Recuperaciones autorizables |
-| --- | --- |
-| 4 | 1 |
-| 8 | 2 |
-| 12 | 2 |
 
 El profesor asignado o administrador puede **Ajustar límite** de un paquete entre 0 y 12, con un motivo obligatorio. El cambio no regala créditos ni autoriza faltas por sí mismo. No se puede bajar el límite por debajo de las autorizaciones activas. Una misma falta no puede autorizarse dos veces. Se registra quién autorizó y por qué. Una autorización errónea puede revocarse con motivo, siempre que el saldo permita recalcular el historial sin clases negativas.
 
 La falta original con recuperación autorizada queda protegida contra ediciones ambiguas: se debe revocar la autorización antes de cambiarla. La clase de recuperación se registra como presencia en su fecha real.
 
-### Datos anteriores
+### Conservación del historial
 
 Las faltas/avisos registrados durante la primera etapa, cuando la política estaba pendiente, mantienen sus créditos: **no se descuentan retroactivamente**. Se identifican como registros anteriores pendientes de revisión. Las nuevas asistencias aplican la política vigente. Los identificadores de los paquetes, saldos e historiales existentes se conservan.
 
 ## Congelamiento
 
-El profesor asignado o administrador puede congelar desde **Gestionar plan**, con motivo y fecha de regreso opcional. Sin fecha, permanece congelado hasta **Reactivar**. Con fecha, vuelve a estar activo desde ese día. El cupo se mantiene porque la postulación continúa aceptada/aprobada.
+El profesor asignado o administrador puede congelar desde **Gestionar plan**, con motivo y fecha de regreso opcional. Sin fecha, permanece congelado hasta **Reactivar**. Con fecha, vuelve a estar activo desde ese día. El cupo se mantiene porque la inscripción sigue reservando su lugar durante el congelamiento.
 
 Durante la pausa no se consumen clases del período ni se permiten renovaciones. Las asistencias pasadas se pueden corregir únicamente fuera de los períodos congelados. Antes de congelar hoy se debe resolver la asistencia de hoy; los avisos futuros dentro de la pausa deben retirarse primero para devolver su reserva.
 
@@ -78,13 +70,13 @@ El alumno puede **Solicitar congelamiento**. La solicitud no congela nada hasta 
 - Profesor: solo alumnos de grupos asignados a su registro de profesor; asistencia, recuperaciones, ajuste de límites, solicitudes, congelamiento y reactivación. No activa paquetes ni cambia el plan contratado.
 - Alumno: solo sus inscripciones asignadas; consulta horario, saldo, renovaciones e historial, avisa o retira una ausencia actual/futura y solicita congelamiento. No cambia saldo, asistencia de terceros ni autorizaciones.
 
-Ver [cuentas y perfiles](07-cuentas-y-perfiles.md). En la estructura profesional se protege la postulación ya inscrita frente a rechazo o eliminación. La gestión completa de bajas y la liquidación de saldos no se automatizan sin una regla acordada.
+Ver [cuentas y perfiles](07-cuentas-y-perfiles.md). La postulación ya inscrita se protege frente a rechazo o eliminación; esas acciones no se utilizan para dar de baja a la persona.
 
 ## Persistencia y límites de operación
 
-En la estructura profesional se utilizan las pestañas legibles de movimientos descritas en [Datos en Sheets](03-google-sheets.md); no se crea SeguimientoAlumnos. En la estructura anterior, `SeguimientoAlumnos` conserva dos columnas: `postulacionId` y `seguimientoJson`. Consultar no crea hojas. La primera escritura válida crea solo esta pestaña si falta, con valores `RAW`. Incluye paquetes, asistencia, congelamientos, recuperaciones, solicitudes y auditoría. Las otras pestañas no cambian.
+El seguimiento se guarda en **Inscripciones, Renovaciones, Asistencias de alumnos, Recuperaciones y Congelamientos**; las sesiones y la asistencia docente están en **Sesiones y profesores**. ControlSistema conserva la versión, auditoría, el cambio de plan programado y los días propios de cada paquete. La [guía de Sheets](03-google-sheets.md) detalla sus columnas.
 
-La primera activación, renovación o configuración con las acciones nuevas adapta **Pagos** a **Renovaciones** de forma atómica junto con la operación solicitada. Conserva IDs, paquetes, saldos, límites y relaciones de asistencia/recuperación. La tabla nueva no contiene importes ni referencias. Consultar no migra la hoja. Las versiones antiguas de la aplicación deben detenerse antes de utilizar esta adaptación, porque esperan la pestaña anterior.
+La hoja vigente ya utiliza Renovaciones y no requiere ejecutar una migración de Pagos ni crear SeguimientoAlumnos o SesionesDojo. Los adaptadores anteriores se mantienen internamente por compatibilidad.
 
 Por compatibilidad, el estado interno y los DTO conservan nombres técnicos como `pagos` y `pagoId`. Representan paquetes de clases; las acciones nuevas no generan movimientos económicos. La interfaz utiliza Activaciones y renovaciones.
 
@@ -103,6 +95,6 @@ No editar manualmente el JSON. Se rechazan encabezados, identificadores duplicad
 
 Se mantienen las fechas de negocio en `America/Lima`. Las pruebas no escriben datos de demostración en la hoja real del dojo.
 
-## Nombres de las pestañas de asistencia
+## Desarrollo con datos simulados
 
-Las pestañas visibles se llaman **Asistencias de alumnos** (antes Asistencias) y **Sesiones y profesores** (antes Sesiones). Los encabezados, identificadores y relaciones no cambian. La API admite tanto los nombres anteriores como los nuevos y escribe en la pestaña existente, sin crear copias. No deben coexistir ambos nombres para el mismo tipo de registro. La asistencia del profesor continúa vinculada a su sesión; no se duplica en la tabla de alumnos.
+El entorno de [colaboración](09-colaboracion-simulada.md) incluye profesor y alumno, asistencia, recuperaciones y congelamientos ficticios. No incluye administración ni renovación de planes y no escribe en Sheets. La comprobación completa de las reglas del backend se realiza con las pruebas de la API real usando repositorios simulados.
