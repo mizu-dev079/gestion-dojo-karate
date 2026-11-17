@@ -293,9 +293,6 @@ function Registro({
                     )}
                   />
                 </label>
-                <p className="text-sm text-gray-600">
-                  El acceso y las clases del paquete quedarán habilitados en un solo paso.
-                </p>
               </>
             )}
           </section>
@@ -667,7 +664,6 @@ export default function Cuentas({ vista = 'menu' }) {
               <a
                 href="/profesores"
                 aria-label="Profesores"
-                aria-describedby="descripcion-profesores"
                 className={`${tarjeta} block transition-colors hover:border-dojo-300 focus-visible:outline-2 focus-visible:outline-dojo-600`}
               >
                 <div className="flex items-center justify-between gap-3">
@@ -676,14 +672,10 @@ export default function Cuentas({ vista = 'menu' }) {
                     →
                   </span>
                 </div>
-                <p id="descripcion-profesores" className="text-sm text-gray-600">
-                  Consulta los profesores, administra sus accesos y crea nuevas cuentas.
-                </p>
               </a>
               <a
                 href="/cuentas/alumnos"
                 aria-label="Alumnos"
-                aria-describedby="descripcion-alumnos"
                 className={`${tarjeta} block transition-colors hover:border-dojo-300 focus-visible:outline-2 focus-visible:outline-dojo-600`}
               >
                 <div className="flex items-center justify-between gap-3">
@@ -692,9 +684,6 @@ export default function Cuentas({ vista = 'menu' }) {
                     →
                   </span>
                 </div>
-                <p id="descripcion-alumnos" className="text-sm text-gray-600">
-                  Consulta los alumnos, administra sus accesos y crea nuevas cuentas.
-                </p>
               </a>
             </>
           ) : (
@@ -784,10 +773,7 @@ export default function Cuentas({ vista = 'menu' }) {
                   {aceptadosVisibles.length > 0 && (
                     <section className="space-y-3 rounded-xl border border-gray-200 p-3">
                       <h2 className="font-bold">Alumnos aceptados sin acceso</h2>
-                      <p className="text-sm text-gray-600">
-                        Ya están inscritos y aparecen en la clase del profesor. Crea su acceso sin
-                        volver a registrar sus datos ni ocupar otro cupo.
-                      </p>
+
                       {aceptadosVisibles.map((a) => (
                         <FichaPersona key={a.id} nombre={a.nombre}>
                           <p className="text-sm text-gray-600">

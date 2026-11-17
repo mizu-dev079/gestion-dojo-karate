@@ -210,11 +210,7 @@ export default function Asistencia() {
         <h2 className="text-lg font-bold">
           {admin ? 'Sesiones y asistencia' : 'Mis sesiones y asistencia'}
         </h2>
-        <p className="text-sm text-gray-600">
-          La asistencia del profesor y de los alumnos se registra por separado. Una sesión pendiente
-          no genera faltas automáticamente. Las cancelaciones del dojo no consumen clases ni
-          recuperaciones.
-        </p>
+
         <SelectorFechaAsistencia fecha={fecha} cambiar={setFecha} disabled={ocupado || cargando} />
         <button
           className={boton}

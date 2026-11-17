@@ -243,9 +243,6 @@ export default function Postulaciones() {
               {clase.horaInicio} – {clase.horaFin} · Prof. {clase.profesor}
             </p>
             <IndicadorCupos disponibles={clase.cuposDisponibles} total={clase.cupos} />
-            <p className="text-xs text-gray-500">
-              Las postulaciones pendientes no reservan una vacante.
-            </p>
           </div>
         )}
         <div>

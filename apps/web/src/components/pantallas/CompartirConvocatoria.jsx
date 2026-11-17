@@ -75,10 +75,6 @@ export default function CompartirConvocatoria() {
 
             <h2 className="text-lg font-bold text-gray-900">Comparte esta clase</h2>
 
-            <p className="mt-2 text-xs text-gray-500">
-              Tu formulario ya está listo para compartir.
-            </p>
-
             {clase && (
               <div className="mt-4 rounded-2xl bg-[var(--accent-soft)] px-4 py-3">
                 <p className="text-sm font-semibold text-[var(--accent)]">

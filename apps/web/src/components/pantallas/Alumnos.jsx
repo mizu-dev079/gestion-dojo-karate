@@ -334,10 +334,7 @@ export default function Alumnos() {
         <h2 className="text-lg font-bold">
           {alumnoPropio ? 'Mi plan' : admin ? 'Planes de alumnos' : 'Mis alumnos'}
         </h2>
-        <p className="text-sm text-gray-600">
-          Planes continuos de 4, 8 o 12 clases. Se conservan las clases pendientes al renovar. Las
-          recuperaciones las autoriza manualmente el profesor o administrador.
-        </p>
+
         <a
           href="/calendario"
           className="inline-flex min-h-11 items-center rounded-xl bg-dojo-600 px-4 py-2 font-semibold text-white"

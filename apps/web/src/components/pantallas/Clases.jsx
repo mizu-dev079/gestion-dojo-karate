@@ -205,10 +205,6 @@ export default function Clases() {
               <h2 className="mt-1 text-[13px] font-bold text-gray-900">
                 Modificar datos del turno
               </h2>
-
-              <p className="mt-1 text-xs text-gray-400">
-                Los cambios solo se guardarán al pulsar Aceptar.
-              </p>
             </div>
 
             <fieldset disabled={ocupado} aria-label="Editar turno" className="min-w-0 space-y-3">
@@ -433,8 +429,7 @@ export default function Clases() {
                     <h2 className="text-lg font-bold">{g.nombre}</h2>
                     <p className="text-sm text-gray-600">
                       {g.turnos.length}{' '}
-                      {g.turnos.length === 1 ? 'turno disponible' : 'turnos disponibles'}. Consulta
-                      los días, edades y cupos de cada uno.
+                      {g.turnos.length === 1 ? 'turno disponible' : 'turnos disponibles'}
                     </p>
                     <button
                       type="button"
