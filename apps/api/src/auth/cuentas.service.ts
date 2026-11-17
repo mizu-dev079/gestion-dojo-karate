@@ -3,9 +3,14 @@ import { promisify } from 'node:util';
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { z } from 'zod';
 import { alumnoNuevoSchema } from '../alumnos/dto/alumno.schema.js';
+import { planInicialSchema } from '../alumnos/seguimiento.js';
 import { ClasesRepository } from '../clases/repositories/clases.repository.js';
 import { PostulacionesRepository } from '../clases/repositories/postulaciones.repository.js';
 import { env } from '../config/env.js';
+import { leerCuentas } from '../portal/cuentas.js';
+import { libroNuevo } from '../portal/libro.js';
+import { leerClases, leerPostulaciones, leerProfesores } from '../portal/registros.js';
+import { leerSeguimientos } from '../portal/seguimientos.js';
 import { profesorNuevoSchema } from '../profesores/dto/profesor.schema.js';
 import { ProfesoresRepository } from '../profesores/repositories/profesores.repository.js';
 import { type Cuenta, CuentasRepository, cuentaPublica } from './cuentas.repository.js';
@@ -33,6 +38,7 @@ const crearSchema = z.discriminatedUnion('perfil', [
       password: passwordSchema,
       perfil: z.literal('alumno'),
       nuevoAlumno: alumnoNuevoSchema,
+      planInicial: planInicialSchema.optional(),
     })
     .strict(),
 ]);
@@ -61,16 +67,22 @@ export class CuentasService {
     return (await this.cuentas.obtenerTodas()).map(cuentaPublica);
   }
   async opciones() {
-    const [profesores, postulaciones, clases, cuentas] = await Promise.all([
-      this.profesores.obtenerTodos(),
-      this.postulaciones.obtenerTodas(),
-      this.clases.obtenerTodas(),
-      this.cuentas.obtenerTodas(),
-    ]);
+    const libro = await libroNuevo();
+    const l = libro ? await libro.leer() : null;
+    const [profesores, postulaciones, clases, cuentas] = l
+      ? [leerProfesores(l), leerPostulaciones(l), leerClases(l), leerCuentas(l)]
+      : await Promise.all([
+          this.profesores.obtenerTodos(),
+          this.postulaciones.obtenerTodas(),
+          this.clases.obtenerTodas(),
+          this.cuentas.obtenerTodas(),
+        ]);
+    const seguimientos = l ? leerSeguimientos(l) : new Map();
     const idsRegistrados = new Set(
       cuentas.filter((c) => c.perfil === 'alumno').flatMap((c) => c.alumnoIds),
     );
     return {
+      permiteActivacionInicial: !!l,
       clases: clases
         .filter((c) => c.estado !== 'Inactiva')
         .map((c) => ({
@@ -101,7 +113,12 @@ export class CuentasService {
         })),
       aceptadosSinCuenta: postulaciones
         .filter((p) => !idsRegistrados.has(p.id) && ['aceptado', 'aprobado'].includes(p.estado))
-        .map((p) => ({ id: p.id, nombre: p.nombre, claseId: p.claseId })),
+        .map((p) => ({
+          id: p.id,
+          nombre: p.nombre,
+          claseId: p.claseId,
+          tienePlan: !!seguimientos.get(p.id)?.plan,
+        })),
       profesores: profesores
         .filter((p) => p.estado === 'activo')
         .map((p) => ({ id: p.id, nombre: p.nombre })),
@@ -117,28 +134,43 @@ export class CuentasService {
         })),
     };
   }
-  async crearDesdeInscripcion(id: number, datos: unknown) {
+  async crearDesdeInscripcion(id: number, datos: unknown, usuario = 'administrador') {
     const r = z
-      .object({ usuario: usuarioSchema, password: passwordSchema })
+      .object({
+        usuario: usuarioSchema,
+        password: passwordSchema,
+        planInicial: planInicialSchema.optional(),
+      })
       .strict()
       .safeParse(datos);
     if (!r.success)
-      throw new BadRequestException('Revisa el usuario y la contraseña (mínimo 8 caracteres).');
+      throw new BadRequestException(
+        r.error.issues.some((i) => i.path.includes('planInicial'))
+          ? 'Revisa el paquete, los días y la fecha de activación.'
+          : 'Revisa el usuario y la contraseña (mínimo 8 caracteres).',
+      );
     if (r.data.usuario === env.ADMIN_USUARIO.toLowerCase())
       throw new BadRequestException('Ese usuario está reservado para administración.');
-    return this.cuentas.guardarDesdeInscripcion(id, {
-      usuario: r.data.usuario,
-      perfil: 'alumno',
-      activo: true,
-      ...(await hashPassword(r.data.password)),
-    });
+    return this.cuentas.guardarDesdeInscripcion(
+      id,
+      {
+        usuario: r.data.usuario,
+        perfil: 'alumno',
+        activo: true,
+        ...(await hashPassword(r.data.password)),
+      },
+      r.data.planInicial,
+      usuario,
+    );
   }
-  async crear(datos: unknown) {
+  async crear(datos: unknown, usuario = 'administrador') {
     const r = crearSchema.safeParse(datos);
     if (!r.success)
       throw new BadRequestException(
         r.error.issues.find((i) => i.path.includes('telefono'))?.message ??
-          'Revisa el usuario, la contraseña (mínimo 8 caracteres) y la asignación del perfil.',
+          (r.error.issues.some((i) => i.path.includes('planInicial'))
+            ? 'Revisa el paquete, los días y la fecha de activación.'
+            : 'Revisa el usuario, la contraseña (mínimo 8 caracteres) y la asignación del perfil.'),
       );
     const d = r.data;
     if (d.usuario === env.ADMIN_USUARIO.toLowerCase())
@@ -158,6 +190,8 @@ export class CuentasService {
     return this.cuentas.guardarConAlumno(
       { usuario: d.usuario, perfil: 'alumno', activo: true, ...(await hashPassword(d.password)) },
       d.nuevoAlumno,
+      d.planInicial,
+      usuario,
     );
   }
   async editar(id: string, datos: unknown) {

@@ -127,16 +127,6 @@ export default function CompartirConvocatoria() {
             <span className="text-sm">◉</span>
             Reenviar por WhatsApp
           </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              window.location.href = enlace;
-            }}
-            className="mt-3 h-11 w-full rounded-xl border border-[var(--accent)] bg-white text-xs font-semibold text-[var(--accent)] transition hover:bg-[var(--accent-soft)]"
-          >
-            Ver vista previa del formulario
-          </button>
         </section>
       </div>
     </main>

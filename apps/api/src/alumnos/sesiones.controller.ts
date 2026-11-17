@@ -17,7 +17,7 @@ import { ClasesRepository } from '../clases/repositories/clases.repository.js';
 import { PostulacionesRepository } from '../clases/repositories/postulaciones.repository.js';
 import { ProfesoresRepository } from '../profesores/repositories/profesores.repository.js';
 import { AlumnosRepository } from './alumnos.repository.js';
-import { congelado, resumir, type Seguimiento, vacio } from './seguimiento.js';
+import { congelado, diasDelAlumno, resumir, type Seguimiento, vacio } from './seguimiento.js';
 import {
   cambiarSesion,
   cambioSesionSchema,
@@ -84,7 +84,7 @@ export class SesionesController {
           const asistencia = estado.asistencias.find((a) => a.fecha === fecha);
           const tienePago = estado.pagos.some((pago) => pago.fecha <= fecha);
           const pausado = congelado(estado, fecha);
-          const programado = !!estado.plan?.dias.some((d) => d === dia) && tienePago && !pausado;
+          const programado = diasDelAlumno(estado, fecha).includes(dia) && tienePago && !pausado;
           return {
             id: p.id,
             nombre: p.nombre,

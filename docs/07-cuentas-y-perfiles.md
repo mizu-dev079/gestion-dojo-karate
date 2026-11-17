@@ -7,8 +7,10 @@ Hay tres perfiles: **administrador, profesor y alumno**. El rol no se elige en e
 ## Activación
 
 1. El administrador continúa ingresando con `ADMIN_USUARIO` y `ADMIN_PASSWORD` configurados en el entorno. Las sesiones de ese administrador mantienen compatibilidad.
-2. Entrar a **Usuario → Profesores y alumnos**, la pantalla única de registro y administración. Al abrirla se muestran dos tarjetas: Registrar profesor y Registrar alumno, seguidas de las listas de registros. Elegir la tarjeta correspondiente abre su formulario. Tanto profesores como alumnos se registran manualmente desde su tarjeta, creando su cuenta al mismo tiempo. No se seleccionan registros ni postulaciones de prueba.
-3. Para Profesor, pulsar **Crear cuenta de profesor**: nombre obligatorio, teléfono y correo opcionales. Se guardan juntos mediante una operación atómica de Google Sheets; no se deja uno creado sin el otro si el lote falla. Todos los profesores oficiales se crean desde cero junto con su cuenta; no se permite vincular registros existentes. Para Alumno, pulsar **Crear cuenta de alumno** e ingresar nombre, contacto opcional, fecha de nacimiento opcional, clase oficial, usuario y contraseña. Se genera un identificador nuevo sin reutilizar postulaciones anteriores.
+2. Entrar a **Usuario → Profesores y alumnos** y elegir Profesores o Alumnos. Cada apartado reúne sus registros y permite crear cuentas.
+3. Para Profesor, pulsar **Crear cuenta de profesor**: nombre obligatorio, teléfono y correo opcionales. Para un alumno nuevo, usar **Registrar alumno** y completar sus datos, clase, turno y credenciales. Si ya tiene una postulación aceptada, usar **Crear acceso y activar plan** desde la lista de aceptados sin acceso: se conserva su inscripción y su cupo.
+
+   En ambos caminos del alumno se ofrece **Activar plan al crear el acceso**, marcado por defecto. Se elige el paquete de 4, 8 o 12 clases, los días del turno y la fecha de activación. Cuenta y plan se guardan en un único lote atómico; un error no deja registros parciales. Se puede desmarcar para crear solo el acceso. Si el alumno ya tiene un plan, se crea únicamente el acceso y se conserva su saldo. Una activación recibida desde otra pantalla mientras el formulario estaba abierto se vuelve a comprobar antes de guardar.
 4. Entregar usuario y contraseña inicial por un medio privado. El titular puede cambiar su contraseña desde **Usuario**. Las contraseñas requieren al menos 8 caracteres. No hay registro público ni contraseñas compartidas predeterminadas.
 5. Desactivar acceso o restablecer contraseña desde la cuenta. Ambas acciones invalidan sesiones existentes inmediatamente; el usuario debe volver a ingresar.
 
@@ -61,3 +63,9 @@ Profesores y alumnos se sincronizan sin botón de recarga. El canal autenticado 
 Una comprobación cada 30 segundos mientras la página está visible permite recuperar cambios hechos directamente en Sheets o notificaciones perdidas. También se sincroniza al volver a la pestaña, recuperar la conexión y terminar una operación local. Las lecturas anteriores a una modificación propia se descartan para no sobrescribirla con datos viejos. El canal se cierra al salir de la página y envía latidos para evitar conexiones inactivas.
 
 Las notificaciones se comparten dentro de una instancia de la API. Varias réplicas necesitan un canal compartido; la comprobación periódica permite recuperar cambios, pero no sustituye esa coordinación para una entrega inmediata.
+
+## Alta conjunta por API
+
+`POST /cuentas` con perfil alumno y `POST /cuentas/inscripciones/:id` aceptan `planInicial` opcional: `{ cantidad: 4 | 8 | 12, dias: [...], fecha: "AAAA-MM-DD" }`. No admite importes ni referencias. La activación se valida con las mismas reglas de Alumnos y registra al administrador autenticado. La respuesta indica `planActivado` y, si corresponde, `clasesPendientes`.
+
+`GET /cuentas/opciones` indica `permiteActivacionInicial` y si cada aceptado sin cuenta `tienePlan`, para ofrecer el formulario adecuado. La estructura anterior de Sheets conserva la creación de cuentas sin plan; el alta conjunta requiere la estructura profesional.

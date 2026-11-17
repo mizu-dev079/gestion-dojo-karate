@@ -27,6 +27,7 @@ const pago = z.object({
   cantidad: z.number().int().positive(),
   restantes: z.number().int().nonnegative(),
   importe: z.number().nonnegative(),
+  dias: dias.optional(),
   referencia: z.string(),
   limiteRecuperaciones: limite.optional(),
 });
@@ -66,6 +67,10 @@ export const seguimientoSchema = z.object({
   plan: z
     .object({ cantidad: z.number().int().positive(), dias, importe: z.number().nonnegative() })
     .nullable(),
+  proximoPlan: z
+    .object({ cantidad: cantidadPlan, dias, importe: z.number().nonnegative() })
+    .nullable()
+    .default(null),
   pagos: z.array(pago),
   asistencias: z.array(asistencia),
   congelamientos: z.array(congelamiento),
@@ -92,10 +97,10 @@ export const vacio = (): Seguimiento =>
     asistencias: [],
     congelamientos: [],
   });
+export const planInicialSchema = z.object({ cantidad: cantidadPlan, dias, fecha }).strict();
+export type PlanInicial = z.infer<typeof planInicialSchema>;
 export const comandoSchema = z.discriminatedUnion('accion', [
-  z
-    .object({ accion: z.literal('activarPlan'), version, cantidad: cantidadPlan, dias, fecha })
-    .strict(),
+  planInicialSchema.extend({ accion: z.literal('activarPlan'), version }).strict(),
   z.object({ accion: z.literal('configurarPlan'), version, cantidad: cantidadPlan, dias }).strict(),
   z.object({ accion: z.literal('renovarPlan'), version, fecha }).strict(),
   z
@@ -164,6 +169,26 @@ export function congelado(s: Seguimiento, dia: string): boolean {
   );
 }
 
+function actualizarPlanVisible(s: Seguimiento) {
+  if (!s.proximoPlan || !s.plan) return;
+  const pendiente = s.pagos.find((p) => p.restantes > 0);
+  s.plan = pendiente
+    ? { cantidad: pendiente.cantidad, dias: pendiente.dias ?? s.plan.dias, importe: 0 }
+    : { ...s.proximoPlan };
+}
+export function diasDelAlumno(s: Seguimiento, fecha: string): string[] {
+  const registrada = s.asistencias.find((a) => a.fecha === fecha);
+  const paquete = registrada?.pagoId ? s.pagos.find((p) => p.id === registrada.pagoId) : undefined;
+  if (paquete?.dias) return paquete.dias;
+  const anterior = seguimientoSchema.parse(s);
+  anterior.asistencias = anterior.asistencias.filter((a) => a.fecha < fecha);
+  recalcular(anterior);
+  return (
+    anterior.pagos.find((p) => p.restantes > 0 && p.fecha <= fecha)?.dias ??
+    anterior.plan?.dias ??
+    []
+  );
+}
 export function recalcular(s: Seguimiento) {
   for (const p of s.pagos) p.restantes = p.cantidad;
   for (const a of s.asistencias.sort((x, y) => x.fecha.localeCompare(y.fecha))) {
@@ -172,7 +197,12 @@ export function recalcular(s: Seguimiento) {
       a.pagoId = autorizada.pagoId;
       continue;
     }
-    const disponible = s.pagos.find((p) => p.restantes > 0 && p.fecha <= a.fecha);
+    const dia = (
+      ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'] as const
+    )[new Date(`${a.fecha}T00:00:00Z`).getUTCDay()];
+    const disponible = s.pagos.find(
+      (p) => p.restantes > 0 && p.fecha <= a.fecha && (!p.dias || p.dias.includes(dia)),
+    );
     // No cobrar retroactivamente las faltas registradas durante la etapa de reglas pendientes.
     if (a.estado !== 'presente' && a.politica === 'pendiente') {
       a.pagoId = disponible?.id ?? null;
@@ -180,14 +210,16 @@ export function recalcular(s: Seguimiento) {
     }
     if (!disponible)
       throw new ConflictException(
-        'No hay clases pagadas disponibles para esa fecha. Revisa el saldo y las recuperaciones.',
+        'No hay clases disponibles para esa fecha. Revisa el saldo y las recuperaciones.',
       );
     disponible.restantes -= 1;
     a.pagoId = disponible.id;
   }
+  actualizarPlanVisible(s);
 }
 export function resumir(estado: Seguimiento, hoy = hoyLima()) {
   const s = seguimientoSchema.parse(estado);
+  actualizarPlanVisible(s);
   return {
     ...s,
     congelado: congelado(s, hoy),
@@ -206,27 +238,39 @@ export function aplicarComando(
   hoy = hoyLima(),
   usuario = 'administrador',
 ): Seguimiento {
-  if (
-    comando.accion === 'activarPlan' ||
-    comando.accion === 'configurarPlan' ||
-    comando.accion === 'renovarPlan'
-  ) {
+  if (comando.accion === 'configurarPlan') {
+    if (actual.version !== comando.version)
+      throw new ConflictException('El registro cambió. Recarga antes de continuar.');
+    const s = seguimientoSchema.parse(actual);
+    if (!s.plan) throw new BadRequestException('Activa primero el plan del alumno.');
+    if (!comando.dias.every((d) => diasClase.includes(d)))
+      throw new BadRequestException('Elige días del horario de la clase.');
+    for (const p of s.pagos) p.dias ??= [...s.plan.dias];
+    s.proximoPlan = { cantidad: comando.cantidad, dias: comando.dias, importe: 0 };
+    recalcular(s);
+    s.auditoria.push({ id: randomUUID(), fecha: hoy, usuario, accion: comando.accion, motivo: '' });
+    s.version += 1;
+    return s;
+  }
+  if (comando.accion === 'activarPlan' || comando.accion === 'renovarPlan') {
+    const base = seguimientoSchema.parse(actual);
+    if (comando.accion === 'renovarPlan' && base.proximoPlan) base.plan = { ...base.proximoPlan };
     const normalizado: Comando =
       comando.accion === 'renovarPlan'
         ? { accion: 'renovar', version: comando.version, fecha: comando.fecha, referencia: '' }
-        : comando.accion === 'activarPlan'
-          ? { ...comando, accion: 'iniciar', importe: 0, referencia: '' }
-          : { ...comando, accion: 'configurar', importe: 0 };
-    const nuevo = aplicarComando(actual, normalizado, diasClase, hoy, usuario);
+        : { ...comando, accion: 'iniciar', importe: 0, referencia: '' };
+    const nuevo = aplicarComando(base, normalizado, diasClase, hoy, usuario);
     if (nuevo.plan) nuevo.plan.importe = 0;
-    if (comando.accion !== 'configurarPlan') {
+    {
       const paquete = nuevo.pagos.at(-1);
       if (paquete) {
         paquete.importe = 0;
         paquete.referencia = '';
       }
     }
-    nuevo.auditoria.at(-1)!.accion = comando.accion;
+    const ultima = nuevo.auditoria.at(-1);
+    if (ultima) ultima.accion = comando.accion;
+    recalcular(nuevo);
     return nuevo;
   }
   if (actual.version !== comando.version)
@@ -240,6 +284,7 @@ export function aplicarComando(
     if (!comando.dias.every((d) => diasClase.includes(d)))
       throw new BadRequestException('Elige días del horario de la clase.');
     s.plan = { cantidad: comando.cantidad, dias: comando.dias, importe: comando.importe };
+    s.proximoPlan = null;
   }
   if (comando.accion === 'iniciar' || comando.accion === 'renovar') {
     if (congelado(s, hoy))
@@ -262,6 +307,7 @@ export function aplicarComando(
       cantidad: plan.cantidad,
       restantes: plan.cantidad,
       importe: plan.importe,
+      dias: [...plan.dias],
       referencia: comando.referencia,
       limiteRecuperaciones: limiteBase(plan.cantidad),
     });
@@ -291,10 +337,10 @@ export function aplicarComando(
       throw new ConflictException('No se registra asistencia durante un congelamiento.');
     if (comando.fecha > hoy && comando.estado !== 'avisada')
       throw new BadRequestException('Solo puedes avisar ausencias futuras.');
-    const dia = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'][
-      new Date(`${comando.fecha}T00:00:00Z`).getUTCDay()
-    ];
-    if (!s.plan?.dias.some((d) => d === dia))
+    const dia = (
+      ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'] as const
+    )[new Date(`${comando.fecha}T00:00:00Z`).getUTCDay()];
+    if (!diasDelAlumno(s, comando.fecha).includes(dia))
       throw new BadRequestException('La fecha no corresponde a los días del alumno.');
     if (!s.pagos.some((p) => p.fecha <= comando.fecha))
       throw new BadRequestException('La fecha es anterior a la primera activación del plan.');

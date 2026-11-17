@@ -28,6 +28,13 @@ import { ProfesoresRepository } from '../src/profesores/repositories/profesores.
 const PASSWORD = 'password-publica-de-pruebas';
 const profesorId = randomUUID(),
   alumnoId = randomUUID();
+// Este conjunto usa repositorios en memoria; no consulta la hoja real al cargar opciones.
+vi.mock('../src/google/sheets.client.js', () => ({
+  crearClienteSheets: vi.fn(async () => ({
+    spreadsheets: { get: vi.fn(async () => ({ data: { sheets: [] } })) },
+  })),
+}));
+
 describe('Perfiles y aislamiento de acceso (HTTP)', () => {
   let app: INestApplication;
   let cuentas: Cuenta[], estados: Map<number, Seguimiento>;

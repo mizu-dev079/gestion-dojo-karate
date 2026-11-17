@@ -4,7 +4,6 @@ export default function TarjetaClase({
   clase,
   estado,
   dias,
-  formatearFecha,
   onEditar,
   onEliminar,
   ocupado = false,
@@ -38,7 +37,7 @@ export default function TarjetaClase({
             {clase.sede ? `Sede ${clase.sede}` : 'Sede por asignar'}
           </p>
           <h2 id={tituloId} className="mt-1 break-words text-base font-bold text-gray-900">
-            {clase.turnoId !== undefined ? 'Turno' : 'Karate'} · {clase.turno ?? clase.nivel}
+            {clase.turnoId !== undefined ? (clase.turno ?? clase.nivel) : `Karate · ${clase.nivel}`}
           </h2>
         </div>
         <span
@@ -125,7 +124,7 @@ export default function TarjetaClase({
           href={`/compartir-convocatoria?clase=${encodeURIComponent(clase.claseBaseId ?? clase.id)}${clase.turnoId !== undefined ? `&turno=${clase.id}` : ''}`}
           className="inline-flex min-h-11 items-center justify-center rounded-xl border border-dojo-200 px-2 py-2 text-center text-sm font-semibold text-dojo-700 hover:bg-dojo-50"
         >
-          Compartir QR
+          Compartir
         </a>
       </div>
 
@@ -154,16 +153,6 @@ export default function TarjetaClase({
             <dt className="text-xs text-gray-500">Tarifa mensual</dt>
             <dd className="mt-1 font-medium text-gray-800">
               {clase.estado !== undefined ? 'Según plan contratado' : `S/ ${clase.tarifa}`}
-            </dd>
-          </div>
-          <div className="col-span-2">
-            <dt className="text-xs text-gray-500">Vigencia</dt>
-            <dd className="mt-1 font-medium text-gray-800">
-              {clase.fechaInicio && clase.fechaFin
-                ? `${formatearFecha(clase.fechaInicio)} al ${formatearFecha(clase.fechaFin)}`
-                : clase.estado !== undefined
-                  ? 'Grupo permanente'
-                  : 'Sin fechas registradas'}
             </dd>
           </div>
           {clase.duracion && (

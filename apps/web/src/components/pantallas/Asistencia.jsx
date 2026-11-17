@@ -3,6 +3,7 @@ import { useOperacion } from '../../hooks/useOperacion.js';
 import { useSesion } from '../../hooks/useSesion.js';
 import { apiFetch, leerRespuesta } from '../../lib/api.js';
 import Mensaje from '../Mensaje.jsx';
+import SelectorFechaAsistencia from '../SelectorFechaAsistencia.jsx';
 
 const hoy = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(new Date());
 const campo = 'mt-1 min-h-11 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-base';
@@ -126,7 +127,7 @@ function GestionSesion({ sesion, profesores, admin, ocupado, guardar, cerrar }) 
     </form>
   );
 }
-export default function Asistencia() {
+export default function Asistencia({ calendario = false }) {
   const acceso = useSesion();
   const [fecha, setFecha] = useState(hoy);
   const [datos, setDatos] = useState(null);
@@ -214,19 +215,27 @@ export default function Asistencia() {
           no genera faltas automáticamente. Las cancelaciones del dojo no consumen clases ni
           recuperaciones.
         </p>
-        <label className="block text-sm font-semibold">
-          Fecha
-          <input
-            className={campo}
-            type="date"
-            value={fecha}
+        {calendario ? (
+          <SelectorFechaAsistencia
+            fecha={fecha}
+            cambiar={setFecha}
             disabled={ocupado || cargando}
-            required
-            onChange={(e) => {
-              if (e.target.value) setFecha(e.target.value);
-            }}
           />
-        </label>
+        ) : (
+          <label className="block text-sm font-semibold">
+            Fecha
+            <input
+              className={campo}
+              type="date"
+              value={fecha}
+              disabled={ocupado || cargando}
+              required
+              onChange={(e) => {
+                if (e.target.value) setFecha(e.target.value);
+              }}
+            />
+          </label>
+        )}
         <button
           className={boton}
           disabled={ocupado || cargando}

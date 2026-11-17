@@ -86,7 +86,7 @@ describe('Planes continuos y saldo', () => {
   it('sin saldo no escribe otra sesión y mantiene intacto el original', () => {
     let s = iniciar(4);
     for (const f of ['2026-11-02', '2026-11-04', '2026-11-09', '2026-11-11']) s = asistir(s, f);
-    expect(() => asistir(s, HOY)).toThrow('pagadas');
+    expect(() => asistir(s, HOY)).toThrow('clases disponibles');
     expect(s.asistencias).toHaveLength(4);
   });
   it('no usa pagos posteriores para cubrir sesiones anteriores', () => {
@@ -94,7 +94,7 @@ describe('Planes continuos y saldo', () => {
     s.pagos[0].fecha = '2026-10-19';
     s = ejecutar(s, { accion: 'renovar', fecha: '2026-11-09' });
     for (const f of ['2026-10-19', '2026-10-21', '2026-10-26', '2026-10-28']) s = asistir(s, f);
-    expect(() => asistir(s, '2026-11-02')).toThrow('pagadas');
+    expect(() => asistir(s, '2026-11-02')).toThrow('clases disponibles');
   });
 });
 describe('Recuperaciones manuales por pago', () => {
@@ -380,5 +380,70 @@ describe('Activaciones y renovaciones sin cobros', () => {
           ...extra,
         }).success,
       ).toBe(false);
+  });
+});
+
+describe('Cambio de plan programado', () => {
+  it('mantiene el plan anterior, renueva el nuevo paquete y lo muestra solo al agotar los anteriores', () => {
+    let s = ejecutar(vacio(), { accion: 'activarPlan', cantidad: 4, dias, fecha: '2026-11-02' });
+    s = asistir(s, '2026-11-02');
+    s = ejecutar(s, { accion: 'configurarPlan', cantidad: 8, dias });
+    expect(s.plan?.cantidad).toBe(4);
+    expect(s.proximoPlan?.cantidad).toBe(8);
+    expect(resumir(s).pendientes).toBe(3);
+    s = ejecutar(s, { accion: 'renovarPlan', fecha: '2026-11-02' });
+    expect(s.plan?.cantidad).toBe(4);
+    expect(s.pagos.map((p) => p.cantidad)).toEqual([4, 8]);
+    for (const fecha of ['2026-11-04', '2026-11-09', '2026-11-11']) s = asistir(s, fecha);
+    expect(s.plan?.cantidad).toBe(8);
+    expect(resumir(s).pendientes).toBe(8);
+    expect(s.pagos.map((p) => p.restantes)).toEqual([0, 8]);
+  });
+  it('programar el cambio no regala clases y permite modificar la elección antes de renovar', () => {
+    let s = ejecutar(iniciar(4), { accion: 'configurarPlan', cantidad: 8, dias });
+    s = ejecutar(s, { accion: 'configurarPlan', cantidad: 12, dias });
+    expect(resumir(s).pendientes).toBe(4);
+    expect(s.pagos).toHaveLength(1);
+    expect(s.plan?.cantidad).toBe(4);
+    for (const fecha of ['2026-11-02', '2026-11-04', '2026-11-09', '2026-11-11'])
+      s = asistir(s, fecha);
+    expect(s.plan?.cantidad).toBe(12);
+    expect(resumir(s).pendientes).toBe(0);
+  });
+  it('conserva los días de cada paquete y las correcciones y recuperaciones históricas', () => {
+    let s = ejecutar(vacio(), {
+      accion: 'activarPlan',
+      cantidad: 4,
+      dias: ['Lunes'],
+      fecha: '2026-11-02',
+    });
+    s = ejecutar(s, { accion: 'configurarPlan', cantidad: 8, dias: ['Miércoles'] });
+    s = ejecutar(s, { accion: 'renovarPlan', fecha: '2026-11-02' });
+    expect(() => asistir(s, '2026-11-04')).toThrow('días');
+    for (const fecha of ['2026-11-02', '2026-11-09', '2026-11-16', '2026-11-23'])
+      s = ejecutar(
+        s,
+        { accion: 'asistencia', fecha, estado: fecha === '2026-11-23' ? 'falta' : 'presente' },
+        '2026-12-01',
+      );
+    expect(s.plan?.dias).toEqual(['Miércoles']);
+    s = ejecutar(
+      s,
+      { accion: 'asistencia', fecha: '2026-11-25', estado: 'presente' },
+      '2026-12-01',
+    );
+    s = ejecutar(
+      s,
+      { accion: 'recuperar', fecha: '2026-11-23', motivo: 'Justificado' },
+      '2026-12-01',
+    );
+    expect(s.pagos.map((p) => p.restantes)).toEqual([1, 7]);
+    expect(s.plan?.cantidad).toBe(4);
+    s = ejecutar(
+      s,
+      { accion: 'asistencia', fecha: '2026-11-02', estado: 'presente' },
+      '2026-12-01',
+    );
+    expect(s.pagos.map((p) => p.restantes)).toEqual([1, 7]);
   });
 });

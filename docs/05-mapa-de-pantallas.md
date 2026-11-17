@@ -8,16 +8,18 @@ Las rutas están en `apps/web/src/pages/`. El contenido interactivo de cada pant
 | Clases | `/clases` | `clases.astro` | `Clases.jsx` |
 | Ruta antigua de alta | `/nueva-clase` → `/clases` | `nueva-clase.astro` | Redirección, sin formulario |
 | Postulaciones | `/postulaciones` | `postulaciones.astro` | `Postulaciones.jsx` |
-| Calendario | `/calendario` | `calendario.astro` | `Calendario.jsx` |
+| Calendario de asistencia | `/calendario` | `calendario.astro` | `Calendario.jsx` |
 | Profesores y alumnos | `/cuentas` | `cuentas.astro` | `Cuentas.jsx` |
 | Alumnos | `/alumnos` | `alumnos.astro` | `Alumnos.jsx` |
 | Ruta anterior de profesores | `/profesores` → `/cuentas` | `profesores.astro` | Redirección |
 | Usuario | `/usuario` | `usuario.astro` | `Usuario.jsx` |
 | Ajustes | `/ajustes` | `ajustes.astro` | `Ajustes.jsx` |
-| Convocatoria desde el calendario | `/configurar-convocatoria` | `configurar-convocatoria.astro` | `ConfigurarConvocatoria.jsx` |
+| Configurar convocatoria | `/configurar-convocatoria` | `configurar-convocatoria.astro` | `ConfigurarConvocatoria.jsx` |
 | Compartir convocatoria | `/compartir-convocatoria` | `compartir-convocatoria.astro` | `CompartirConvocatoria.jsx` |
 | Formulario de postulación público | `/formulario?clase=ID` | `formulario.astro` | `FormularioPostulacion.jsx` |
 | Iniciar sesión | `/login` | `login.astro` | `Login.jsx` |
+
+El calendario se dedica a la asistencia. Profesores y administración seleccionan una fecha, consultan las sesiones y registran la presencia del profesor y de los alumnos. El alumno consulta únicamente su propia asistencia. La gestión de clases y las convocatorias se realizan en sus apartados respectivos.
 
 ## Componentes compartidos
 

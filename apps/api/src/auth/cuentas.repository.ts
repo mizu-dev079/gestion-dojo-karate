@@ -8,9 +8,11 @@ import {
 } from '@nestjs/common';
 import type { sheets_v4 } from 'googleapis';
 import type { AlumnoNuevo } from '../alumnos/dto/alumno.schema.js';
+import { type PlanInicial } from '../alumnos/seguimiento.js';
 import { enClaseCompartida } from '../clases/cola-clases.js';
 import { env } from '../config/env.js';
 import { crearClienteSheets } from '../google/sheets.client.js';
+import { activarPlanInicial } from '../portal/activar-plan-inicial.js';
 import {
   alumnoConCuenta,
   cuentaInscripcion,
@@ -341,6 +343,8 @@ export class CuentasRepository {
   guardarConAlumno(
     nueva: Omit<Cuenta, 'id' | 'revision' | 'profesorId' | 'alumnoIds'>,
     datos: AlumnoNuevo,
+    planInicial?: PlanInicial,
+    usuario = 'administrador',
   ) {
     return this.enOrden(() =>
       enClaseCompartida(datos.claseId, async () => {
@@ -348,8 +352,13 @@ export class CuentasRepository {
         if (libro)
           return libro.modificar((l) => {
             const { alumnoCreado, ...c } = alumnoConCuenta(l, nueva, datos);
-            return { ...cuentaPublica(c), alumnoCreado };
+            const activacion = activarPlanInicial(l, alumnoCreado.id, planInicial, usuario);
+            return { ...cuentaPublica(c), alumnoCreado, ...activacion };
           });
+        if (planInicial)
+          throw new ConflictException(
+            'La activación conjunta requiere la estructura actual de Sheets.',
+          );
         const { sheets, existe, filas, cuentas, hojas } = await this.leer();
         if (cuentas.some((c) => c.usuario === nueva.usuario))
           throw new ConflictException('Ese nombre de usuario ya está registrado.');
@@ -619,10 +628,15 @@ export class CuentasRepository {
   async guardarDesdeInscripcion(
     id: number,
     nueva: Omit<Cuenta, 'id' | 'revision' | 'profesorId' | 'alumnoIds'>,
+    planInicial?: PlanInicial,
+    usuario = 'administrador',
   ) {
     const libro = await libroNuevo();
     if (!libro) throw new ConflictException('Esta acción requiere la nueva estructura de la hoja.');
-    return libro.modificar((l) => cuentaPublica(cuentaInscripcion(l, id, nueva)));
+    return libro.modificar((l) => {
+      const cuenta = cuentaPublica(cuentaInscripcion(l, id, nueva));
+      return { ...cuenta, ...activarPlanInicial(l, id, planInicial, usuario) };
+    });
   }
   private enOrden<T>(accion: () => Promise<T>): Promise<T> {
     const resultado = this.cola.then(accion);

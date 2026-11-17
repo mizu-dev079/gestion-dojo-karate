@@ -201,16 +201,12 @@ export default function FormularioPostulacion() {
       <p className="mt-1 text-sm text-dojo-900">
         {clase.horaInicio} – {clase.horaFin}
       </p>
-      <p className="mt-2 text-sm text-dojo-900">
-        {permanente ? (
-          'Grupo permanente: clases en los días y horarios indicados.'
-        ) : (
-          <>
-            Fechas de la clase: del {fechaEnEspanol(clase.fechaInicio)} al{' '}
-            {fechaEnEspanol(clase.fechaFin)}
-          </>
-        )}
-      </p>
+      {!permanente && (
+        <p className="mt-2 text-sm text-dojo-900">
+          Fechas de la clase: del {fechaEnEspanol(clase.fechaInicio)} al{' '}
+          {fechaEnEspanol(clase.fechaFin)}
+        </p>
+      )}
       <div className="mt-3">
         <IndicadorCupos disponibles={clase.cuposDisponibles} total={clase.cupos} />
       </div>
@@ -397,18 +393,6 @@ export default function FormularioPostulacion() {
                   />
                 </label>
                 <label className="block text-sm font-medium text-gray-800">
-                  Correo del apoderado *
-                  <input
-                    className={campo}
-                    type="email"
-                    inputMode="email"
-                    name="correoApoderado"
-                    autoComplete="section-apoderado email"
-                    required
-                    maxLength={254}
-                  />
-                </label>
-                <label className="block text-sm font-medium text-gray-800">
                   Teléfono del apoderado *
                   <input
                     className={campo}
@@ -420,6 +404,18 @@ export default function FormularioPostulacion() {
                     pattern="[0-9]{9}"
                     maxLength={9}
                     title="Escribe 9 dígitos sin espacios"
+                  />
+                </label>
+                <label className="block text-sm font-medium text-gray-800">
+                  Correo del apoderado *
+                  <input
+                    className={campo}
+                    type="email"
+                    inputMode="email"
+                    name="correoApoderado"
+                    autoComplete="section-apoderado email"
+                    required
+                    maxLength={254}
                   />
                 </label>
               </section>

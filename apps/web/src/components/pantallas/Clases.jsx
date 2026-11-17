@@ -645,7 +645,6 @@ export default function Clases() {
                         ? ordenarDias(clase.frecuencia).join(', ')
                         : clase.frecuencia
                     }
-                    formatearFecha={formatearFecha}
                     onEditar={iniciarEdicion}
                     onEliminar={(id) => {
                       setAviso(null);

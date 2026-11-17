@@ -483,6 +483,167 @@ describe('Portal sobre la nueva estructura de Sheets (HTTP y persistencia reales
     expect(tablas.Turnos[1][3]).toBe('Sede principal');
     expect(tablas.Turnos[1][9]).toBe(10);
   });
+  it('crea acceso y activa el plan de una inscripción aceptada en un solo lote, sin duplicar persona ni cupo', async () => {
+    const id = await postular();
+    await aceptar(id);
+    const opciones = await api().get('/cuentas/opciones').set('Cookie', cookie).expect(200);
+    expect(opciones.body.permiteActivacionInicial).toBe(true);
+    expect(opciones.body.aceptadosSinCuenta[0].tienePlan).toBe(false);
+    const previas = batchUpdate.mock.calls.length;
+    const r = await api()
+      .post(`/cuentas/inscripciones/${id}`)
+      .set('Cookie', cookie)
+      .send({
+        usuario: 'ana.acceso',
+        password: PASS,
+        planInicial: { cantidad: 4, dias: [dia], fecha: hoy },
+      })
+      .expect(201);
+    expect(r.body.planActivado).toBe(true);
+    expect(r.body.clasesPendientes).toBe(4);
+    expect(r.body).not.toHaveProperty('hash');
+    expect(r.body).not.toHaveProperty('salt');
+    expect(batchUpdate.mock.calls.length).toBe(previas + 1);
+    expect(tablas.Alumnos).toHaveLength(2);
+    expect(tablas.Inscripciones).toHaveLength(2);
+    expect(tablas.Clases[1][10]).toBe(1);
+    expect(tablas.Renovaciones[1][6]).toBe(1);
+    expect(tablas.Renovaciones[1][8]).toBe('admin');
+    const lista = await api().get('/alumnos').set('Cookie', cookie).expect(200);
+    expect(lista.body[0].seguimiento.pendientes).toBe(4);
+    await api()
+      .post(`/cuentas/inscripciones/${id}`)
+      .set('Cookie', cookie)
+      .send({
+        usuario: 'ana.otra',
+        password: PASS,
+        planInicial: { cantidad: 4, dias: [dia], fecha: hoy },
+      })
+      .expect(409);
+    expect(tablas.Renovaciones.filter((f) => f.length)).toHaveLength(2);
+  });
+  it('registra manualmente alumno, inscripción, cuenta y plan juntos', async () => {
+    const previas = batchUpdate.mock.calls.length;
+    const r = await api()
+      .post('/cuentas')
+      .set('Cookie', cookie)
+      .send({
+        usuario: 'manual.conplan',
+        password: PASS,
+        perfil: 'alumno',
+        nuevoAlumno: { nombre: 'Alumno con plan', telefono: '', correo: '', claseId: 11 },
+        planInicial: { cantidad: 8, dias: [dia], fecha: hoy },
+      })
+      .expect(201);
+    expect(r.body.planActivado).toBe(true);
+    expect(r.body.clasesPendientes).toBe(8);
+    expect(batchUpdate.mock.calls.length).toBe(previas + 1);
+    expect(tablas.Alumnos).toHaveLength(2);
+    expect(tablas.Inscripciones).toHaveLength(2);
+    expect(tablas.CuentasDojo).toHaveLength(2);
+    expect(tablas.Postulaciones).toHaveLength(1);
+    expect(tablas.Renovaciones[1][7]).toBe(8);
+  });
+  it('conserva un plan existente y rechaza otra activación al crear el acceso sin modificar datos', async () => {
+    const id = await postular();
+    await aceptar(id);
+    await api()
+      .post(`/alumnos/${id}`)
+      .set('Cookie', cookie)
+      .send({ accion: 'activarPlan', cantidad: 4, dias: [dia], fecha: hoy, version: 0 })
+      .expect(201);
+    const opciones = await api().get('/cuentas/opciones').set('Cookie', cookie).expect(200);
+    expect(opciones.body.aceptadosSinCuenta[0].tienePlan).toBe(true);
+    const original = structuredClone(tablas);
+    await api()
+      .post(`/cuentas/inscripciones/${id}`)
+      .set('Cookie', cookie)
+      .send({
+        usuario: 'ana.duplicada',
+        password: PASS,
+        planInicial: { cantidad: 8, dias: [dia], fecha: hoy },
+      })
+      .expect(409);
+    expect(tablas).toEqual(original);
+    await api()
+      .post(`/cuentas/inscripciones/${id}`)
+      .set('Cookie', cookie)
+      .send({ usuario: 'ana.sinreset', password: PASS })
+      .expect(201);
+    expect(tablas.Renovaciones).toEqual(original.Renovaciones);
+    const lista = await api().get('/alumnos').set('Cookie', cookie).expect(200);
+    expect(lista.body[0].seguimiento.pendientes).toBe(4);
+  });
+  it('rechaza días incompatibles y un fallo de Sheets no deja acceso ni alumno parciales', async () => {
+    const datos = {
+      usuario: 'manual.invalido',
+      password: PASS,
+      perfil: 'alumno',
+      nuevoAlumno: { nombre: 'Alumno nuevo', telefono: '', correo: '', claseId: 11 },
+      planInicial: { cantidad: 4, dias: [dia], fecha: hoy },
+    };
+    const original = structuredClone(tablas);
+    const otroDia = dia === 'Domingo' ? 'Lunes' : 'Domingo';
+    await api()
+      .post('/cuentas')
+      .set('Cookie', cookie)
+      .send({ ...datos, planInicial: { ...datos.planInicial, dias: [otroDia] } })
+      .expect(400);
+    expect(tablas).toEqual(original);
+    fallar = true;
+    await api().post('/cuentas').set('Cookie', cookie).send(datos).expect(500);
+    expect(tablas).toEqual(original);
+  });
+  it('persiste el plan programado sin reemplazar el actual hasta terminar sus clases pendientes', async () => {
+    const cuenta = await alumnoManual();
+    const id = cuenta.alumnoCreado.id;
+    const fechas = [21, 14, 7, 0].map((dias) =>
+      new Date(new Date(`${hoy}T00:00:00Z`).getTime() - dias * 86400000).toISOString().slice(0, 10),
+    );
+    let r = await api()
+      .post(`/alumnos/${id}`)
+      .set('Cookie', cookie)
+      .send({ accion: 'activarPlan', version: 0, cantidad: 4, dias: [dia], fecha: fechas[0] })
+      .expect(201);
+    r = await api()
+      .post(`/alumnos/${id}`)
+      .set('Cookie', cookie)
+      .send({ accion: 'asistencia', version: r.body.version, fecha: fechas[0], estado: 'presente' })
+      .expect(201);
+    r = await api()
+      .post(`/alumnos/${id}`)
+      .set('Cookie', cookie)
+      .send({ accion: 'configurarPlan', version: r.body.version, cantidad: 8, dias: [dia] })
+      .expect(201);
+    expect(r.body.plan.cantidad).toBe(4);
+    expect(r.body.proximoPlan.cantidad).toBe(8);
+    expect(r.body.pendientes).toBe(3);
+    expect(tablas.Inscripciones[1][6]).toBe('PLAN-04');
+    const lista = await api().get('/alumnos').set('Cookie', cookie).expect(200);
+    expect(lista.body[0].seguimiento.plan.cantidad).toBe(4);
+    expect(lista.body[0].seguimiento.proximoPlan.cantidad).toBe(8);
+    r = await api()
+      .post(`/alumnos/${id}`)
+      .set('Cookie', cookie)
+      .send({ accion: 'renovarPlan', version: r.body.version, fecha: hoy })
+      .expect(201);
+    expect(r.body.plan.cantidad).toBe(4);
+    expect(r.body.pendientes).toBe(11);
+    for (const fecha of fechas.slice(1))
+      r = await api()
+        .post(`/alumnos/${id}`)
+        .set('Cookie', cookie)
+        .send({ accion: 'asistencia', version: r.body.version, fecha, estado: 'presente' })
+        .expect(201);
+    expect(r.body.plan.cantidad).toBe(8);
+    expect(r.body.pendientes).toBe(8);
+    expect(tablas.Inscripciones[1][6]).toBe('PLAN-08');
+    const final = await api().get('/alumnos').set('Cookie', cookie).expect(200);
+    expect(final.body[0].seguimiento.plan.cantidad).toBe(8);
+    expect(final.body[0].seguimiento.pagos.map((p: { restantes: number }) => p.restantes)).toEqual([
+      0, 8,
+    ]);
+  });
   it('lee clases y catálogo, sin crear hojas antiguas ni registros al consultar', async () => {
     const c = await api().get('/clases').set('Cookie', cookie).expect(200);
     expect(c.body[0]).toMatchObject({

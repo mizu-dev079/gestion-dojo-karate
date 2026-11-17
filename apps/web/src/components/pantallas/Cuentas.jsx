@@ -66,7 +66,17 @@ function FichaPersona({ nombre, children }) {
   );
 }
 
-function Registro({ perfil, clases, ocupado, crear, cancelar, inscripcion, postulaciones = [] }) {
+function Registro({
+  perfil,
+  clases,
+  ocupado,
+  crear,
+  cancelar,
+  inscripcion,
+  postulaciones = [],
+  planes = [],
+  permiteActivacionInicial = false,
+}) {
   const [usuario, setUsuario] = useState('');
   const [password, setPassword] = useState('');
   const [nombre, setNombre] = useState('');
@@ -74,6 +84,18 @@ function Registro({ perfil, clases, ocupado, crear, cancelar, inscripcion, postu
   const [correo, setCorreo] = useState('');
   const [claseId, setClaseId] = useState('');
   const [fechaNacimiento, setFechaNacimiento] = useState('');
+  const [activarPlan, setActivarPlan] = useState(true);
+  const [cantidadPlan, setCantidadPlan] = useState(
+    String(planes.find((p) => p.cantidad === 8)?.cantidad ?? planes[0]?.cantidad ?? ''),
+  );
+  const [diasElegidos, setDiasElegidos] = useState(null);
+  const [fechaActivacion, setFechaActivacion] = useState(
+    new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(new Date()),
+  );
+  const claseSeleccionada = clases.find((c) => c.id === Number(inscripcion?.claseId ?? claseId));
+  const puedeActivar = perfil === 'alumno' && permiteActivacionInicial && !inscripcion?.tienePlan;
+  const incluirPlan = puedeActivar && activarPlan;
+  const diasPlan = diasElegidos ?? claseSeleccionada?.frecuencia ?? [];
   const [confirmacion, setConfirmacion] = useState('');
   const coincidencias =
     perfil === 'alumno' && !inscripcion
@@ -83,12 +105,16 @@ function Registro({ perfil, clases, ocupado, crear, cancelar, inscripcion, postu
   const revisadas = confirmacion === claveRevision;
   async function enviar(e) {
     e.preventDefault();
-    if (inscripcion) return crear({ usuario, password }, inscripcion.id);
+    const planInicial = incluirPlan
+      ? { planInicial: { cantidad: Number(cantidadPlan), dias: diasPlan, fecha: fechaActivacion } }
+      : {};
+    if (inscripcion) return crear({ usuario, password, ...planInicial }, inscripcion.id);
     if (coincidencias.length && !revisadas) return;
     await crear({
       usuario,
       password,
       perfil,
+      ...planInicial,
       ...(perfil === 'profesor'
         ? { nuevoProfesor: { nombre, telefono, correo } }
         : {
@@ -110,7 +136,7 @@ function Registro({ perfil, clases, ocupado, crear, cancelar, inscripcion, postu
     <form onSubmit={enviar} className={tarjeta}>
       <h2 className="text-lg font-bold">
         {inscripcion
-          ? `Crear acceso para ${inscripcion.nombre}`
+          ? `${incluirPlan ? 'Crear acceso y activar plan' : 'Crear acceso'} para ${inscripcion.nombre}`
           : perfil === 'profesor'
             ? 'Registrar profesor'
             : 'Registrar alumno'}
@@ -174,7 +200,10 @@ function Registro({ perfil, clases, ocupado, crear, cancelar, inscripcion, postu
                 <SelectorClaseTurno
                   turnos={clases}
                   valor={claseId}
-                  cambiar={setClaseId}
+                  cambiar={(valor) => {
+                    setClaseId(valor);
+                    setDiasElegidos(null);
+                  }}
                   className={campo}
                 />
                 {!clases.length && (
@@ -186,6 +215,90 @@ function Registro({ perfil, clases, ocupado, crear, cancelar, inscripcion, postu
               </>
             )}
           </>
+        )}
+        {perfil === 'alumno' && inscripcion?.tienePlan && (
+          <p className="rounded-xl bg-gray-50 p-3 text-sm text-gray-600">
+            El alumno ya tiene un plan. Se conservará y se creará únicamente su acceso.
+          </p>
+        )}
+        {puedeActivar && (
+          <section
+            className="space-y-3 rounded-xl border border-dojo-200 bg-dojo-50 p-4"
+            aria-label="Plan inicial del alumno"
+          >
+            <label className="flex min-h-11 items-center gap-3 font-semibold">
+              <input
+                type="checkbox"
+                checked={activarPlan}
+                onChange={(e) => setActivarPlan(e.target.checked)}
+                className="h-5 w-5 accent-dojo-600"
+              />
+              Activar plan al crear el acceso
+            </label>
+            {incluirPlan && (
+              <>
+                <label className="block text-sm font-semibold">
+                  Plan de clases
+                  <select
+                    required
+                    className={campo}
+                    value={cantidadPlan}
+                    onChange={(e) => setCantidadPlan(e.target.value)}
+                  >
+                    {!planes.length && <option value="">No hay planes disponibles</option>}
+                    {planes.map((p) => (
+                      <option key={p.id} value={p.cantidad}>
+                        {p.cantidad} clases continuas
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <fieldset>
+                  <legend className="text-sm font-semibold">Días del alumno</legend>
+                  {!claseSeleccionada && (
+                    <p className="mt-2 text-sm text-gray-600">
+                      Selecciona una clase y un turno para elegir los días.
+                    </p>
+                  )}
+                  <div className="flex flex-wrap gap-3">
+                    {(claseSeleccionada?.frecuencia ?? []).map((dia) => (
+                      <label key={dia} className="flex min-h-11 items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          className="h-5 w-5 accent-dojo-600"
+                          checked={diasPlan.includes(dia)}
+                          onChange={(e) =>
+                            setDiasElegidos(
+                              e.target.checked
+                                ? [...diasPlan, dia]
+                                : diasPlan.filter((d) => d !== dia),
+                            )
+                          }
+                        />
+                        {dia}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+                <label className="block text-sm font-semibold">
+                  Fecha de activación
+                  <input
+                    type="date"
+                    required
+                    className={campo}
+                    value={fechaActivacion}
+                    onChange={(e) => setFechaActivacion(e.target.value)}
+                    max={new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(
+                      new Date(),
+                    )}
+                  />
+                </label>
+                <p className="text-sm text-gray-600">
+                  El acceso y las clases del paquete quedarán habilitados en un solo paso.
+                </p>
+              </>
+            )}
+          </section>
         )}
         <label className="block text-sm font-semibold">
           Usuario
@@ -263,7 +376,11 @@ function Registro({ perfil, clases, ocupado, crear, cancelar, inscripcion, postu
             disabled={
               ocupado ||
               (!inscripcion && perfil === 'alumno' && !claseId) ||
-              (coincidencias.length > 0 && !revisadas)
+              (coincidencias.length > 0 && !revisadas) ||
+              (incluirPlan &&
+                (!planes.some((p) => p.cantidad === Number(cantidadPlan)) ||
+                  !diasPlan.length ||
+                  !claseSeleccionada))
             }
             className={boton}
           >
@@ -272,8 +389,12 @@ function Registro({ perfil, clases, ocupado, crear, cancelar, inscripcion, postu
               : perfil === 'profesor'
                 ? 'Crear cuenta de profesor'
                 : inscripcion
-                  ? 'Crear acceso'
-                  : 'Registrar alumno'}
+                  ? incluirPlan
+                    ? 'Crear acceso y activar plan'
+                    : 'Crear acceso'
+                  : incluirPlan
+                    ? 'Registrar alumno y activar plan'
+                    : 'Registrar alumno'}
           </button>
           <button type="button" onClick={cancelar} className={secundario}>
             Cancelar
@@ -348,6 +469,8 @@ export default function Cuentas({ vista = 'menu' }) {
   const [postulacionesPendientes, setPostulacionesPendientes] = useState([]);
   const [aceptados, setAceptados] = useState([]);
   const [clases, setClases] = useState([]);
+  const [planes, setPlanes] = useState([]);
+  const [permiteActivacionInicial, setPermiteActivacionInicial] = useState(false);
   const [busquedaProfesores, setBusquedaProfesores] = useState('');
   const [busquedaAlumnos, setBusquedaAlumnos] = useState('');
   const [cargando, setCargando] = useState(vista !== 'menu');
@@ -362,10 +485,13 @@ export default function Cuentas({ vista = 'menu' }) {
     try {
       const obtener = (ruta, mensaje) =>
         apiFetch(ruta, { cache: 'no-store' }).then((r) => leerRespuesta(r, mensaje));
-      const [lista, profesores, opciones] = await Promise.all([
+      const [lista, profesores, opciones, planes] = await Promise.all([
         obtener('/cuentas', 'No se pudieron cargar los accesos.'),
         obtener('/profesores', 'No se pudieron cargar los profesores.'),
         obtener('/cuentas/opciones', 'No se pudieron cargar los alumnos.'),
+        vista === 'alumnos'
+          ? obtener('/planes', 'No se pudieron cargar los planes.')
+          : Promise.resolve([]),
       ]);
       if (version !== versionDatos.current) return;
       setErrorSincronizacion('');
@@ -375,13 +501,15 @@ export default function Cuentas({ vista = 'menu' }) {
       setPostulacionesPendientes(opciones.postulacionesPendientes ?? []);
       setAceptados(opciones.aceptadosSinCuenta ?? []);
       setClases(opciones.clases ?? []);
+      setPlanes(planes);
+      setPermiteActivacionInicial(opciones.permiteActivacionInicial === true);
       setListo(true);
     } catch (error) {
       if (version === versionDatos.current) setErrorSincronizacion(error.message);
     } finally {
       setCargando(false);
     }
-  }, []);
+  }, [vista]);
   useActualizacionesCuentas(cargar, ocupado, vista !== 'menu');
   function abrir(perfil) {
     setAviso(null);
@@ -412,9 +540,12 @@ export default function Cuentas({ vista = 'menu' }) {
       if (nueva.profesorCreado)
         setProfesores((anteriores) => [...anteriores, nueva.profesorCreado]);
       if (nueva.alumnoCreado) setAlumnos((anteriores) => [...anteriores, nueva.alumnoCreado]);
+      if (nueva.planActivado)
+        return `Registro completado y plan activado: ${nueva.clasesPendientes} clases pendientes. Entrega las credenciales al alumno.`;
       return 'Registro completado. Entrega el usuario y la contraseña a su titular por un medio privado.';
     });
     if (ok) setRegistro(null);
+    else await cargar();
   }
   async function editar(cuenta, datos) {
     return ejecutar(async () => {
@@ -515,8 +646,14 @@ export default function Cuentas({ vista = 'menu' }) {
           <Registro
             key={registro.perfil}
             perfil={registro.perfil}
-            inscripcion={registro.inscripcion}
+            inscripcion={
+              registro.inscripcion
+                ? (aceptados.find((a) => a.id === registro.inscripcion.id) ?? registro.inscripcion)
+                : undefined
+            }
             clases={clases}
+            planes={planes}
+            permiteActivacionInicial={permiteActivacionInicial}
             postulaciones={postulacionesPendientes}
             ocupado={ocupado}
             crear={crear}
@@ -663,7 +800,9 @@ export default function Cuentas({ vista = 'menu' }) {
                             disabled={ocupado}
                             onClick={() => setRegistro({ perfil: 'alumno', inscripcion: a })}
                           >
-                            Crear acceso
+                            {permiteActivacionInicial && !a.tienePlan
+                              ? 'Crear acceso y activar plan'
+                              : 'Crear acceso'}
                           </button>
                         </FichaPersona>
                       ))}

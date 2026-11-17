@@ -35,7 +35,7 @@ export default function Ajustes({ version }) {
               Compartir una convocatoria
             </summary>
             <p className="pb-3 leading-6">
-              En la tarjeta de la clase, pulsa Compartir QR. Puedes copiar el enlace, enviarlo por
+              En la tarjeta de la clase, pulsa Compartir. Puedes copiar el enlace, enviarlo por
               WhatsApp o descargar el QR. La convocatoria puede compartirse antes de que empiece la
               clase.
             </p>

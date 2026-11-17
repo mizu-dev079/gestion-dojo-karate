@@ -17,7 +17,7 @@ const fechaVisible = (f) =>
 const base = (p) => p.limiteRecuperaciones ?? (p.cantidad === 4 ? 1 : 2);
 const titulos = {
   activarPlan: 'Activar plan',
-  configurarPlan: 'Cambiar plan para la próxima renovación',
+  configurarPlan: 'Cambiar plan',
   renovarPlan: 'Renovar plan',
   asistencia: 'Registrar asistencia',
   avisar: 'Avisar ausencia',
@@ -33,10 +33,11 @@ const titulos = {
 function FormularioAccion({ alumno, seleccion, fechaInicial, ocupado, guardar, cerrar, planes }) {
   const s = alumno.seguimiento;
   const accion = seleccion.accion;
+  const planElegido = accion === 'configurarPlan' ? (s.proximoPlan ?? s.plan) : s.plan;
   const [cantidad, setCantidad] = useState(
     String(
-      planes.some((p) => p.cantidad === s.plan?.cantidad)
-        ? s.plan.cantidad
+      planes.some((p) => p.cantidad === planElegido?.cantidad)
+        ? planElegido.cantidad
         : (planes.find((p) => p.cantidad === 8)?.cantidad ?? planes[0]?.cantidad ?? ''),
     ),
   );
@@ -114,7 +115,7 @@ function FormularioAccion({ alumno, seleccion, fechaInicial, ocupado, guardar, c
               recuperaciones por paquete, por inasistencias justificadas y con autorización manual.
               Las clases se conservan hasta completarlas.{' '}
               {accion === 'configurarPlan' &&
-                'El cambio se aplicará a las próximas renovaciones y conservará el saldo y las condiciones anteriores.'}
+                'El nuevo plan se mostrará cuando se terminen las clases pendientes. No se añaden clases hasta renovar.'}
             </p>
             <fieldset>
               <legend className="font-semibold">Días del alumno</legend>
@@ -125,7 +126,7 @@ function FormularioAccion({ alumno, seleccion, fechaInicial, ocupado, guardar, c
                       type="checkbox"
                       name="dias"
                       value={dia}
-                      defaultChecked={(s.plan?.dias ?? alumno.clase.frecuencia).includes(dia)}
+                      defaultChecked={(planElegido?.dias ?? alumno.clase.frecuencia).includes(dia)}
                       className="h-5 w-5 accent-dojo-600"
                     />
                     {dia}
@@ -138,9 +139,9 @@ function FormularioAccion({ alumno, seleccion, fechaInicial, ocupado, guardar, c
         {['activarPlan', 'renovarPlan'].includes(accion) && (
           <>
             <p className="text-sm text-gray-600">
-              Habilita las clases del paquete. El cobro se coordina fuera de la aplicación.{' '}
+              Habilita las clases del paquete.{' '}
               {accion === 'renovarPlan' &&
-                `Mismo plan: ${s.plan.cantidad} clases. Se conservan ${s.pendientes} clases pendientes y se consumen primero.`}
+                `Se habilitarán ${(s.proximoPlan ?? s.plan).cantidad} clases. Se conservan ${s.pendientes} clases pendientes y se consumen primero.`}
             </p>
             <label className="block text-sm font-semibold">
               Fecha de activación
@@ -410,10 +411,10 @@ export default function Alumnos() {
         </p>
         {!alumnoPropio && (
           <a
-            href="/asistencia"
+            href="/calendario"
             className="inline-flex min-h-11 items-center rounded-xl bg-dojo-600 px-4 py-2 font-semibold text-white"
           >
-            Sesiones y asistencia
+            Calendario de asistencia
           </a>
         )}
         {admin && (
@@ -528,6 +529,14 @@ export default function Alumnos() {
                 {s.plan.dias.join(', ')} · {s.plan.cantidad} clases por paquete
               </p>
             )}
+            {s.proximoPlan &&
+              (s.proximoPlan.cantidad !== s.plan?.cantidad ||
+                s.proximoPlan.dias.join(',') !== s.plan?.dias.join(',')) && (
+                <p className="mt-2 rounded-xl bg-dojo-50 p-3 text-sm text-dojo-800">
+                  Cambio programado: {s.proximoPlan.cantidad} clases por paquete. Se aplicará cuando
+                  se terminen las clases pendientes del plan actual.
+                </p>
+              )}
             {s.congelado && (
               <p className="mt-2 text-sm text-gray-600">
                 {pausa.hasta
@@ -588,14 +597,24 @@ export default function Alumnos() {
                     {alumnoPropio ? 'Avisar ausencia' : 'Asistencia'}
                   </button>
                   {admin && (
-                    <button
-                      type="button"
-                      disabled={ocupado}
-                      onClick={() => abrir('renovarPlan')}
-                      className={secundario}
-                    >
-                      Renovar
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        disabled={ocupado}
+                        onClick={() => abrir('renovarPlan')}
+                        className={secundario}
+                      >
+                        Renovar
+                      </button>
+                      <button
+                        type="button"
+                        disabled={ocupado}
+                        onClick={() => abrir('configurarPlan')}
+                        className={secundario}
+                      >
+                        Cambiar plan
+                      </button>
+                    </>
                   )}
                   {alumnoPropio && (
                     <button
@@ -652,16 +671,6 @@ export default function Alumnos() {
                   >
                     Ajustar límite
                   </button>
-                  {admin && (
-                    <button
-                      type="button"
-                      disabled={ocupado}
-                      onClick={() => abrir('configurarPlan')}
-                      className={secundario}
-                    >
-                      Cambiar plan
-                    </button>
-                  )}
                 </div>
               </details>
             )}

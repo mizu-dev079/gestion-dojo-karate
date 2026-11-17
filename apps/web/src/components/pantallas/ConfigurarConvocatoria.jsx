@@ -274,18 +274,6 @@ export default function ConfigurarConvocatoria() {
             >
               ▣ Reenviar por WhatsApp
             </button>
-
-            {/* VISTA PREVIA */}
-
-            <button
-              type="button"
-              onClick={() => {
-                window.location.href = enlace;
-              }}
-              className="mt-2 h-10 w-full rounded-xl border border-dojo-500 bg-white text-sm font-bold text-dojo-600 transition hover:bg-dojo-50"
-            >
-              Ver vista previa del formulario
-            </button>
           </div>
         </div>
       )}

@@ -26,12 +26,12 @@ Los datos se guardan en una hoja de cálculo de Google. La estructura del almace
 - **Admisión desde postulaciones:** en la estructura profesional, aceptar una solicitud crea alumno, inscripción y reserva de cupo juntos. El profesor ve al alumno al actualizar la lista; su cuenta puede crearse después sin duplicar la inscripción.
 - **Hoja profesional:** personas, inscripciones, planes, renovaciones, sesiones y seguimiento se guardan en pestañas legibles, conservando los formatos importados. Se mantiene compatibilidad con la estructura anterior.
 - **Portal del alumno:** consulta de horarios, planes, clases pendientes, renovaciones, asistencia, recuperaciones y estado de las solicitudes de congelamiento.
-- **Planes continuos de 4, 8 o 12 clases:** activación y renovación del mismo plan, sin registrar cobros, con conservación del saldo anterior y consumo de las clases del paquete más antiguo primero.
+- **Planes continuos de 4, 8 o 12 clases:** activación, renovación y cambio programado de plan, sin registrar cobros. Se conserva el saldo anterior y se consumen primero las clases del paquete más antiguo; el nuevo plan se muestra al terminar las pendientes.
 - **Control de asistencia:** registro y corrección de presencias y faltas, avisos de ausencia y filtros por profesor, clase y fecha para consultar los alumnos programados.
 - **Recuperaciones manuales:** autorización de clases pendientes en el horario habitual, sin añadir clases al plan. Se contempla una recuperación por paquete de 4 clases y dos por paquete de 8 o 12, con ajuste del límite y registro del motivo por el profesor o administrador.
 - **Congelamiento del plan:** solicitud del alumno y autorización del profesor asignado o administrador, con fecha de regreso o reactivación manual, manteniendo el cupo y las clases pendientes.
 - **Gestión unificada de profesores y alumnos:** alta de profesores junto con su cuenta, contacto opcional, administración de accesos, restablecimiento de contraseñas y cambio de contraseña por el titular.
-- **Consulta de clases oficiales:** visualización de tres clases con sus turnos por días y edades, cupos independientes y calendario de entrenamiento. Los grupos permanentes pueden recibir inscripciones sin una fecha de finalización.
+- **Consulta de clases oficiales:** visualización de tres clases con sus turnos por días y edades, cupos independientes. Los grupos permanentes pueden recibir inscripciones sin una fecha de finalización.
 - **Convocatorias y postulaciones:** enlaces y códigos QR descargables, formulario público de inscripción y revisión de solicitudes con control de cupos.
 - **Historial de seguimiento:** consulta de renovaciones, asistencia, congelamientos y recuperaciones, con registro de las autorizaciones y sus motivos.
 - **Interfaz adaptable:** navegación para celulares y computadoras, avisos dentro del portal, guía de uso y un único tema claro con la identidad visual del dojo.
@@ -40,7 +40,7 @@ Los datos se guardan en una hoja de cálculo de Google. La estructura del almace
 
 La administración de personas se concentra en **Usuario → Profesores y alumnos**. Desde esta pantalla se registran profesores y alumnos nuevos junto con sus cuentas de acceso, sin seleccionar datos de prueba ni reutilizar postulaciones anteriores. El nombre es obligatorio; teléfono y correo son opcionales. En el alta de alumno también se indica la clase oficial y, opcionalmente, la fecha de nacimiento.
 
-Las clases se cargan directamente en Google Sheets. La creación desde la web y desde `POST /clases` está deshabilitada; la consulta, el calendario y las operaciones administrativas de edición y eliminación se mantienen disponibles. La preparación de grupos permanentes se detalla en la [guía de clases oficiales](docs/08-clases-oficiales.md).
+Las clases se cargan directamente en Google Sheets. La creación desde la web y desde `POST /clases` está deshabilitada; la consulta y las operaciones administrativas de edición y eliminación se mantienen disponibles. El calendario se utiliza para la asistencia de profesores y alumnos. La preparación de grupos permanentes se detalla en la [guía de clases oficiales](docs/08-clases-oficiales.md).
 
 | Perfil | Funciones disponibles |
 |---|---|

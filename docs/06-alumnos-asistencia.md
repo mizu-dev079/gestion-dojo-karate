@@ -2,11 +2,13 @@
 
 ## Planes continuos
 
-Los alumnos se incorporan mediante una postulación aceptada o desde **Usuario → Profesores y alumnos → Alumnos → Registrar alumno**. El acceso de una inscripción aceptada se habilita con **Crear acceso**, sin duplicar su registro ni su cupo.
+Los alumnos se incorporan mediante una postulación aceptada o desde **Usuario → Profesores y alumnos → Alumnos → Registrar alumno**. El acceso de una inscripción aceptada se habilita con **Crear acceso y activar plan**, en un mismo formulario y sin duplicar su registro ni su cupo. Si el plan ya estaba activo, se ofrece solo Crear acceso y se conserva su saldo.
 
-Administración utiliza **Activar plan** para habilitar un paquete de **4, 8 o 12 clases** y elegir los días del alumno dentro de su turno. Se registra la fecha de activación. Las clases se conservan hasta completarlas, sin vencimiento por mes calendario.
+Administración puede habilitar el primer paquete al crear el acceso o utilizar **Activar plan** para habilitar un paquete de **4, 8 o 12 clases** y elegir los días del alumno dentro de su turno. Se registra la fecha de activación. Las clases se conservan hasta completarlas, sin vencimiento por mes calendario.
 
-**Renovar** habilita otro paquete del mismo formato y conserva las clases pendientes. Primero se consumen las del paquete más antiguo. **Gestionar plan → Cambiar plan** permite configurar cantidad y días para la siguiente renovación; no modifica los paquetes anteriores ni su límite de recuperaciones.
+**Renovar** habilita otro paquete y conserva las clases pendientes. Primero se consumen las del paquete más antiguo. **Cambiar plan**, junto a Renovar, permite programar cantidad y días para el siguiente paquete, sin añadir clases por sí solo. La renovación utiliza esa configuración, pero el plan visible continúa siendo el anterior hasta consumir sus clases pendientes. Cada paquete conserva sus días y su límite de recuperaciones, incluso si se corrige una asistencia anterior.
+
+La configuración pendiente y los días de cada paquete se conservan en los metadatos de ControlSistema; no se añaden columnas visibles a Sheets.
 
 Los cobros se coordinan y verifican fuera de la aplicación. No se solicitan ni registran importes, medios de pago, referencias o comprobantes al activar o renovar. Los precios oficiales del catálogo son informativos; no se copian a las activaciones.
 
@@ -20,7 +22,7 @@ Los límites del catálogo se copian a cada paquete. Las recuperaciones requiere
 
 ## Sesiones y asistencia del profesor
 
-Desde **Alumnos → Sesiones y asistencia** se selecciona una fecha. Cada grupo oficial tiene una sesión por fecha de su horario, con el horario, el profesor responsable y los estados **programada**, **realizada** o **cancelada**. Consultar sesiones no crea filas en Sheets; se guardan al realizar una operación. Un cambio posterior del horario del grupo no modifica los datos de una sesión ya guardada.
+Desde **Calendario**, también accesible en **Alumnos → Calendario de asistencia**, se selecciona una fecha. Cada grupo oficial tiene una sesión por fecha de su horario, con el horario, el profesor responsable y los estados **programada**, **realizada** o **cancelada**. Consultar sesiones no crea filas en Sheets; se guardan al realizar una operación. Un cambio posterior del horario del grupo no modifica los datos de una sesión ya guardada.
 
 La asistencia del profesor se registra por separado: **pendiente**, **presente** o **ausente**. El profesor marca su propia presencia en las sesiones asignadas; administración puede corregirla con motivo. Marcar presencia deja la sesión como realizada y no marca automáticamente a los alumnos. No se permite marcar asistencia del profesor en una fecha futura. Una sesión pendiente no genera faltas automáticamente.
 
@@ -34,7 +36,7 @@ Solo administración cancela una sesión, con motivo. La cancelación **no consu
 
 El estado de la sesión y los saldos afectados se escriben en un único `spreadsheets.batchUpdate` atómico. Las cancelaciones y los cambios de seguimiento comparten una cola dentro de la instancia de API. Una sesión cancelada bloquea nuevas asistencias y recuperaciones para esa fecha, incluso desde la ficha individual. La sesión queda cerrada; si se reprograma, se utiliza otra fecha válida del horario del grupo.
 
-En la estructura profesional los datos de la sesión se guardan en **Sesiones**, con columnas legibles, y su versión y auditoría en ControlSistema. En la estructura anterior se utiliza **SesionesDojo**, con `sesionId` y `sesionJson`. La clave combina grupo y fecha (`claseId:AAAA-MM-DD`). Se conservan versión, profesor responsable, horario y auditoría. Los alumnos consultan su saldo y asistencia desde Mi plan; el panel de sesiones se reserva a profesores y administración.
+En la estructura profesional los datos de la sesión se guardan en **Sesiones**, con columnas legibles, y su versión y auditoría en ControlSistema. En la estructura anterior se utiliza **SesionesDojo**, con `sesionId` y `sesionJson`. La clave combina grupo y fecha (`claseId:AAAA-MM-DD`). Se conservan versión, profesor responsable, horario y auditoría. Los alumnos consultan su saldo desde Mi plan y su asistencia propia desde Calendario; el registro de asistencia y el panel de sesiones se reservan a profesores y administración.
 
 ## Asistencia y recuperación
 

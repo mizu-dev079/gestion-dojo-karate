@@ -79,12 +79,14 @@ export function leerSeguimientos(l: Libro): Map<number, Seguimiento> {
               .filter(Boolean),
           }
         : null,
+      proximoPlan: meta.datos.proximoPlan ?? null,
       pagos: l.Pagos.filter((f) => pertenece(f, 1)).map((f) => ({
         id: texto(f[0]),
         fecha: fecha(f[3]),
         cantidad: numero(f[5]),
         importe: numero(f[6]),
         referencia: texto(f[8]),
+        dias: (meta.datos.diasPaquetes as Record<string, string[]> | undefined)?.[texto(f[0])],
         limiteRecuperaciones: numero(f[9]),
         restantes: numero(f[10]),
       })),
@@ -152,6 +154,12 @@ export function guardarSeguimiento(l: Libro, id: number, s: Seguimiento) {
     l[tabla] = l[tabla].filter((f) => texto(f[columna]) !== texto(id));
     l[tabla].push(...filas);
   };
+  if (
+    s.proximoPlan &&
+    ultimo?.accion === 'configurarPlan' &&
+    !l.Planes.some((p) => numero(p[2]) === s.proximoPlan?.cantidad && p[5] === 'Activo')
+  )
+    throw new ConflictException('El plan elegido no está disponible en Planes.');
   if (s.plan) {
     const requiereActivo = [
       'iniciar',
@@ -162,7 +170,9 @@ export function guardarSeguimiento(l: Libro, id: number, s: Seguimiento) {
       'renovarPlan',
     ].includes(ultimo?.accion ?? '');
     const p = l.Planes.find(
-      (f) => numero(f[2]) === s.plan?.cantidad && (!requiereActivo || f[5] === 'Activo'),
+      (f) =>
+        numero(f[2]) === s.plan?.cantidad &&
+        (!requiereActivo || !!s.proximoPlan || f[5] === 'Activo'),
     );
     if (!p) throw new ConflictException('El plan elegido no está disponible en Planes.');
     ins[6] = p[0];
@@ -174,7 +184,8 @@ export function guardarSeguimiento(l: Libro, id: number, s: Seguimiento) {
   for (const pago of s.pagos) {
     if (!anteriores.Pagos.some((f) => texto(f[0]) === pago.id)) {
       const catalogo = l.Planes.find((f) => numero(f[2]) === pago.cantidad && f[5] === 'Activo');
-      if (catalogo) pago.limiteRecuperaciones = numero(catalogo[4]);
+      if (!catalogo) throw new ConflictException('El plan elegido no está disponible en Planes.');
+      pago.limiteRecuperaciones = numero(catalogo[4]);
     }
   }
   reemplazar(
@@ -296,6 +307,8 @@ export function guardarSeguimiento(l: Libro, id: number, s: Seguimiento) {
   seguimientoSchema.parse(s);
   guardarControl(l, 'inscripcion', id, s.version, {
     importePlan: s.plan?.importe ?? null,
+    proximoPlan: s.proximoPlan,
+    diasPaquetes: Object.fromEntries(s.pagos.filter((p) => p.dias).map((p) => [p.id, p.dias])),
     auditoria: s.auditoria,
   });
 }
