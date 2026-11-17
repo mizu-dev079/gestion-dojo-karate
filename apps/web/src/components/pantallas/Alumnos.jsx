@@ -16,9 +16,9 @@ const fechaVisible = (f) =>
   );
 const base = (p) => p.limiteRecuperaciones ?? (p.cantidad === 4 ? 1 : 2);
 const titulos = {
-  iniciar: 'Registrar plan y primer pago',
-  configurar: 'Cambiar próximos pagos',
-  renovar: 'Registrar pago y renovar',
+  activarPlan: 'Activar plan',
+  configurarPlan: 'Cambiar plan para la próxima renovación',
+  renovarPlan: 'Renovar plan',
   asistencia: 'Registrar asistencia',
   avisar: 'Avisar ausencia',
   congelar: 'Congelar plan',
@@ -31,7 +31,6 @@ const titulos = {
 };
 
 function FormularioAccion({ alumno, seleccion, fechaInicial, ocupado, guardar, cerrar, planes }) {
-  const preciosPlanes = Object.fromEntries(planes.map((p) => [p.cantidad, p.importe]));
   const s = alumno.seguimiento;
   const accion = seleccion.accion;
   const [cantidad, setCantidad] = useState(
@@ -40,9 +39,6 @@ function FormularioAccion({ alumno, seleccion, fechaInicial, ocupado, guardar, c
         ? s.plan.cantidad
         : (planes.find((p) => p.cantidad === 8)?.cantidad ?? planes[0]?.cantidad ?? ''),
     ),
-  );
-  const [importe, setImporte] = useState(
-    planes.some((p) => p.cantidad === s.plan?.cantidad) ? s.plan.importe : preciosPlanes[cantidad],
   );
   const faltas = s.asistencias.filter(
     (a) =>
@@ -54,14 +50,13 @@ function FormularioAccion({ alumno, seleccion, fechaInicial, ocupado, guardar, c
     e.preventDefault();
     const f = new FormData(e.currentTarget);
     const d = { accion, version: s.version };
-    if (['iniciar', 'configurar'].includes(accion))
+    if (['activarPlan', 'configurarPlan'].includes(accion))
       Object.assign(d, {
         cantidad: Number(cantidad),
-        importe: Number(f.get('importe')),
         dias: f.getAll('dias'),
       });
-    if (['iniciar', 'renovar'].includes(accion))
-      Object.assign(d, { fecha: f.get('fecha'), referencia: f.get('referencia') });
+    if (['activarPlan', 'renovarPlan'].includes(accion))
+      Object.assign(d, { fecha: f.get('fecha') });
     if (['congelar', 'solicitarCongelamiento'].includes(accion))
       Object.assign(d, { hasta: f.get('hasta') || null, motivo: f.get('motivo') });
     if (['asistencia', 'avisar'].includes(accion))
@@ -95,7 +90,7 @@ function FormularioAccion({ alumno, seleccion, fechaInicial, ocupado, guardar, c
     >
       <h3 className="font-bold">{titulos[accion]}</h3>
       <fieldset disabled={ocupado} className="space-y-4">
-        {['iniciar', 'configurar'].includes(accion) && (
+        {['activarPlan', 'configurarPlan'].includes(accion) && (
           <>
             <label className="block text-sm font-semibold">
               Plan de clases
@@ -103,13 +98,12 @@ function FormularioAccion({ alumno, seleccion, fechaInicial, ocupado, guardar, c
                 value={cantidad}
                 onChange={(e) => {
                   setCantidad(e.target.value);
-                  setImporte(preciosPlanes[e.target.value]);
                 }}
                 className={campo}
               >
                 {planes.map((p) => (
                   <option key={p.id} value={p.cantidad}>
-                    {p.cantidad} clases continuas — S/ {p.importe.toFixed(2)}
+                    {p.cantidad} clases continuas
                   </option>
                 ))}
               </select>
@@ -117,25 +111,11 @@ function FormularioAccion({ alumno, seleccion, fechaInicial, ocupado, guardar, c
             <p className="text-sm text-gray-600">
               Límite inicial:{' '}
               {planes.find((p) => p.cantidad === Number(cantidad))?.recuperaciones ?? 0}{' '}
-              recuperaciones por pago, por inasistencias justificadas y con autorización manual. Las
-              clases se conservan hasta completarlas.{' '}
-              {accion === 'configurar' &&
-                'El cambio se aplicará a los próximos pagos y conservará el saldo y las condiciones anteriores.'}
+              recuperaciones por paquete, por inasistencias justificadas y con autorización manual.
+              Las clases se conservan hasta completarlas.{' '}
+              {accion === 'configurarPlan' &&
+                'El cambio se aplicará a las próximas renovaciones y conservará el saldo y las condiciones anteriores.'}
             </p>
-            <label className="block text-sm font-semibold">
-              Importe del plan (S/)
-              <input
-                name="importe"
-                type="number"
-                min="0.01"
-                max="100000"
-                step="0.01"
-                required
-                value={importe}
-                onChange={(e) => setImporte(e.target.value)}
-                className={campo}
-              />
-            </label>
             <fieldset>
               <legend className="font-semibold">Días del alumno</legend>
               <div className="flex flex-wrap gap-3">
@@ -155,15 +135,15 @@ function FormularioAccion({ alumno, seleccion, fechaInicial, ocupado, guardar, c
             </fieldset>
           </>
         )}
-        {['iniciar', 'renovar'].includes(accion) && (
+        {['activarPlan', 'renovarPlan'].includes(accion) && (
           <>
             <p className="text-sm text-gray-600">
-              Registra un pago ya recibido.{' '}
-              {accion === 'renovar' &&
-                `Mismo plan: ${s.plan.cantidad} clases, importe S/ ${s.plan.importe.toFixed(2)}. Se conservan ${s.pendientes} clases pendientes.`}
+              Habilita las clases del paquete. El cobro se coordina fuera de la aplicación.{' '}
+              {accion === 'renovarPlan' &&
+                `Mismo plan: ${s.plan.cantidad} clases. Se conservan ${s.pendientes} clases pendientes y se consumen primero.`}
             </p>
             <label className="block text-sm font-semibold">
-              Fecha del pago
+              Fecha de activación
               <input
                 name="fecha"
                 type="date"
@@ -172,10 +152,6 @@ function FormularioAccion({ alumno, seleccion, fechaInicial, ocupado, guardar, c
                 max={hoy()}
                 className={campo}
               />
-            </label>
-            <label className="block text-sm font-semibold">
-              Referencia del pago (opcional)
-              <input name="referencia" maxLength={120} className={campo} />
             </label>
           </>
         )}
@@ -253,7 +229,7 @@ function FormularioAccion({ alumno, seleccion, fechaInicial, ocupado, guardar, c
         {accion === 'limiteRecuperaciones' && (
           <>
             <label className="block text-sm font-semibold">
-              Pago
+              Paquete
               <select name="pagoId" required className={campo}>
                 {s.pagos.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -267,7 +243,7 @@ function FormularioAccion({ alumno, seleccion, fechaInicial, ocupado, guardar, c
               <input name="limite" type="number" min="0" max="12" required className={campo} />
             </label>
             <p className="text-sm text-gray-600">
-              El cambio afecta solo al pago elegido y queda registrado con tu motivo.
+              El cambio afecta solo al paquete elegido y queda registrado con tu motivo.
             </p>
           </>
         )}
@@ -549,8 +525,7 @@ export default function Alumnos() {
             </p>
             {s.plan && (
               <p className="mt-1 text-sm text-gray-600">
-                {s.plan.dias.join(', ')} · {s.plan.cantidad} clases por pago · Importe{' '}
-                {s.plan.importe.toFixed(2)}
+                {s.plan.dias.join(', ')} · {s.plan.cantidad} clases por paquete
               </p>
             )}
             {s.congelado && (
@@ -596,10 +571,10 @@ export default function Alumnos() {
                 <button
                   type="button"
                   disabled={ocupado}
-                  onClick={() => abrir('iniciar')}
+                  onClick={() => abrir('activarPlan')}
                   className={boton}
                 >
-                  Registrar plan
+                  Activar plan
                 </button>
               )}
               {s.plan && alumno.clase && !s.congelado && (
@@ -616,7 +591,7 @@ export default function Alumnos() {
                     <button
                       type="button"
                       disabled={ocupado}
-                      onClick={() => abrir('renovar')}
+                      onClick={() => abrir('renovarPlan')}
                       className={secundario}
                     >
                       Renovar
@@ -681,10 +656,10 @@ export default function Alumnos() {
                     <button
                       type="button"
                       disabled={ocupado}
-                      onClick={() => abrir('configurar')}
+                      onClick={() => abrir('configurarPlan')}
                       className={secundario}
                     >
-                      Cambiar próximos pagos
+                      Cambiar plan
                     </button>
                   )}
                 </div>
@@ -725,16 +700,16 @@ export default function Alumnos() {
             {s.plan && (
               <details className="mt-4">
                 <summary className="min-h-11 cursor-pointer py-3 font-semibold">
-                  Pagos, recuperaciones e historial
+                  Planes, recuperaciones e historial
                 </summary>
-                <h3 className="font-semibold">Pagos</h3>
+                <h3 className="font-semibold">Activaciones y renovaciones</h3>
                 <ul className="space-y-2 text-sm">
                   {s.pagos.map((p) => (
                     <li key={p.id} className="rounded-lg bg-gray-50 p-3">
-                      {fechaVisible(p.fecha)} · Importe {p.importe.toFixed(2)} · {p.restantes} de{' '}
-                      {p.cantidad} clases pendientes · Recuperaciones:{' '}
+                      {fechaVisible(p.fecha)} · {p.restantes} de {p.cantidad} clases pendientes ·
+                      Recuperaciones:{' '}
                       {s.recuperaciones.filter((r) => r.pagoId === p.id && !r.revocada).length} de{' '}
-                      {base(p)} autorizadas{p.referencia && ` · ${p.referencia}`}
+                      {base(p)} autorizadas
                     </li>
                   ))}
                 </ul>

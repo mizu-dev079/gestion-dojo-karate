@@ -70,7 +70,8 @@ export default function Ajustes({ version }) {
         </div>
         <p className="mt-1 text-sm text-gray-500">Versión {version}</p>
         <p className="mt-3 text-sm text-gray-600">
-          Clases, alumnos, profesores, pagos, asistencia y recuperaciones del dojo en un solo lugar.
+          Clases, alumnos, profesores, planes, asistencia y recuperaciones del dojo en un solo
+          lugar.
         </p>
       </section>
     </main>

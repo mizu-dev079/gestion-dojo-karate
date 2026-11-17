@@ -94,6 +94,11 @@ export const vacio = (): Seguimiento =>
   });
 export const comandoSchema = z.discriminatedUnion('accion', [
   z
+    .object({ accion: z.literal('activarPlan'), version, cantidad: cantidadPlan, dias, fecha })
+    .strict(),
+  z.object({ accion: z.literal('configurarPlan'), version, cantidad: cantidadPlan, dias }).strict(),
+  z.object({ accion: z.literal('renovarPlan'), version, fecha }).strict(),
+  z
     .object({
       accion: z.literal('iniciar'),
       version,
@@ -201,6 +206,29 @@ export function aplicarComando(
   hoy = hoyLima(),
   usuario = 'administrador',
 ): Seguimiento {
+  if (
+    comando.accion === 'activarPlan' ||
+    comando.accion === 'configurarPlan' ||
+    comando.accion === 'renovarPlan'
+  ) {
+    const normalizado: Comando =
+      comando.accion === 'renovarPlan'
+        ? { accion: 'renovar', version: comando.version, fecha: comando.fecha, referencia: '' }
+        : comando.accion === 'activarPlan'
+          ? { ...comando, accion: 'iniciar', importe: 0, referencia: '' }
+          : { ...comando, accion: 'configurar', importe: 0 };
+    const nuevo = aplicarComando(actual, normalizado, diasClase, hoy, usuario);
+    if (nuevo.plan) nuevo.plan.importe = 0;
+    if (comando.accion !== 'configurarPlan') {
+      const paquete = nuevo.pagos.at(-1);
+      if (paquete) {
+        paquete.importe = 0;
+        paquete.referencia = '';
+      }
+    }
+    nuevo.auditoria.at(-1)!.accion = comando.accion;
+    return nuevo;
+  }
   if (actual.version !== comando.version)
     throw new ConflictException('El registro cambió. Recarga antes de continuar.');
   const s = seguimientoSchema.parse(actual);
@@ -215,11 +243,14 @@ export function aplicarComando(
   }
   if (comando.accion === 'iniciar' || comando.accion === 'renovar') {
     if (congelado(s, hoy))
-      throw new ConflictException('Reactiva el plan antes de registrar un nuevo pago.');
-    if (comando.fecha > hoy) throw new BadRequestException('No registres pagos futuros.');
+      throw new ConflictException('Reactiva el plan antes de activar otro paquete.');
+    if (comando.fecha > hoy)
+      throw new BadRequestException('La fecha de activación no puede ser futura.');
     const ultimo = s.pagos.at(-1);
     if (ultimo && comando.fecha < ultimo.fecha)
-      throw new BadRequestException('El pago debe ser igual o posterior al último registrado.');
+      throw new BadRequestException(
+        'La activación debe ser igual o posterior a la última registrada.',
+      );
     const plan = s.plan;
     if (!plan || ![4, 8, 12].includes(plan.cantidad))
       throw new BadRequestException(
@@ -266,7 +297,7 @@ export function aplicarComando(
     if (!s.plan?.dias.some((d) => d === dia))
       throw new BadRequestException('La fecha no corresponde a los días del alumno.');
     if (!s.pagos.some((p) => p.fecha <= comando.fecha))
-      throw new BadRequestException('La fecha es anterior al primer pago.');
+      throw new BadRequestException('La fecha es anterior a la primera activación del plan.');
     if (s.recuperaciones.some((r) => r.fecha === comando.fecha && !r.revocada))
       throw new ConflictException(
         'Esa falta tiene recuperación autorizada. Revócala antes de corregir el registro original.',
@@ -302,11 +333,13 @@ export function aplicarComando(
       throw new ConflictException('Esa falta ya tiene recuperación.');
     const p = s.pagos.find((pago) => pago.id === falta.pagoId);
     if (!p)
-      throw new ConflictException('No se pudo vincular la falta a un pago. Revisa el historial.');
+      throw new ConflictException(
+        'No se pudo vincular la falta a un paquete. Revisa el historial.',
+      );
     const autorizadas = s.recuperaciones.filter((r) => r.pagoId === p.id && !r.revocada).length;
     if (autorizadas >= (p.limiteRecuperaciones ?? limiteBase(p.cantidad)))
       throw new ConflictException(
-        'Se alcanzó el límite de recuperaciones de ese pago. Ajusta el límite con un motivo si corresponde.',
+        'Se alcanzó el límite de recuperaciones de ese paquete. Ajusta el límite con un motivo si corresponde.',
       );
     s.recuperaciones.push({
       id: randomUUID(),
@@ -327,7 +360,7 @@ export function aplicarComando(
   }
   if (comando.accion === 'limiteRecuperaciones') {
     const p = s.pagos.find((pago) => pago.id === comando.pagoId);
-    if (!p) throw new BadRequestException('Pago no encontrado.');
+    if (!p) throw new BadRequestException('Paquete no encontrado.');
     if (comando.limite < s.recuperaciones.filter((r) => r.pagoId === p.id && !r.revocada).length)
       throw new ConflictException(
         'No puedes bajar el límite por debajo de las recuperaciones autorizadas.',

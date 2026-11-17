@@ -183,4 +183,20 @@ export const estructura = {
 export type Tabla = keyof typeof estructura;
 export type Fila = (string | number | boolean)[];
 export const cabeceraClasesConTurnos = ['ID clase', 'Nombre de la clase', 'Estado'] as const;
-export type Libro = Record<Tabla, Fila[]> & { clasesConTurnos?: boolean };
+export type Libro = Record<Tabla, Fila[]> & {
+  clasesConTurnos?: boolean;
+  usaRenovaciones?: boolean;
+};
+
+export const cabeceraRenovaciones = [
+  'ID renovación',
+  'ID inscripción',
+  'Alumno',
+  'Fecha de activación',
+  'Plan',
+  'Clases otorgadas',
+  'Límite de recuperaciones',
+  'Clases pendientes',
+  'Registrado por',
+  'Observaciones',
+] as const;

@@ -142,6 +142,8 @@ export function guardarSeguimiento(l: Libro, id: number, s: Seguimiento) {
   const alumno = texto(ins[2]);
   const ultimo = s.auditoria.at(-1);
   const anteriores = structuredClone(l);
+  if (['activarPlan', 'renovarPlan', 'configurarPlan'].includes(ultimo?.accion ?? ''))
+    l.usaRenovaciones = true;
   const reemplazar = (
     tabla: 'Pagos' | 'Asistencias' | 'Recuperaciones' | 'Congelamientos',
     columna: number,
@@ -151,7 +153,14 @@ export function guardarSeguimiento(l: Libro, id: number, s: Seguimiento) {
     l[tabla].push(...filas);
   };
   if (s.plan) {
-    const requiereActivo = ['iniciar', 'configurar', 'renovar'].includes(ultimo?.accion ?? '');
+    const requiereActivo = [
+      'iniciar',
+      'configurar',
+      'renovar',
+      'activarPlan',
+      'configurarPlan',
+      'renovarPlan',
+    ].includes(ultimo?.accion ?? '');
     const p = l.Planes.find(
       (f) => numero(f[2]) === s.plan?.cantidad && (!requiereActivo || f[5] === 'Activo'),
     );

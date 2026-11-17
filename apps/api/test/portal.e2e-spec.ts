@@ -79,6 +79,13 @@ describe('Portal sobre la nueva estructura de Sheets (HTTP y persistencia reales
           nuevosIds[p.title] = p.sheetId;
           copia[p.title] = [];
         }
+        if (r.deleteSheet) {
+          const title = Object.keys(nuevosIds).find((t) => nuevosIds[t] === r.deleteSheet.sheetId);
+          if (title) {
+            delete copia[title];
+            delete nuevosIds[title];
+          }
+        }
         if (r.updateCells) {
           const u = r.updateCells,
             id = u.range?.sheetId ?? u.start.sheetId,
@@ -216,6 +223,121 @@ describe('Portal sobre la nueva estructura de Sheets (HTTP y persistencia reales
       .expect(409);
     expect(tablas).toEqual(anterior);
   });
+  it('activa y renueva sin datos de cobro, migra a Renovaciones y conserva el saldo y las relaciones', async () => {
+    const cuenta = await alumnoManual();
+    const id = cuenta.alumnoCreado.id;
+    const inicial = await api()
+      .post(`/alumnos/${id}`)
+      .set('Cookie', cookie)
+      .send({ accion: 'activarPlan', version: 0, cantidad: 8, dias: [dia], fecha: hoy })
+      .expect(201);
+    expect(inicial.body.pendientes).toBe(8);
+    expect(tablas.Pagos).toBeUndefined();
+    expect(tablas.Renovaciones[0]).toEqual([
+      'ID renovación',
+      'ID inscripción',
+      'Alumno',
+      'Fecha de activación',
+      'Plan',
+      'Clases otorgadas',
+      'Límite de recuperaciones',
+      'Clases pendientes',
+      'Registrado por',
+      'Observaciones',
+    ]);
+    const primerId = tablas.Renovaciones[1][0];
+    expect(tablas.Asistencias[0][5]).toBe('ID renovación utilizada');
+    expect(tablas.Recuperaciones[0][4]).toBe('ID renovación');
+    const asistio = await api()
+      .post(`/alumnos/${id}`)
+      .set('Cookie', cookie)
+      .send({ accion: 'asistencia', version: inicial.body.version, fecha: hoy, estado: 'presente' })
+      .expect(201);
+    expect(asistio.body.pendientes).toBe(7);
+    expect(tablas.Asistencias[1][5]).toBe(primerId);
+    const renovo = await api()
+      .post(`/alumnos/${id}`)
+      .set('Cookie', cookie)
+      .send({ accion: 'renovarPlan', version: asistio.body.version, fecha: hoy })
+      .expect(201);
+    expect(renovo.body.pendientes).toBe(15);
+    expect(tablas.Renovaciones.filter((f) => f.length)).toHaveLength(3);
+    expect(tablas.Renovaciones[1][0]).toBe(primerId);
+    expect(tablas.Renovaciones[1][7]).toBe(7);
+    expect(tablas.Renovaciones[2][7]).toBe(8);
+    expect(tablas.Renovaciones[1].length).toBeLessThanOrEqual(10);
+    expect(
+      renovo.body.pagos.every(
+        (p: { importe: number; referencia: string }) => p.importe === 0 && p.referencia === '',
+      ),
+    ).toBe(true);
+    await api()
+      .post(`/alumnos/${id}`)
+      .set('Cookie', cookie)
+      .send({ accion: 'renovarPlan', version: asistio.body.version, fecha: hoy })
+      .expect(409);
+  });
+  it('adapta paquetes anteriores sin perder sus IDs, recuperaciones ni clases y permite cambiar el siguiente plan', async () => {
+    const cuenta = await alumnoManual();
+    const id = cuenta.alumnoCreado.id;
+    const inicial = await api()
+      .post(`/alumnos/${id}`)
+      .set('Cookie', cookie)
+      .send({ accion: 'iniciar', version: 0, cantidad: 8, dias: [dia], importe: 150, fecha: hoy })
+      .expect(201);
+    const primerId = tablas.Pagos[1][0];
+    const falta = await api()
+      .post(`/alumnos/${id}`)
+      .set('Cookie', cookie)
+      .send({ accion: 'asistencia', version: inicial.body.version, fecha: hoy, estado: 'falta' })
+      .expect(201);
+    const recuperado = await api()
+      .post(`/alumnos/${id}`)
+      .set('Cookie', cookie)
+      .send({
+        accion: 'recuperar',
+        version: falta.body.version,
+        fecha: hoy,
+        motivo: 'Inasistencia justificada',
+      })
+      .expect(201);
+    const configurado = await api()
+      .post(`/alumnos/${id}`)
+      .set('Cookie', cookie)
+      .send({
+        accion: 'configurarPlan',
+        version: recuperado.body.version,
+        cantidad: 4,
+        dias: [dia],
+      })
+      .expect(201);
+    expect(configurado.body.pendientes).toBe(8);
+    expect(tablas.Renovaciones[1][0]).toBe(primerId);
+    expect(tablas.Renovaciones[1][6]).toBe(2);
+    expect(tablas.Recuperaciones[1][4]).toBe(primerId);
+    expect(tablas.Asistencias[1][5]).toBe(primerId);
+    const r = await api()
+      .post(`/alumnos/${id}`)
+      .set('Cookie', cookie)
+      .send({ accion: 'renovarPlan', version: configurado.body.version, fecha: hoy })
+      .expect(201);
+    expect(r.body.pendientes).toBe(12);
+    expect(tablas.Renovaciones[2][6]).toBe(1);
+  });
+  it('rechaza importes en la activación nueva y no deja una migración parcial si falla Google', async () => {
+    const cuenta = await alumnoManual();
+    const id = cuenta.alumnoCreado.id;
+    const body = { accion: 'activarPlan', version: 0, cantidad: 4, dias: [dia], fecha: hoy };
+    await api()
+      .post(`/alumnos/${id}`)
+      .set('Cookie', cookie)
+      .send({ ...body, importe: 130 })
+      .expect(400);
+    const original = structuredClone(tablas);
+    fallar = true;
+    await api().post(`/alumnos/${id}`).set('Cookie', cookie).send(body).expect(500);
+    expect(tablas).toEqual(original);
+  });
   it('lee clases y catálogo, sin crear hojas antiguas ni registros al consultar', async () => {
     const c = await api().get('/clases').set('Cookie', cookie).expect(200);
     expect(c.body[0]).toMatchObject({
@@ -306,6 +428,11 @@ describe('Portal sobre la nueva estructura de Sheets (HTTP y persistencia reales
       .send({ usuario: 'maestro', password: PASS })
       .expect(200);
     const token = login.headers['set-cookie'][0];
+    await api()
+      .post(`/alumnos/${id}`)
+      .set('Cookie', token)
+      .send({ accion: 'activarPlan', version: 0, cantidad: 4, dias: [dia], fecha: hoy })
+      .expect(403);
     const alumnos = await api().get('/alumnos').set('Cookie', token).expect(200);
     expect(alumnos.body[0].id).toBe(id);
     await api()

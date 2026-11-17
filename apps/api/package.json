@@ -10,6 +10,7 @@
     "dev": "nest start --watch",
     "build": "nest build",
     "start": "node dist/main.js",
+    "datos:limpiar-alumnos-prueba": "pnpm build && node scripts/eliminar-alumnos-prueba.mjs",
     "start:debug": "nest start --debug --watch",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

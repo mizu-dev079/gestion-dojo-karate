@@ -4,6 +4,7 @@ import { env } from '../config/env.js';
 import { crearClienteSheets } from '../google/sheets.client.js';
 import {
   cabeceraClasesConTurnos,
+  cabeceraRenovaciones,
   estructura,
   type Fila,
   type Libro,
@@ -35,9 +36,17 @@ export class LibroPortal {
       fields: 'sheets.properties',
     });
     const existentes = new Set(info.data.sheets?.map((s) => s.properties?.title));
-    const tablas = (Object.keys(estructura) as Tabla[]).filter((t) => existentes.has(t));
+    if (existentes.has('Pagos') && existentes.has('Renovaciones'))
+      throw new ConflictException(
+        'La hoja tiene Pagos y Renovaciones a la vez. Revisa la migración antes de continuar.',
+      );
+    const usaRenovaciones = existentes.has('Renovaciones');
+    const nombreFisico = (t: string) => (t === 'Pagos' && usaRenovaciones ? 'Renovaciones' : t);
+    const tablas = (Object.keys(estructura) as Tabla[]).filter((t) =>
+      existentes.has(nombreFisico(t)),
+    );
     const faltantes = (Object.keys(estructura) as Tabla[]).filter(
-      (t) => t !== 'ControlSistema' && t !== 'Turnos' && !existentes.has(t),
+      (t) => t !== 'ControlSistema' && t !== 'Turnos' && !existentes.has(nombreFisico(t)),
     );
     if (faltantes.length)
       throw new ConflictException(
@@ -47,8 +56,8 @@ export class LibroPortal {
       spreadsheetId: env.GOOGLE_SPREADSHEET_ID,
       ranges: tablas.map((t) => {
         let n =
-          info.data.sheets?.find((s) => s.properties?.title === t)?.properties?.gridProperties
-            ?.columnCount ??
+          info.data.sheets?.find((s) => s.properties?.title === nombreFisico(t))?.properties
+            ?.gridProperties?.columnCount ??
           Math.max(
             estructura[t].length,
             t === 'Congelamientos' ? 13 : t === 'Asistencias' ? 10 : 1,
@@ -59,13 +68,14 @@ export class LibroPortal {
           ultima = String.fromCharCode(65 + (n % 26)) + ultima;
           n = Math.floor(n / 26);
         }
-        return `'${t}'!A:${ultima}`;
+        return `'${nombreFisico(t)}'!A:${ultima}`;
       }),
       valueRenderOption: 'UNFORMATTED_VALUE',
     });
     const libro = Object.fromEntries(
       Object.keys(estructura).map((t) => [t, []]),
     ) as unknown as Libro;
+    libro.usaRenovaciones = usaRenovaciones;
     const encabezadosClases = respuesta.data.valueRanges?.[tablas.indexOf('Clases')]?.values?.[0];
     libro.clasesConTurnos =
       existentes.has('Turnos') &&
@@ -73,7 +83,14 @@ export class LibroPortal {
     tablas.forEach((t, i) => {
       const filas = respuesta.data.valueRanges?.[i]?.values ?? [];
       const cabecera =
-        t === 'Clases' && libro.clasesConTurnos ? cabeceraClasesConTurnos : estructura[t];
+        t === 'Clases' && libro.clasesConTurnos
+          ? cabeceraClasesConTurnos
+          : t === 'Pagos' && usaRenovaciones
+            ? cabeceraRenovaciones
+            : [...estructura[t]];
+      if (usaRenovaciones && t === 'Asistencias')
+        (cabecera as string[])[5] = 'ID renovación utilizada';
+      if (usaRenovaciones && t === 'Recuperaciones') (cabecera as string[])[4] = 'ID renovación';
       if (cabecera.some((h, j) => filas[0]?.[j] !== h))
         throw new ConflictException(`Revisa los encabezados de ${t}. No se han modificado datos.`);
       const datos = filas
@@ -85,7 +102,24 @@ export class LibroPortal {
       );
       if (ids.some((id) => !id) || new Set(ids).size !== ids.length)
         throw new InternalServerErrorException(`Hay identificadores vacíos o duplicados en ${t}.`);
-      libro[t] = datos;
+      libro[t] =
+        t === 'Pagos' && usaRenovaciones
+          ? datos.map((f) => [
+              f[0],
+              f[1],
+              f[2],
+              f[3],
+              f[4],
+              f[5],
+              0,
+              '',
+              '',
+              f[6],
+              f[7],
+              f[8] ?? '',
+              f[9] ?? '',
+            ])
+          : datos;
     });
     if (!libro.clasesConTurnos && libro.Turnos.length)
       throw new ConflictException(
@@ -101,6 +135,8 @@ export class LibroPortal {
       const modificadas = (Object.keys(estructura) as Tabla[]).filter(
         (t) =>
           JSON.stringify(libro[t]) !== JSON.stringify(original[t]) ||
+          (['Pagos', 'Asistencias', 'Recuperaciones'].includes(t) &&
+            libro.usaRenovaciones !== original.usaRenovaciones) ||
           (['Clases', 'Turnos'].includes(t) && libro.clasesConTurnos !== original.clasesConTurnos),
       );
       if (!modificadas.length) return resultado;
@@ -112,7 +148,8 @@ export class LibroPortal {
       let siguienteId = Math.max(0, ...propiedades.map((p) => p.sheetId ?? 0)) + 1;
       const requests: sheets_v4.Schema$Request[] = [];
       for (const tabla of modificadas) {
-        const existente = propiedades.find((p) => p.title === tabla);
+        const titulo = tabla === 'Pagos' && libro.usaRenovaciones ? 'Renovaciones' : tabla;
+        const existente = propiedades.find((p) => p.title === titulo);
         const sheetId = existente?.sheetId ?? siguienteId++;
         const ancho = Math.max(
           estructura[tabla].length,
@@ -132,7 +169,7 @@ export class LibroPortal {
             addSheet: {
               properties: {
                 sheetId,
-                title: tabla,
+                title: titulo,
                 hidden: tabla === 'ControlSistema',
                 gridProperties: {
                   rowCount: Math.max(1000, alto),
@@ -163,6 +200,11 @@ export class LibroPortal {
             ? cabeceraClasesConTurnos
             : estructura[tabla]),
         ];
+        if (libro.usaRenovaciones) {
+          if (tabla === 'Pagos') cabecera.splice(0, cabecera.length, ...cabeceraRenovaciones);
+          if (tabla === 'Asistencias') cabecera[5] = 'ID renovación utilizada';
+          if (tabla === 'Recuperaciones') cabecera[4] = 'ID renovación';
+        }
         if (libro.clasesConTurnos) {
           if (tabla === 'Postulaciones') {
             cabecera[18] = 'ID turno';
@@ -244,7 +286,23 @@ export class LibroPortal {
               },
             });
         }
-        const filas: Fila[] = [cabecera, ...libro[tabla]];
+        const filas: Fila[] = [
+          cabecera,
+          ...(tabla === 'Pagos' && libro.usaRenovaciones
+            ? libro.Pagos.map((f) => [
+                f[0],
+                f[1],
+                f[2],
+                f[3],
+                f[4],
+                f[5],
+                f[9],
+                f[10],
+                f[11] ?? '',
+                f[12] ?? '',
+              ])
+            : libro[tabla]),
+        ];
         const rows = filas.map((f) => ({
           values: Array.from({ length: ancho }, (_, i) => {
             const valor = f[i] ?? '';
@@ -275,6 +333,11 @@ export class LibroPortal {
             fields: 'userEnteredValue',
           },
         });
+      }
+      if (libro.usaRenovaciones && !original.usaRenovaciones) {
+        const anterior = propiedades.find((p) => p.title === 'Pagos');
+        if (anterior?.sheetId !== undefined && anterior.sheetId !== null)
+          requests.push({ deleteSheet: { sheetId: anterior.sheetId } });
       }
       await this.sheets.spreadsheets.batchUpdate({
         spreadsheetId: env.GOOGLE_SPREADSHEET_ID,

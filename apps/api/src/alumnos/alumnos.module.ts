@@ -102,9 +102,11 @@ export class AlumnosController {
       throw new ForbiddenException('No tienes acceso a este alumno.');
     if (
       request.sesion.perfil === 'profesor' &&
-      ['iniciar', 'renovar', 'configurar'].includes(comando.accion)
+      ['iniciar', 'renovar', 'configurar', 'activarPlan', 'renovarPlan', 'configurarPlan'].includes(
+        comando.accion,
+      )
     )
-      throw new ForbiddenException('Los planes y pagos los registra administración.');
+      throw new ForbiddenException('Los planes y las renovaciones los registra administración.');
     if (
       request.sesion.perfil === 'alumno' &&
       comando.accion !== 'solicitarCongelamiento' &&

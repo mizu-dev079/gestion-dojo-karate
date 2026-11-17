@@ -24,16 +24,16 @@ Los datos se guardan en una hoja de cálculo de Google. La estructura del almace
 - **Inscripción manual de alumnos:** registro de datos, asignación a una clase oficial y creación de la cuenta de acceso en una sola operación, con comprobación de cupos.
 - **Sesiones y asistencia:** consulta por fecha, marcación propia del profesor y registro individual de alumnos. Administración puede asignar reemplazos, corregir la asistencia del profesor y cancelar una sesión sin consumir saldo ni recuperaciones de los alumnos.
 - **Admisión desde postulaciones:** en la estructura profesional, aceptar una solicitud crea alumno, inscripción y reserva de cupo juntos. El profesor ve al alumno al actualizar la lista; su cuenta puede crearse después sin duplicar la inscripción.
-- **Hoja profesional:** personas, inscripciones, planes, pagos, sesiones y seguimiento se guardan en pestañas legibles, conservando los formatos importados. Se mantiene compatibilidad con la estructura anterior.
-- **Portal del alumno:** consulta de horarios, planes, clases pendientes, pagos registrados, asistencia, recuperaciones y estado de las solicitudes de congelamiento.
-- **Planes continuos de 4, 8 o 12 clases:** registro de pagos y renovación del mismo plan, con conservación del saldo anterior y consumo de las clases del pago más antiguo primero.
+- **Hoja profesional:** personas, inscripciones, planes, renovaciones, sesiones y seguimiento se guardan en pestañas legibles, conservando los formatos importados. Se mantiene compatibilidad con la estructura anterior.
+- **Portal del alumno:** consulta de horarios, planes, clases pendientes, renovaciones, asistencia, recuperaciones y estado de las solicitudes de congelamiento.
+- **Planes continuos de 4, 8 o 12 clases:** activación y renovación del mismo plan, sin registrar cobros, con conservación del saldo anterior y consumo de las clases del paquete más antiguo primero.
 - **Control de asistencia:** registro y corrección de presencias y faltas, avisos de ausencia y filtros por profesor, clase y fecha para consultar los alumnos programados.
-- **Recuperaciones manuales:** autorización de clases pendientes en el horario habitual, sin añadir clases al plan. Se contempla una recuperación por pago de 4 clases y dos por pago de 8 o 12, con ajuste del límite y registro del motivo por el profesor o administrador.
+- **Recuperaciones manuales:** autorización de clases pendientes en el horario habitual, sin añadir clases al plan. Se contempla una recuperación por paquete de 4 clases y dos por paquete de 8 o 12, con ajuste del límite y registro del motivo por el profesor o administrador.
 - **Congelamiento del plan:** solicitud del alumno y autorización del profesor asignado o administrador, con fecha de regreso o reactivación manual, manteniendo el cupo y las clases pendientes.
 - **Gestión unificada de profesores y alumnos:** alta de profesores junto con su cuenta, contacto opcional, administración de accesos, restablecimiento de contraseñas y cambio de contraseña por el titular.
 - **Consulta de clases oficiales:** visualización de tres clases con sus turnos por días y edades, cupos independientes y calendario de entrenamiento. Los grupos permanentes pueden recibir inscripciones sin una fecha de finalización.
 - **Convocatorias y postulaciones:** enlaces y códigos QR descargables, formulario público de inscripción y revisión de solicitudes con control de cupos.
-- **Historial de seguimiento:** consulta de pagos, asistencia, congelamientos y recuperaciones, con registro de las autorizaciones y sus motivos.
+- **Historial de seguimiento:** consulta de renovaciones, asistencia, congelamientos y recuperaciones, con registro de las autorizaciones y sus motivos.
 - **Interfaz adaptable:** navegación para celulares y computadoras, avisos dentro del portal, guía de uso y un único tema claro con la identidad visual del dojo.
 
 ## Organización del portal
@@ -44,11 +44,11 @@ Las clases se cargan directamente en Google Sheets. La creación desde la web y 
 
 | Perfil | Funciones disponibles |
 |---|---|
-| Administrador | Registro y administración de cuentas, clases oficiales, inscripciones, planes, pagos, asistencia, recuperaciones y congelamientos |
+| Administrador | Registro y administración de cuentas, clases oficiales, inscripciones, planes, renovaciones, asistencia, recuperaciones y congelamientos |
 | Profesor | Consulta de sus grupos y alumnos asignados, asistencia, autorización de recuperaciones, ajuste de límites y gestión de congelamientos |
-| Alumno | Consulta de sus inscripciones, horarios, pagos e historial; aviso o retiro de ausencias actuales/futuras y solicitud de congelamiento |
+| Alumno | Consulta de sus inscripciones, horarios, renovaciones e historial; aviso o retiro de ausencias actuales/futuras y solicitud de congelamiento |
 
-La inscripción manual crea un registro nuevo y reserva su cupo junto con la cuenta. El plan y el primer pago se registran después desde **Alumnos**. Cada renovación conserva el saldo anterior. El registro de pagos no implica cobros automáticos ni conexión con una pasarela de pago.
+La inscripción manual crea un registro nuevo y reserva su cupo junto con la cuenta. El plan se activa después desde **Alumnos**. Cada renovación conserva el saldo anterior. Los cobros se gestionan fuera de la app; no se registran importes, medios de pago ni comprobantes. Sheets conserva los datos y la gestión se realiza desde la aplicación.
 
 El formulario público y las convocatorias por QR siguen disponibles como un flujo adicional de solicitudes. Las postulaciones pendientes no reservan cupo; la aceptación o aprobación sí lo hace. El registro manual no depende de una postulación previa ni elimina registros existentes.
 
@@ -59,7 +59,7 @@ El formulario público y las convocatorias por QR siguen disponibles como un flu
 3. [Datos en Google Sheets](docs/03-google-sheets.md): pestañas, columnas, credenciales y validación de postulaciones.
 4. [Calidad de código](docs/04-calidad-de-codigo.md): Biome, Husky, pruebas con Vitest y CI.
 5. [Mapa de pantallas](docs/05-mapa-de-pantallas.md): rutas y archivos de cada sección.
-6. [Alumnos, planes y asistencia](docs/06-alumnos-asistencia.md): pagos, renovaciones, recuperaciones y congelamientos.
+6. [Alumnos, planes y asistencia](docs/06-alumnos-asistencia.md): activaciones, renovaciones, recuperaciones y congelamientos.
 7. [Cuentas y perfiles](docs/07-cuentas-y-perfiles.md): altas manuales, autenticación y permisos.
 8. [Clases oficiales](docs/08-clases-oficiales.md): preparación de los grupos y horarios en Sheets.
 
@@ -194,7 +194,7 @@ apps/
     main.ts                  arranque: validación global, cookies y CORS
     config/env.ts            carga y validación de variables de entorno
     auth/                    cuentas, perfiles, contraseñas, JWT y sesiones
-    alumnos/                 planes, pagos, asistencia, recuperaciones y congelamientos
+    alumnos/                 planes, renovaciones, asistencia, recuperaciones y congelamientos
     clases/                  clases, postulaciones, cupos y validación de horarios
     profesores/              datos de profesores, contacto y estado del registro
     google/                  cliente de Google Sheets
@@ -252,7 +252,7 @@ Las rutas privadas requieren autenticación y son exclusivas de administración 
 | `POST` | `/profesores/estado` | Administrador | Activación o desactivación del profesor |
 | `DELETE` | `/profesores/:id` | Administrador | Eliminación del registro de profesor |
 
-Las acciones y reglas de `/alumnos/:id` se detallan en la [guía de seguimiento](docs/06-alumnos-asistencia.md). Administración registra los planes y pagos; el profesor gestiona asistencia y autorizaciones de sus alumnos; el alumno solo avisa o retira ausencias permitidas y solicita congelamiento.
+Las acciones y reglas de `/alumnos/:id` se detallan en la [guía de seguimiento](docs/06-alumnos-asistencia.md). Administración activa y renueva los planes; el profesor gestiona asistencia y autorizaciones de sus alumnos; el alumno solo avisa o retira ausencias permitidas y solicita congelamiento.
 
 Las clases se identifican por id, pero actualmente guardan al profesor por nombre. Al eliminar un profesor, sus clases y solicitudes existentes conservan el nombre guardado; no se eliminan en cascada. Las postulaciones también conservan una copia de los datos de su clase al momento de enviarse.
 

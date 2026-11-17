@@ -51,13 +51,19 @@ Una postulación ya inscrita no se rechaza o elimina para dar de baja a la perso
 
 ## Planes y seguimiento
 
-Planes contiene los paquetes oficiales de 4, 8 y 12 clases. La app obtiene sus precios y límites mediante `GET /planes`. El precio elegido se conserva en la configuración del alumno y en cada pago; cambiar el catálogo no reescribe pagos anteriores. El límite de recuperaciones se copia al registrar un nuevo pago y sus ajustes manuales conservan auditoría.
+Sheets se utiliza como almacenamiento. Administración gestiona activaciones y renovaciones desde la app; profesores gestionan asistencia y autorizaciones. No se requiere que el cliente edite celdas.
 
-Los movimientos se guardan como filas legibles en Pagos, Asistencias, Recuperaciones y Congelamientos. Se reconstruye el seguimiento por inscripción y se recalcula el consumo de los pagos más antiguos primero. Las clases se conservan hasta completarlas; renovar mantiene el saldo. Cancelar una sesión del dojo devuelve descuentos y libera las recuperaciones de esa fecha.
+Planes conserva los paquetes oficiales y sus precios de referencia. La activación y renovación solo habilitan clases; los cobros se coordinan externamente.
+
+La tabla inicial **Pagos** de la plantilla se admite por compatibilidad. En la primera acción `activarPlan`, `renovarPlan` o `configurarPlan`, se reemplaza por **Renovaciones** con estas columnas: `ID renovación · ID inscripción · Alumno · Fecha de activación · Plan · Clases otorgadas · Límite de recuperaciones · Clases pendientes · Registrado por · Observaciones`. También se actualizan los encabezados relacionados a `ID renovación utilizada` en Asistencias y `ID renovación` en Recuperaciones, conservando los mismos IDs.
+
+La creación de Renovaciones, copia de paquetes y relaciones, eliminación de la pestaña anterior y operación del alumno se ejecutan en un único lote atómico. Si falla, la hoja conserva la estructura anterior. No crear ambas pestañas manualmente. La lectura no inicia la adaptación y las instancias antiguas de la API deben detenerse antes de la primera operación nueva.
+
+Los movimientos se guardan como filas legibles en Renovaciones, Asistencias, Recuperaciones y Congelamientos. Se reconstruye el seguimiento por inscripción y se recalcula el consumo de los paquetes más antiguos primero. Las clases se conservan hasta completarlas; renovar mantiene el saldo. Cancelar una sesión del dojo devuelve descuentos y libera las recuperaciones de esa fecha.
 
 La app añade dos columnas cuando hay movimientos que las necesitan: `Asistencias!J`, Política interna, conserva la política aplicada al registro; `Congelamientos!M`, Tipo de registro, distingue Solicitud y Período. Una solicitud aprobada se conserva como Aprobada y el período autorizado como Activo/Finalizado. Esto permite conservar el historial de ambas operaciones.
 
-En la primera operación que necesite auditoría se crea automáticamente la pestaña oculta `ControlSistema`, con Tipo, ID, Versión y Datos internos. Conserva versiones, auditorías y el importe configurado para próximos pagos; no sustituye las tablas legibles de movimientos. No se crean SeguimientoAlumnos ni SesionesDojo en la estructura nueva.
+En la primera operación que necesite auditoría se crea automáticamente la pestaña oculta `ControlSistema`, con Tipo, ID, Versión y Datos internos. Conserva versiones, auditorías y metadatos de compatibilidad del plan; no sustituye las tablas legibles de movimientos. No se crean SeguimientoAlumnos ni SesionesDojo en la estructura nueva.
 
 Consultar no crea registros. Las escrituras actualizan únicamente valores, conservando el formato del Excel importado. Las cadenas se escriben como texto literal, incluso si empiezan por `=`. Los lotes relacionados se envían mediante un único `spreadsheets.batchUpdate` atómico. Todas las escrituras de esta estructura comparten una cola dentro de la instancia de API; no se proporciona coordinación distribuida ni protección frente a ediciones manuales concurrentes. Se requiere una sola instancia escritora y evitar editar datos simultáneamente desde Sheets.
 

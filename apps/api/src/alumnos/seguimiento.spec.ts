@@ -346,8 +346,39 @@ describe('Validación del calendario y datos', () => {
   });
   it('valida horario, fecha anterior al pago y asistencia futura', () => {
     expect(() => asistir(iniciar(), '2026-11-03')).toThrow('días');
-    expect(() => asistir(iniciar(), '2026-10-26')).toThrow('primer pago');
+    expect(() => asistir(iniciar(), '2026-10-26')).toThrow('primera activación');
     expect(() => asistir(iniciar(), '2026-11-18')).toThrow('futuras');
     expect(asistir(iniciar(), '2026-11-18', 'avisada').pagos[0].restantes).toBe(7);
+  });
+});
+
+describe('Activaciones y renovaciones sin cobros', () => {
+  it('activa un paquete sin importe ni referencia y conserva saldo al renovar', () => {
+    let s = ejecutar(vacio(), { accion: 'activarPlan', cantidad: 4, dias, fecha: '2026-11-02' });
+    s = asistir(s, '2026-11-02');
+    s = ejecutar(s, { accion: 'renovarPlan', fecha: '2026-11-09' });
+    expect(s.pagos.map((p) => p.restantes)).toEqual([3, 4]);
+    expect(s.pagos.every((p) => p.importe === 0 && p.referencia === '')).toBe(true);
+    expect(s.auditoria.at(-1)?.accion).toBe('renovarPlan');
+  });
+  it('no permite renovar congelado ni activar con fecha futura', () => {
+    const s = ejecutar(iniciar(), { accion: 'congelar', hasta: null, motivo: 'Pausa' });
+    expect(() => ejecutar(s, { accion: 'renovarPlan', fecha: HOY })).toThrow('Reactiva');
+    expect(() =>
+      ejecutar(vacio(), { accion: 'activarPlan', cantidad: 4, dias, fecha: '2026-11-17' }),
+    ).toThrow('futura');
+  });
+  it('rechaza importes, referencias y medios de pago en los comandos nuevos', () => {
+    for (const extra of [{ importe: 130 }, { referencia: 'op123' }, { medioPago: 'Yape' }])
+      expect(
+        comandoSchema.safeParse({
+          accion: 'activarPlan',
+          version: 0,
+          cantidad: 4,
+          dias,
+          fecha: HOY,
+          ...extra,
+        }).success,
+      ).toBe(false);
   });
 });
