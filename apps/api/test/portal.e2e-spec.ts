@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { INestApplication } from '@nestjs/common';
+import { type INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
@@ -122,6 +122,7 @@ describe('Portal sobre la nueva estructura de Sheets (HTTP y persistencia reales
     const modulo = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = modulo.createNestApplication();
     app.use(cookieParser());
+    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     await app.init();
     const login = await request(app.getHttpServer())
       .post('/auth/login')
@@ -265,6 +266,18 @@ describe('Portal sobre la nueva estructura de Sheets (HTTP y persistencia reales
     expect(tablas.Renovaciones[1][0]).toBe(primerId);
     expect(tablas.Renovaciones[1][7]).toBe(7);
     expect(tablas.Renovaciones[2][7]).toBe(8);
+    const escrituras = batchUpdate.mock.calls
+      .flatMap(([r]) => r.requestBody.requests)
+      .filter(
+        (r: { updateCells?: { range?: { sheetId?: number } } }) =>
+          r.updateCells?.range?.sheetId === ids.Renovaciones,
+      );
+    expect(
+      escrituras.every(
+        (r: { updateCells: { range: { endColumnIndex: number } } }) =>
+          r.updateCells.range.endColumnIndex === 10,
+      ),
+    ).toBe(true);
     expect(tablas.Renovaciones[1].length).toBeLessThanOrEqual(10);
     expect(
       renovo.body.pagos.every(
@@ -416,6 +429,59 @@ describe('Portal sobre la nueva estructura de Sheets (HTTP y persistencia reales
       .send({ ...datos, fechaInicio: 'fecha inválida', duracion: 'sin límite' })
       .expect(400);
     expect(tablas).toEqual(original);
+  });
+  it('admite familiares con correo compartido en el mismo turno y evita duplicar al mismo alumno', async () => {
+    await prepararCincoTurnos();
+    const datos = {
+      claseId: 1,
+      turnoId: 1,
+      nombre: 'Mateo Prueba',
+      telefono: '900111222',
+      correo: 'familia@example.com',
+      fechaNacimiento: '2020-01-01',
+      consentimiento: true,
+      nombreCompletoApoderado: 'Patricia Prueba',
+      telefonoApoderado: '900333444',
+      correoApoderado: 'familia@example.com',
+    };
+    await api().post('/clases/postulaciones').send(datos).expect(201);
+    await api()
+      .post('/clases/postulaciones')
+      .send({ ...datos, nombre: 'Lucas Prueba' })
+      .expect(201);
+    await api()
+      .post('/clases/postulaciones')
+      .send({ ...datos, nombre: '  MÁTEO  Prueba ', correo: ' FAMILIA@example.com ' })
+      .expect(409);
+    expect(tablas.Postulaciones.filter((f) => f.length)).toHaveLength(3);
+  });
+  it('valida el formulario de edición sin escribir datos inválidos y acepta los campos visibles sin tarifa', async () => {
+    await prepararCincoTurnos();
+    const datos = {
+      nivel: 'Mini Samuráis',
+      sede: ' Sede principal ',
+      profesor: ' Hiroshi ',
+      frecuencia: ['Lunes', 'Miércoles', 'Viernes'],
+      horaInicio: '16:00',
+      horaFin: '17:00',
+      cupos: 12,
+    };
+    const original = structuredClone(tablas);
+    for (const extra of [
+      { cupos: 1.5 },
+      { frecuencia: ['Lunes', 'Lunes'] },
+      { horaInicio: '4pm' },
+      { sede: '   ' },
+    ])
+      await api()
+        .post('/clases/1')
+        .set('Cookie', cookie)
+        .send({ ...datos, ...extra })
+        .expect(400);
+    expect(tablas).toEqual(original);
+    await api().post('/clases/1').set('Cookie', cookie).send(datos).expect(201);
+    expect(tablas.Turnos[1][3]).toBe('Sede principal');
+    expect(tablas.Turnos[1][9]).toBe(10);
   });
   it('lee clases y catálogo, sin crear hojas antiguas ni registros al consultar', async () => {
     const c = await api().get('/clases').set('Cookie', cookie).expect(200);

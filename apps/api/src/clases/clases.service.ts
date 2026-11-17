@@ -210,13 +210,22 @@ export class ClasesService {
 
       const postulaciones = await this.postulacionesRepository.obtenerTodas();
       const correo = datos.correo.trim().toLowerCase();
+      const nombreNormalizado = (v: string) =>
+        v.normalize('NFD').replace(/\p{M}/gu, '').trim().replace(/\s+/g, ' ').toLowerCase();
       if (
-        postulaciones.some(
-          (item) =>
-            Number(item.claseId) === clase.id && item.correo?.trim().toLowerCase() === correo,
-        )
+        postulaciones.some((item) => {
+          if (Number(item.claseId) !== clase.id) return false;
+          if (clase.estado === undefined) return item.correo?.trim().toLowerCase() === correo;
+          return (
+            nombreNormalizado(item.nombre) === nombreNormalizado(datos.nombre) &&
+            item.fechaNacimiento === datos.fechaNacimiento &&
+            item.correo?.trim().toLowerCase() === correo
+          );
+        })
       ) {
-        throw new ConflictException('Este correo ya tiene una postulación para esta clase.');
+        throw new ConflictException(
+          'Este alumno ya tiene una postulación o inscripción para este turno.',
+        );
       }
 
       this.ultimoId = Math.max(
@@ -358,7 +367,7 @@ export class ClasesService {
 
         horaFin: datos.horaFin,
 
-        tarifa: datos.tarifa,
+        tarifa: permanente ? 0 : datos.tarifa,
 
         cupos: datos.cupos,
 

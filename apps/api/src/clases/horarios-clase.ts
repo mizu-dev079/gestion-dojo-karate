@@ -27,6 +27,7 @@ export function validarHorarioClase(datos: CrearClaseInput, permanente = false) 
   if (
     !Array.isArray(datos.frecuencia) ||
     !datos.frecuencia.length ||
+    new Set(datos.frecuencia).size !== datos.frecuencia.length ||
     !datos.frecuencia.every((dia) => DIAS.includes(dia))
   )
     throw new BadRequestException('Selecciona al menos un día de entrenamiento válido.');

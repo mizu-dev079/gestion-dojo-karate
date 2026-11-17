@@ -25,6 +25,22 @@ function tituloTabla(
   return nombre && existentes.has(nombre) ? nombre : tabla;
 }
 
+function filasFisicas(libro: Libro, tabla: Tabla): Fila[] {
+  return tabla === 'Pagos' && libro.usaRenovaciones
+    ? libro.Pagos.map((f) => [
+        f[0],
+        f[1],
+        f[2],
+        f[3],
+        f[4],
+        f[5],
+        f[9],
+        f[10],
+        f[11] ?? '',
+        f[12] ?? '',
+      ])
+    : libro[tabla];
+}
 let cola: Promise<unknown> = Promise.resolve();
 export class LibroPortal {
   private lecturaEnCurso: Promise<Libro> | null = null;
@@ -176,7 +192,11 @@ export class LibroPortal {
         const existente = propiedades.find((p) => p.title === titulo);
         const sheetId = existente?.sheetId ?? siguienteId++;
         const ancho = Math.max(
-          estructura[tabla].length,
+          tabla === 'Clases' && libro.clasesConTurnos
+            ? cabeceraClasesConTurnos.length
+            : tabla === 'Pagos' && libro.usaRenovaciones
+              ? cabeceraRenovaciones.length
+              : estructura[tabla].length,
           libro.clasesConTurnos
             ? ((
                 { Postulaciones: 20, Inscripciones: 15, Sesiones: 16 } as Partial<
@@ -184,8 +204,8 @@ export class LibroPortal {
                 >
               )[tabla] ?? 0)
             : 0,
-          ...libro[tabla].map((f) => f.length),
-          ...original[tabla].map((f) => f.length),
+          ...filasFisicas(libro, tabla).map((f) => f.length),
+          ...filasFisicas(original, tabla).map((f) => f.length),
         );
         const alto = Math.max(libro[tabla].length, original[tabla].length) + 1;
         if (!existente)
@@ -310,23 +330,7 @@ export class LibroPortal {
               },
             });
         }
-        const filas: Fila[] = [
-          cabecera,
-          ...(tabla === 'Pagos' && libro.usaRenovaciones
-            ? libro.Pagos.map((f) => [
-                f[0],
-                f[1],
-                f[2],
-                f[3],
-                f[4],
-                f[5],
-                f[9],
-                f[10],
-                f[11] ?? '',
-                f[12] ?? '',
-              ])
-            : libro[tabla]),
-        ];
+        const filas: Fila[] = [cabecera, ...filasFisicas(libro, tabla)];
         const rows = filas.map((f) => ({
           values: Array.from({ length: ancho }, (_, i) => {
             const valor = f[i] ?? '';
