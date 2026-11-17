@@ -1,6 +1,6 @@
 # Shinken Dojo - Hiroshi
 
-**Versión actual: 0.2.0 — en desarrollo.** Esta versión reúne el portal de alumnos, los tres perfiles de acceso y el seguimiento de planes, asistencia, recuperaciones y congelamientos. El número de versión se muestra en Usuario → Ajustes y se mantiene alineado en web, API y contratos compartidos.
+**Versión actual: 0.2.0 — en desarrollo.** Esta versión reúne el portal de alumnos, los tres perfiles de acceso y el seguimiento de planes, asistencia, recuperaciones y congelamientos. El número de versión se muestra en Usuario → Ayuda e información y se mantiene alineado en web, API y contratos compartidos.
 
 Portal web para centralizar la inscripción y el seguimiento de los alumnos de Shinken Dojo - Hiroshi. La plataforma integra la consulta de horarios y planes, el registro de asistencia, la renovación de inscripciones y la gestión de recuperaciones y congelamientos.
 
@@ -40,7 +40,7 @@ Los datos se guardan en una hoja de cálculo de Google. La estructura del almace
 
 La administración de personas se concentra en **Usuario → Profesores y alumnos**. Desde esta pantalla se registran profesores y alumnos nuevos junto con sus cuentas de acceso, sin seleccionar datos de prueba ni reutilizar postulaciones anteriores. El nombre es obligatorio; teléfono y correo son opcionales. En el alta de alumno también se indica la clase oficial y, opcionalmente, la fecha de nacimiento.
 
-Las clases se cargan directamente en Google Sheets. La creación desde la web y desde `POST /clases` está deshabilitada; la consulta y las operaciones administrativas de edición y eliminación se mantienen disponibles. El calendario se utiliza para la asistencia de profesores y alumnos. La preparación de grupos permanentes se detalla en la [guía de clases oficiales](docs/08-clases-oficiales.md).
+Las clases se cargan directamente en Google Sheets. La creación desde la web y desde `POST /clases` está deshabilitada; se mantienen la consulta y la edición de los turnos. Las clases oficiales no se eliminan desde la aplicación. El calendario se utiliza para la asistencia de profesores y alumnos. La preparación de grupos permanentes se detalla en la [guía de clases oficiales](docs/08-clases-oficiales.md).
 
 | Perfil | Funciones disponibles |
 |---|---|
@@ -233,7 +233,7 @@ Las rutas privadas requieren autenticación y son exclusivas de administración 
 | `GET` | `/planes` | Los tres perfiles | Catálogo activo de paquetes, precios y recuperaciones |
 | `POST` | `/cuentas/:id` | Administrador | Activación/desactivación del acceso o restablecimiento de contraseña |
 | `GET` | `/alumnos` | Según perfil | Seguimiento de todos los alumnos para administración, grupos propios para profesor o inscripciones propias para alumno |
-| `POST` | `/alumnos/:id` | Según acción y asignación | Planes, pagos, asistencia, recuperaciones, solicitudes y congelamientos |
+| `POST` | `/alumnos/:id` | Según acción y asignación | Planes, renovaciones, asistencia, recuperaciones, solicitudes y congelamientos |
 | `GET` | `/sesiones?fecha=AAAA-MM-DD` | Administrador o profesor asignado | Sesiones, asistencia del profesor y alumnos del grupo |
 | `POST` | `/sesiones/:id/:fecha` | Administrador o profesor asignado | Marcación propia del profesor; administración corrige, asigna reemplazos o cancela |
 | `GET` | `/clases/catalogo` | Público | Clases agrupadas con sus turnos |
@@ -242,7 +242,7 @@ Las rutas privadas requieren autenticación y son exclusivas de administración 
 | `GET` | `/clases/:id` | Público | Consulta de la clase del formulario o QR |
 | `POST` | `/clases` | Deshabilitado | Respuesta 405 para administración; las altas se realizan en Sheets |
 | `POST` | `/clases/:id` | Administrador | Edición de una clase y validación de cruces de horario |
-| `DELETE` | `/clases/:id` | Administrador | Eliminación de una clase |
+| `DELETE` | `/clases/:id` | Administrador | Deshabilitado (405): se conservan las clases oficiales |
 | `GET` | `/clases/postulaciones` | Administrador | Consulta de solicitudes |
 | `POST` | `/clases/postulaciones` | Público | Registro de una postulación pendiente con validaciones y consentimiento |
 | `POST` | `/clases/postulaciones/estado` | Administrador | Cambio de estado y actualización de cupos |

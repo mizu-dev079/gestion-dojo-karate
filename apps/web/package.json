@@ -15,16 +15,14 @@
   },
   "dependencies": {
     "@astrojs/react": "^6.0.5",
+    "@dojo/shared": "workspace:*",
     "@tailwindcss/vite": "^4.3.3",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "antd": "^6.6.4",
     "astro": "^7.3.2",
-    "dayjs": "^1.11.23",
     "qrcode.react": "^4.2.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "tailwindcss": "^4.3.3",
-    "@dojo/shared": "workspace:*"
+    "tailwindcss": "^4.3.3"
   }
 }

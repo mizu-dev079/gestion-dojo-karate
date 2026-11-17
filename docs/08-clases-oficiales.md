@@ -1,6 +1,6 @@
 # Clases oficiales y turnos
 
-La aplicación organiza tres clases: **Mini Samuráis**, **Jóvenes Guerreros** y **Avanzados**. Cada una contiene sus turnos; los cupos, el profesor y la asistencia se administran por turno. No se permite crear clases nuevas desde la web.
+La aplicación organiza tres clases: **Mini Samuráis**, **Jóvenes Guerreros** y **Avanzados**. Cada una contiene sus turnos; los cupos, el profesor y la asistencia se administran por turno. No se permite crear ni eliminar clases desde la aplicación.
 
 | Clase | Días | Edades | Horario | Cupos |
 | --- | --- | --- | --- | --- |
@@ -14,9 +14,9 @@ Los horarios y cupos corresponden a la información confirmada por el dojo. La s
 
 ## Preparación de la hoja existente
 
-Desde **Clases → Preparar clases y turnos**, administración confirma la adaptación de la hoja configurada. Se guardan tres categorías en Clases y cinco horarios en Turnos. Esta acción requiere las credenciales de Google de la aplicación; consultar la app no migra datos automáticamente.
+La hoja ya contiene las tres categorías en Clases y los cinco horarios en Turnos. La preparación inicial se retiró de la interfaz de uso diario. El endpoint administrativo `POST /clases/turnos/preparar` se conserva únicamente para adaptar hojas antiguas; consultar la app no migra datos automáticamente.
 
-La adaptación conserva los identificadores anteriores como identificadores de turno y mantiene sus alumnos, cuentas, pagos y sesiones. Si un grupo anterior no coincide con los horarios oficiales, se detiene sin guardar para permitir su revisión. Repetir la preparación no duplica filas.
+La adaptación conserva los identificadores y las relaciones existentes y no duplica filas. Si un grupo anterior no coincide con los horarios oficiales, se detiene sin guardar.
 
 Después, abrir cada clase y usar **Editar turno** para completar sede y profesor. Un turno sin sede o profesor activo no admite nuevas inscripciones. No cambiar identificadores manualmente.
 
@@ -26,10 +26,8 @@ El formulario público y el registro manual permiten elegir primero la clase y d
 
 Aceptar una postulación ocupa un cupo exclusivamente en el turno seleccionado. El profesor consulta los alumnos de sus propios turnos. Las sesiones se identifican por turno y fecha: cancelar una no cancela otro turno de la misma clase ni descuenta sus saldos.
 
-Los planes y pagos pertenecen a la inscripción del alumno. Los precios no se almacenan en Clases ni Turnos. La estructura y las columnas se describen en [Google Sheets](03-google-sheets.md).
+Los planes y renovaciones pertenecen a la inscripción del alumno. Los precios no se almacenan en Clases ni Turnos. La estructura y las columnas se describen en [Google Sheets](03-google-sheets.md).
 
-## Demostración con alumnos
+## Datos de demostración
 
-La carga inicial de demostración prepara los horarios oficiales y cinco alumnos ficticios, uno por turno. El botón de carga se retiró de la interfaz después de preparar la demostración; los datos ya registrados se conservan. La carga conserva los registros existentes y no duplica sus cuentas si se repite. Las cuentas nuevas utilizan `alumno.prueba01` a `alumno.prueba05`, con contraseña inicial igual al usuario.
-
-Solo completa asignaciones vacías: utiliza los profesores activos existentes por clase y, si no alcanzan, añade profesores identificados como prueba. La sede provisional es **Sede de prueba**. Estos datos deben reemplazarse antes del uso oficial. No registra pagos, movimientos de asistencia ni activa paquetes; los alumnos comienzan sin saldo. La operación requiere sesión de administración y se guarda en un único lote atómico. Un conflicto o falta de cupo cancela toda la operación.
+La carga automática de alumnos de prueba está deshabilitada en la API y no aparece en la interfaz. Para realizar pruebas se utiliza el formulario de postulación o el registro manual; no se alteran ni se eliminan automáticamente los datos ya almacenados.

@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { useOperacion } from '../../hooks/useOperacion.js';
 import { apiFetch, leerRespuesta } from '../../lib/api.js';
 import { agruparClases } from '../../lib/turnos.js';
-import ConfirmarAccion from '../ConfirmarAccion.jsx';
 import Mensaje from '../Mensaje.jsx';
 import TarjetaClase from '../TarjetaClase.jsx';
 
@@ -17,14 +16,11 @@ const imagenClase = (nombre) => {
 export default function Clases() {
   const { ocupado, aviso, setAviso, ejecutar } = useOperacion();
   const [clases, setClases] = useState([]);
-  const [preparado, setPreparado] = useState(false);
   const [grupoSeleccionado, setGrupoSeleccionado] = useState(null);
-  const [confirmarTurnos, setConfirmarTurnos] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState('');
   const [profesores, setProfesores] = useState([]);
   const [editandoId, setEditandoId] = useState(null);
-  const [clasePorEliminar, setClasePorEliminar] = useState(null);
 
   const [nivel, setNivel] = useState('');
   const [sede, setSede] = useState('');
@@ -32,103 +28,12 @@ export default function Clases() {
   const [horaInicio, setHoraInicio] = useState('');
   const [horaFin, setHoraFin] = useState('');
   const [profesor, setProfesor] = useState('');
-  const [tarifa, setTarifa] = useState('');
   const [cupos, setCupos] = useState('');
-
-  const [fechaInicio, setFechaInicio] = useState('');
-  const [duracion, setDuracion] = useState('');
-  const [fechaFin, setFechaFin] = useState('');
 
   const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
   const ordenarDias = (dias) => {
     return diasSemana.filter((dia) => dias.includes(dia));
-  };
-
-  const obtenerFechaHoy = () =>
-    new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'America/Lima',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(new Date());
-
-  const calcularFechaFin = useCallback((inicio, duracionSeleccionada) => {
-    if (!inicio || !duracionSeleccionada) {
-      return '';
-    }
-
-    const fecha = new Date(`${inicio}T00:00:00`);
-
-    if (duracionSeleccionada === '1 semana') {
-      fecha.setDate(fecha.getDate() + 7);
-    }
-
-    if (duracionSeleccionada === '2 semanas') {
-      fecha.setDate(fecha.getDate() + 14);
-    }
-
-    if (duracionSeleccionada === '3 semanas') {
-      fecha.setDate(fecha.getDate() + 21);
-    }
-
-    if (duracionSeleccionada === '1 mes') {
-      fecha.setMonth(fecha.getMonth() + 1);
-    }
-
-    const año = fecha.getFullYear();
-
-    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-
-    const dia = String(fecha.getDate()).padStart(2, '0');
-
-    return `${año}-${mes}-${dia}`;
-  }, []);
-
-  const formatearFecha = (fecha) => {
-    if (!fecha) {
-      return 'Sin fecha';
-    }
-
-    const partes = fecha.split('-');
-
-    if (partes.length !== 3) {
-      return fecha;
-    }
-
-    return `${partes[2]}/${partes[1]}/${partes[0]}`;
-  };
-
-  const obtenerEstadoClase = (clase) => {
-    if (clase.estado === 'Inactiva')
-      return { texto: 'Inactiva', estilo: 'bg-gray-100 text-gray-500' };
-    if (!clase.fechaInicio || !clase.fechaFin) {
-      return {
-        texto: 'Vigente',
-        estilo: 'bg-green-50 text-green-600',
-      };
-    }
-
-    const hoy = obtenerFechaHoy();
-
-    if (hoy < clase.fechaInicio) {
-      return {
-        texto: 'Por iniciar',
-        estilo: 'bg-yellow-50 text-yellow-600',
-      };
-    }
-
-    if (hoy > clase.fechaFin) {
-      return {
-        texto: 'Finalizada',
-        estilo: 'bg-gray-100 text-gray-500',
-      };
-    }
-
-    return {
-      texto: 'Vigente',
-      estilo: 'bg-green-50 text-green-600',
-    };
   };
 
   const cargarClases = useCallback(async () => {
@@ -143,7 +48,6 @@ export default function Clases() {
 
       const datos = await respuesta.json();
 
-      setPreparado(datos.preparado);
       setClases(datos.clases.flatMap((c) => c.turnos));
     } catch (error) {
       console.error('Error al cargar clases:', error);
@@ -180,16 +84,6 @@ export default function Clases() {
     return () => window.removeEventListener('pageshow', actualizarAlVolver);
   }, [cargarClases, cargarProfesores]);
 
-  useEffect(() => {
-    if (fechaInicio && duracion) {
-      const nuevaFechaFin = calcularFechaFin(fechaInicio, duracion);
-
-      setFechaFin(nuevaFechaFin);
-    } else {
-      setFechaFin('');
-    }
-  }, [fechaInicio, duracion, calcularFechaFin]);
-
   const iniciarEdicion = (clase) => {
     setEditandoId(clase.id);
 
@@ -205,15 +99,7 @@ export default function Clases() {
 
     setProfesor(clase.profesor || '');
 
-    setTarifa(clase.tarifa !== undefined && clase.tarifa !== null ? String(clase.tarifa) : '');
-
     setCupos(clase.cupos !== undefined && clase.cupos !== null ? String(clase.cupos) : '');
-
-    setFechaInicio(clase.fechaInicio || '');
-
-    setDuracion(clase.duracion || '');
-
-    setFechaFin(clase.fechaFin || '');
 
     window.scrollTo({
       top: 0,
@@ -236,15 +122,7 @@ export default function Clases() {
 
     setProfesor('');
 
-    setTarifa('');
-
     setCupos('');
-
-    setFechaInicio('');
-
-    setDuracion('');
-
-    setFechaFin('');
   };
 
   const cambiarDia = (dia) => {
@@ -263,9 +141,7 @@ export default function Clases() {
       horaInicio === '' ||
       horaFin === '' ||
       profesor === '' ||
-      (!estructuraNueva && tarifa === '') ||
-      cupos === '' ||
-      (!estructuraNueva && (fechaInicio === '' || duracion === ''))
+      cupos === ''
     ) {
       setAviso({ tipo: 'error', texto: 'Completa todos los campos antes de guardar los cambios.' });
 
@@ -295,13 +171,13 @@ export default function Clases() {
 
           profesor: profesor,
 
-          tarifa: Number(tarifa),
+          tarifa: clases.find((c) => c.id === editandoId)?.tarifa ?? 0,
 
           cupos: Number(cupos),
 
-          fechaInicio: fechaInicio,
+          fechaInicio: clases.find((c) => c.id === editandoId)?.fechaInicio ?? '',
 
-          duracion: duracion,
+          duracion: clases.find((c) => c.id === editandoId)?.duracion ?? '',
         }),
       });
 
@@ -314,26 +190,9 @@ export default function Clases() {
     });
   };
 
-  const eliminarClase = async () => {
-    if (!clasePorEliminar) return;
-    const eliminado = await ejecutar(async () => {
-      const respuesta = await apiFetch(`/clases/${clasePorEliminar.id}`, {
-        method: 'DELETE',
-      });
-
-      await leerRespuesta(respuesta, 'No se pudo eliminar la clase. Intenta de nuevo.');
-
-      await cargarClases();
-      return 'Clase eliminada correctamente.';
-    });
-    if (eliminado) setClasePorEliminar(null);
-  };
-
-  const visibles = clases;
-  const grupos = agruparClases(visibles);
+  const grupos = agruparClases(clases);
   const grupoActual = grupos.find((g) => g.id === grupoSeleccionado);
   const turnosVisibles = grupoActual?.turnos ?? [];
-  const estructuraNueva = clases.some((c) => c.estado !== undefined);
   return (
     <div className="min-h-0 bg-[var(--page-background)] text-gray-800">
       <main className="space-y-4 px-4 pb-10 pt-4" aria-busy={ocupado}>
@@ -341,10 +200,10 @@ export default function Clases() {
         {editandoId !== null && (
           <section className="relative z-10 rounded-2xl border-2 border-dojo-100 bg-white p-4 shadow-sm">
             <div className="mb-4">
-              <p className="text-sm font-semibold text-dojo-500">EDITANDO CLASE</p>
+              <p className="text-sm font-semibold text-dojo-500">EDITANDO TURNO</p>
 
               <h2 className="mt-1 text-[13px] font-bold text-gray-900">
-                Modificar datos de la clase
+                Modificar datos del turno
               </h2>
 
               <p className="mt-1 text-xs text-gray-400">
@@ -352,112 +211,38 @@ export default function Clases() {
               </p>
             </div>
 
-            <fieldset disabled={ocupado} aria-label="Editar clase" className="min-w-0 space-y-3">
+            <fieldset disabled={ocupado} aria-label="Editar turno" className="min-w-0 space-y-3">
               <div>
-                <label className="text-xs font-semibold text-gray-500">NIVEL</label>
+                <label htmlFor="turno-clase" className="text-xs font-semibold text-gray-500">
+                  CLASE
+                </label>
 
-                {estructuraNueva ? (
-                  <input
-                    aria-label="Clase"
-                    readOnly
-                    value={nivel}
-                    className="mt-1 min-h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm"
-                  />
-                ) : (
-                  <select
-                    value={nivel}
-                    onChange={(e) => setNivel(e.target.value)}
-                    className="mt-1 h-9 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700"
-                  >
-                    <option value="">Seleccionar nivel</option>
-
-                    <option value="Básico">Básico</option>
-
-                    <option value="Intermedio">Intermedio</option>
-
-                    <option value="Avanzado">Avanzado</option>
-                  </select>
-                )}
+                <input
+                  aria-label="Clase"
+                  readOnly
+                  id="turno-clase"
+                  value={nivel}
+                  className="mt-1 min-h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm"
+                />
+              </div>
+              <div>
+                <label htmlFor="turno-sede" className="text-xs font-semibold text-gray-500">
+                  SEDE
+                </label>
+                <input
+                  aria-label="Sede"
+                  required
+                  maxLength={120}
+                  id="turno-sede"
+                  value={sede}
+                  onChange={(e) => setSede(e.target.value)}
+                  placeholder="Nombre de la sede"
+                  className="mt-1 min-h-11 w-full rounded-xl border border-gray-200 px-3 text-sm"
+                />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-gray-500">SEDE</label>
-
-                {estructuraNueva ? (
-                  <input
-                    aria-label="Sede"
-                    required
-                    maxLength={120}
-                    value={sede}
-                    onChange={(e) => setSede(e.target.value)}
-                    placeholder="Nombre de la sede"
-                    className="mt-1 min-h-11 w-full rounded-xl border border-gray-200 px-3 text-sm"
-                  />
-                ) : (
-                  <select
-                    value={sede}
-                    onChange={(e) => setSede(e.target.value)}
-                    className="mt-1 h-9 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700"
-                  >
-                    <option value="">Seleccionar sede</option>
-
-                    <option value="Callao">Callao</option>
-
-                    <option value="San Miguel">San Miguel</option>
-
-                    <option value="Ventanilla">Ventanilla</option>
-                  </select>
-                )}
-              </div>
-
-              <div hidden={estructuraNueva}>
-                <label className="text-xs font-semibold text-gray-500">VIGENCIA DE LA CLASE</label>
-
-                <div className="mt-2 grid grid-cols-1 gap-3 min-[400px]:grid-cols-2">
-                  <div>
-                    <p className="mb-1 text-xs text-gray-400">FECHA DE INICIO</p>
-
-                    <input
-                      type="date"
-                      value={fechaInicio}
-                      onChange={(e) => setFechaInicio(e.target.value)}
-                      min={obtenerFechaHoy()}
-                      className="h-9 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700"
-                    />
-                  </div>
-
-                  <div>
-                    <p className="mb-1 text-xs text-gray-400">DURACIÓN</p>
-
-                    <select
-                      value={duracion}
-                      onChange={(e) => setDuracion(e.target.value)}
-                      className="h-9 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700"
-                    >
-                      <option value="">Seleccionar</option>
-
-                      <option value="1 semana">1 semana</option>
-
-                      <option value="2 semanas">2 semanas</option>
-
-                      <option value="3 semanas">3 semanas</option>
-
-                      <option value="1 mes">1 mes</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="mt-2 rounded-xl bg-gray-50 px-3 py-2">
-                  <p className="text-xs font-medium text-gray-400">FECHA DE FINALIZACIÓN</p>
-
-                  <p className="mt-1 text-sm font-semibold text-gray-700">
-                    {fechaFin ? formatearFecha(fechaFin) : 'Se calculará automáticamente'}
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-gray-500">FRECUENCIA</label>
+                <p className="text-xs font-semibold text-gray-500">FRECUENCIA</p>
 
                 <div className="mt-2 grid grid-cols-1 gap-3 min-[400px]:grid-cols-2">
                   {diasSemana.map((dia) => (
@@ -479,10 +264,13 @@ export default function Clases() {
 
               <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2">
                 <div>
-                  <label className="text-xs font-semibold text-gray-500">HORA INICIO</label>
+                  <label htmlFor="turno-inicio" className="text-xs font-semibold text-gray-500">
+                    HORA INICIO
+                  </label>
 
                   <input
                     type="time"
+                    id="turno-inicio"
                     value={horaInicio}
                     onChange={(e) => setHoraInicio(e.target.value)}
                     className="mt-1 h-9 w-full rounded-xl border border-gray-200 px-3 text-sm"
@@ -490,10 +278,13 @@ export default function Clases() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-gray-500">HORA FIN</label>
+                  <label htmlFor="turno-fin" className="text-xs font-semibold text-gray-500">
+                    HORA FIN
+                  </label>
 
                   <input
                     type="time"
+                    id="turno-fin"
                     value={horaFin}
                     onChange={(e) => setHoraFin(e.target.value)}
                     className="mt-1 h-9 w-full rounded-xl border border-gray-200 px-3 text-sm"
@@ -502,9 +293,12 @@ export default function Clases() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-gray-500">PROFESOR</label>
+                <label htmlFor="turno-profesor" className="text-xs font-semibold text-gray-500">
+                  PROFESOR
+                </label>
 
                 <select
+                  id="turno-profesor"
                   value={profesor}
                   onChange={(e) => setProfesor(e.target.value)}
                   className="mt-1 h-9 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700"
@@ -520,30 +314,15 @@ export default function Clases() {
               </div>
 
               <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2">
-                <div hidden={estructuraNueva}>
-                  <label className="text-xs font-semibold text-gray-500">TARIFA</label>
-
-                  <select
-                    value={tarifa}
-                    onChange={(e) => setTarifa(e.target.value)}
-                    className="mt-1 h-9 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700"
-                  >
-                    <option value="">Seleccionar tarifa</option>
-
-                    <option value="150">S/ 150</option>
-
-                    <option value="300">S/ 300</option>
-
-                    <option value="450">S/ 450</option>
-                  </select>
-                </div>
-
                 <div>
-                  <label className="text-xs font-semibold text-gray-500">CUPOS</label>
+                  <label htmlFor="turno-cupos" className="text-xs font-semibold text-gray-500">
+                    CUPOS
+                  </label>
 
                   <input
                     type="number"
                     min="1"
+                    id="turno-cupos"
                     value={cupos}
                     onChange={(e) => setCupos(e.target.value)}
                     className="mt-1 h-9 w-full rounded-xl border border-gray-200 px-3 text-sm"
@@ -578,24 +357,6 @@ export default function Clases() {
           </section>
         )}
 
-        {!preparado && !cargando && !errorCarga && (
-          <section className="space-y-3 rounded-2xl border border-dojo-200 bg-white p-4">
-            <h2 className="font-bold">Clases con turnos</h2>
-            <p className="text-sm text-gray-600">
-              Prepara las tres clases oficiales y sus cinco turnos confirmados. Se conservarán las
-              inscripciones y sus movimientos; después deberás completar la sede y el profesor de
-              cada turno.
-            </p>
-            <button
-              type="button"
-              disabled={ocupado}
-              className="min-h-11 rounded-xl bg-dojo-600 px-4 py-2 font-semibold text-white"
-              onClick={() => setConfirmarTurnos(true)}
-            >
-              Preparar clases y turnos
-            </button>
-          </section>
-        )}
         {cargando ? (
           <p role="status" className="rounded-2xl bg-white p-5 text-sm text-gray-600">
             Cargando clases…
@@ -614,7 +375,7 @@ export default function Clases() {
               Reintentar
             </button>
           </div>
-        ) : visibles.length === 0 ? (
+        ) : clases.length === 0 ? (
           <section className="rounded-2xl border border-dashed border-gray-300 bg-white p-6 text-center">
             <h2 className="text-base font-semibold text-gray-800">
               Todavía no hay clases registradas
@@ -639,17 +400,12 @@ export default function Clases() {
                   <TarjetaClase
                     key={clase.id}
                     clase={clase}
-                    estado={obtenerEstadoClase(clase)}
                     dias={
                       Array.isArray(clase.frecuencia)
                         ? ordenarDias(clase.frecuencia).join(', ')
                         : clase.frecuencia
                     }
                     onEditar={iniciarEdicion}
-                    onEliminar={(id) => {
-                      setAviso(null);
-                      setClasePorEliminar(clases.find((clase) => clase.id === id));
-                    }}
                     ocupado={ocupado || cargando}
                   />
                 ))}{' '}
@@ -694,47 +450,6 @@ export default function Clases() {
           </div>
         )}
       </main>
-      {confirmarTurnos && (
-        <ConfirmarAccion
-          titulo="¿Preparar clases y turnos?"
-          ocupado={ocupado}
-          aviso={aviso}
-          textoConfirmar="Preparar estructura"
-          textoOcupado="Preparando…"
-          onCancelar={() => setConfirmarTurnos(false)}
-          onConfirmar={async () => {
-            const ok = await ejecutar(async () => {
-              const r = await leerRespuesta(
-                await apiFetch('/clases/turnos/preparar', { method: 'POST' }),
-                'No se pudo preparar la estructura.',
-              );
-              await cargarClases();
-              return r.mensaje;
-            });
-            if (ok) setConfirmarTurnos(false);
-          }}
-        >
-          <p>
-            Se crearán las tres clases y los cinco turnos oficiales, sin inventar sedes ni
-            profesores. Las relaciones existentes se actualizarán juntas para conservar el
-            historial.
-          </p>
-        </ConfirmarAccion>
-      )}
-      {clasePorEliminar && (
-        <ConfirmarAccion
-          titulo="¿Eliminar esta clase?"
-          ocupado={ocupado}
-          aviso={aviso}
-          onCancelar={() => setClasePorEliminar(null)}
-          onConfirmar={eliminarClase}
-        >
-          <p className="break-words font-semibold text-gray-900">
-            Karate · {clasePorEliminar.nivel} · Sede {clasePorEliminar.sede}
-          </p>
-          <p className="mt-2">Esta acción no se puede deshacer.</p>
-        </ConfirmarAccion>
-      )}
     </div>
   );
 }

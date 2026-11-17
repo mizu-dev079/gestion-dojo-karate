@@ -1072,34 +1072,13 @@ describe('Portal sobre la nueva estructura de Sheets (HTTP y persistencia reales
     await api().post('/clases/turnos/preparar').set('Cookie', cookie).expect(409);
     expect(tablas).toEqual(anterior);
   });
-  it('carga cinco alumnos con acceso, un cupo por turno, sin pagos ni duplicados', async () => {
-    tablas.Clases = [tablas.Clases[0]];
+  it('rechaza la carga de demostración y la eliminación de clases sin modificar datos', async () => {
+    const anterior = structuredClone(tablas);
     await api().post('/clases/datos-prueba').expect(401);
-    const r = await api().post('/clases/datos-prueba').set('Cookie', cookie).expect(201);
-    expect(r.body.cuentas).toHaveLength(5);
-    expect(tablas.Alumnos.filter((f) => f.length)).toHaveLength(6);
-    expect(tablas.Inscripciones.filter((f) => f.length)).toHaveLength(6);
-    expect(tablas.Pagos.filter((f) => f.length)).toHaveLength(1);
-    expect(
-      tablas.Turnos.slice(1)
-        .filter((f) => f.length)
-        .map((f) => f[12]),
-    ).toEqual([1, 1, 1, 1, 1]);
-    const anterior = structuredClone(tablas);
-    const segunda = await api().post('/clases/datos-prueba').set('Cookie', cookie).expect(201);
-    expect(segunda.body.cuentas.every((c: { creada: boolean }) => !c.creada)).toBe(true);
+    await api().post('/clases/datos-prueba').set('Cookie', cookie).expect(405);
+    await api().delete('/clases/11').set('Cookie', cookie).expect(405);
     expect(tablas).toEqual(anterior);
-    await api()
-      .post('/auth/login')
-      .send({ usuario: 'alumno.prueba01', password: 'alumno.prueba01' })
-      .expect(200);
-  });
-  it('no carga parcialmente ejemplos si no hay cupo y conserva las asignaciones existentes', async () => {
-    await prepararCincoTurnos();
-    tablas.Turnos[1][11] = 0;
-    const anterior = structuredClone(tablas);
-    await api().post('/clases/datos-prueba').set('Cookie', cookie).expect(409);
-    expect(tablas).toEqual(anterior);
+    expect(batchUpdate).not.toHaveBeenCalled();
   });
   it('prepara tres clases y cinco turnos con los días, edades y cupos oficiales, sin duplicar al repetir', async () => {
     await prepararCincoTurnos();

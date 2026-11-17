@@ -1,7 +1,3 @@
 ---
-import LayoutAdministracion from '../layouts/LayoutAdministracion.astro';
-import Asistencia from '../components/pantallas/Asistencia.jsx';
+return Astro.redirect(`/calendario${Astro.url.search}`);
 ---
-<LayoutAdministracion title="Asistencia" active="alumnos" backHref="/alumnos" backLabel="Volver a alumnos">
-  <Asistencia client:load />
-</LayoutAdministracion>

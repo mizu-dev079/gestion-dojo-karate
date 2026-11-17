@@ -27,7 +27,6 @@
       const sesion = await respuesta.json();
       if (!['administrador','profesor','alumno'].includes(sesion.perfil)) { irAlLogin(); return; }
       const compartidas = ['/alumnos','/usuario','/ajustes','/calendario'];
-      if (sesion.perfil === 'profesor') compartidas.push('/asistencia');
       if (sesion.perfil !== 'administrador' && !compartidas.includes(window.location.pathname.replace(/\/$/, ''))) {
         window.location.replace('/alumnos'); return;
       }

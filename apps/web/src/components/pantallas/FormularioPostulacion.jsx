@@ -72,17 +72,7 @@ export default function FormularioPostulacion() {
       setCargando(true);
       setErrorClase('');
       try {
-        let id = new URLSearchParams(window.location.search).get('clase');
-        let turnoGuardado;
-        if (!id) {
-          try {
-            const previa = JSON.parse(localStorage.getItem('claseFormulario') ?? 'null');
-            id = previa?.claseBaseId ?? previa?.id;
-            turnoGuardado = previa?.turnoId;
-          } catch {
-            /* Una vista previa dañada no debe bloquear la página. */
-          }
-        }
+        const id = new URLSearchParams(window.location.search).get('clase');
         const respuestaCatalogo = await fetch(`${API_URL}/clases/catalogo`, {
           signal: controller.signal,
           cache: 'no-store',
@@ -91,9 +81,7 @@ export default function FormularioPostulacion() {
           const catalogo = await respuestaCatalogo.json();
           if (catalogo.preparado) {
             const todos = catalogo.clases.flatMap((c) => c.turnos);
-            const destino =
-              new URLSearchParams(window.location.search).get('turno') ??
-              (turnoGuardado ? String(turnoGuardado) : null);
+            const destino = new URLSearchParams(window.location.search).get('turno');
             const grupo = id ? catalogo.clases.find((c) => String(c.id) === String(id)) : null;
             if (id && !grupo) throw new Error('Esta clase ya no existe o el enlace no es válido.');
             const elegido = destino

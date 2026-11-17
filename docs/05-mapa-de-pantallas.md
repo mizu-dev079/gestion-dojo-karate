@@ -13,13 +13,15 @@ Las rutas están en `apps/web/src/pages/`. El contenido interactivo de cada pant
 | Alumnos | `/alumnos` | `alumnos.astro` | `Alumnos.jsx` |
 | Ruta anterior de profesores | `/profesores` → `/cuentas` | `profesores.astro` | Redirección |
 | Usuario | `/usuario` | `usuario.astro` | `Usuario.jsx` |
-| Ajustes | `/ajustes` | `ajustes.astro` | `Ajustes.jsx` |
-| Configurar convocatoria | `/configurar-convocatoria` | `configurar-convocatoria.astro` | `ConfigurarConvocatoria.jsx` |
+| Ayuda e información | `/ajustes` | `ajustes.astro` | `Ajustes.jsx` |
+| Enlace anterior de convocatoria | `/configurar-convocatoria` | `configurar-convocatoria.astro` | Reutiliza CompartirConvocatoria |
 | Compartir convocatoria | `/compartir-convocatoria` | `compartir-convocatoria.astro` | `CompartirConvocatoria.jsx` |
 | Formulario de postulación público | `/formulario?clase=ID` | `formulario.astro` | `FormularioPostulacion.jsx` |
 | Iniciar sesión | `/login` | `login.astro` | `Login.jsx` |
 
-El calendario se dedica a la asistencia. Profesores y administración seleccionan una fecha, consultan las sesiones y registran la presencia del profesor y de los alumnos. El alumno consulta únicamente su propia asistencia. La gestión de clases y las convocatorias se realizan en sus apartados respectivos.
+El calendario se dedica a la asistencia. Profesores y administración seleccionan una fecha, consultan las sesiones y registran la presencia del profesor y de los alumnos. El alumno consulta su propia asistencia y puede avisar o retirar una ausencia futura. La gestión de clases y las convocatorias se realizan en sus apartados respectivos.
+
+La ruta anterior `/asistencia` redirige a `/calendario`. Alumnos concentra los planes, recuperaciones y congelamientos; la toma de asistencia no se duplica en esa pantalla. Los accesos de ayuda se reúnen en Usuario → Ayuda e información.
 
 ## Componentes compartidos
 

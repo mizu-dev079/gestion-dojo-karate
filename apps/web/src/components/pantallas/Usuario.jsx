@@ -151,7 +151,7 @@ export default function Usuario() {
         </section>
       )}
       <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-        <h2 className="mb-3 text-base font-bold text-gray-900">Preferencias y ayuda</h2>
+        <h2 className="mb-3 text-base font-bold text-gray-900">Administración y ayuda</h2>
         <div className="divide-y divide-gray-100">
           {[
             {
@@ -161,24 +161,11 @@ export default function Usuario() {
             },
             {
               href: '/ajustes',
-              titulo: 'Ajustes',
-              texto: 'Guía rápida e información del sistema.',
-            },
-            {
-              href: '/ajustes#guia',
-              titulo: 'Guía rápida',
-              texto: 'Cómo gestionar clases, QR y postulaciones.',
-            },
-            {
-              href: '/ajustes#acerca',
-              titulo: 'Acerca del sistema',
-              texto: 'Información de la app y versión.',
+              titulo: 'Ayuda e información',
+              texto: 'Guía de uso y versión de la aplicación.',
             },
           ]
-            .filter(
-              (enlace) =>
-                perfil === 'administrador' || !['/profesores', '/cuentas'].includes(enlace.href),
-            )
+            .filter((enlace) => perfil === 'administrador' || enlace.href !== '/cuentas')
             .map((enlace) => (
               <a
                 key={enlace.href}

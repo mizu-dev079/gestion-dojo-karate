@@ -13,16 +13,8 @@ export default function CompartirConvocatoria() {
     const controller = new AbortController();
     async function cargarClase() {
       try {
-        let id =
-          new URLSearchParams(window.location.search).get('turno') ??
-          new URLSearchParams(window.location.search).get('clase');
-        if (!id) {
-          try {
-            id = JSON.parse(localStorage.getItem('claseFormulario') ?? 'null')?.id;
-          } catch {
-            /* Sin selección válida. */
-          }
-        }
+        const parametros = new URLSearchParams(window.location.search);
+        const id = parametros.get('turno') ?? parametros.get('clase');
         if (!id) throw new Error('Selecciona una clase desde el inicio para compartir su QR.');
         const respuesta = await fetch(`${API_URL}/clases/${encodeURIComponent(id)}`, {
           signal: controller.signal,

@@ -35,7 +35,7 @@ export class ClasesController {
     return this.clasesService.obtenerCatalogo();
   }
   @Post('datos-prueba') cargarDatosPrueba() {
-    return this.clasesService.cargarDatosPrueba();
+    throw new MethodNotAllowedException('La carga de datos de demostración está deshabilitada.');
   }
   @Post('turnos/preparar') prepararTurnos() {
     return this.clasesService.prepararTurnos();
@@ -109,10 +109,9 @@ export class ClasesController {
   }
 
   @Delete(':id')
-  eliminarClase(
-    @Param('id')
-    id: string,
-  ) {
-    return this.clasesService.eliminarClase(Number(id));
+  eliminarClase() {
+    throw new MethodNotAllowedException(
+      'Las clases oficiales del dojo no se eliminan desde la aplicación.',
+    );
   }
 }

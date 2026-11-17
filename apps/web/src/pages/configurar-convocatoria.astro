@@ -1,7 +1,4 @@
 ---
-import LayoutAdministracion from "../layouts/LayoutAdministracion.astro";
-import ConfigurarConvocatoria from "../components/pantallas/ConfigurarConvocatoria.jsx";
+import CompartirConvocatoria from './compartir-convocatoria.astro';
 ---
-<LayoutAdministracion title="Convocatoria de la clase" active="calendario" backHref="/calendario" backLabel="Volver al calendario">
-  <ConfigurarConvocatoria client:load />
-</LayoutAdministracion>
+<CompartirConvocatoria />

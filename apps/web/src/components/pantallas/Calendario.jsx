@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useOperacion } from '../../hooks/useOperacion.js';
 import { useSesion } from '../../hooks/useSesion.js';
 import { apiFetch, leerRespuesta } from '../../lib/api.js';
+import Mensaje from '../Mensaje.jsx';
 import SelectorFechaAsistencia from '../SelectorFechaAsistencia.jsx';
 import Asistencia from './Asistencia.jsx';
 
@@ -10,6 +12,7 @@ function CalendarioAlumno() {
   const [alumnos, setAlumnos] = useState([]);
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(true);
+  const { ocupado, aviso, ejecutar } = useOperacion();
   const cargar = useCallback(async () => {
     setCargando(true);
     setError('');
@@ -29,14 +32,36 @@ function CalendarioAlumno() {
   useEffect(() => {
     cargar();
   }, [cargar]);
+  async function avisar(alumno, retirar = false) {
+    await ejecutar(async () => {
+      await leerRespuesta(
+        await apiFetch(`/alumnos/${alumno.id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            accion: retirar ? 'retirarAviso' : 'asistencia',
+            version: alumno.seguimiento.version,
+            fecha,
+            ...(retirar ? {} : { estado: 'avisada' }),
+          }),
+        }),
+        'No se pudo guardar el aviso.',
+      );
+      await cargar();
+      return retirar
+        ? 'Aviso retirado.'
+        : 'Ausencia avisada. La recuperación requiere autorización.';
+    });
+  }
   return (
     <main className="space-y-4 p-4">
+      <Mensaje aviso={aviso} />
       <section className="space-y-4 rounded-2xl border border-gray-200 bg-white p-4">
         <h2 className="text-lg font-bold">Mi asistencia</h2>
-        <SelectorFechaAsistencia fecha={fecha} cambiar={setFecha} disabled={cargando} />
+        <SelectorFechaAsistencia fecha={fecha} cambiar={setFecha} disabled={cargando || ocupado} />
         <button
           type="button"
-          disabled={cargando}
+          disabled={cargando || ocupado}
           onClick={cargar}
           className="min-h-11 font-semibold text-dojo-700"
         >
@@ -78,6 +103,19 @@ function CalendarioAlumno() {
                 {alumno.clase?.turno ?? alumno.clase?.nivel ?? 'Clase asignada'}
               </p>
               <p className="font-semibold text-dojo-700">{etiqueta}</p>
+              {fecha >= hoy() &&
+                s.plan &&
+                !pausa &&
+                (!asistencia || asistencia.estado === 'avisada') && (
+                  <button
+                    type="button"
+                    disabled={ocupado || cargando}
+                    onClick={() => avisar(alumno, asistencia?.estado === 'avisada')}
+                    className="min-h-11 rounded-xl border border-dojo-600 px-3 py-2 font-semibold text-dojo-700 disabled:opacity-50"
+                  >
+                    {asistencia?.estado === 'avisada' ? 'Retirar aviso' : 'Avisar ausencia'}
+                  </button>
+                )}
             </section>
           );
         })
@@ -88,5 +126,5 @@ function CalendarioAlumno() {
 export default function Calendario() {
   const sesion = useSesion();
   if (!sesion) return <p className="p-4">Cargando tu perfil…</p>;
-  return sesion.perfil === 'alumno' ? <CalendarioAlumno /> : <Asistencia calendario />;
+  return sesion.perfil === 'alumno' ? <CalendarioAlumno /> : <Asistencia />;
 }

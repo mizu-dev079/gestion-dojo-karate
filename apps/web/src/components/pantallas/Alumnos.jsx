@@ -20,7 +20,6 @@ const titulos = {
   configurarPlan: 'Cambiar plan',
   renovarPlan: 'Renovar plan',
   asistencia: 'Registrar asistencia',
-  avisar: 'Avisar ausencia',
   congelar: 'Congelar plan',
   recuperar: 'Brindar recuperación',
   limiteRecuperaciones: 'Ajustar límite de recuperaciones',
@@ -30,7 +29,7 @@ const titulos = {
   retirarAviso: 'Retirar aviso de ausencia',
 };
 
-function FormularioAccion({ alumno, seleccion, fechaInicial, ocupado, guardar, cerrar, planes }) {
+function FormularioAccion({ alumno, seleccion, ocupado, guardar, cerrar, planes }) {
   const s = alumno.seguimiento;
   const accion = seleccion.accion;
   const planElegido = accion === 'configurarPlan' ? (s.proximoPlan ?? s.plan) : s.plan;
@@ -60,12 +59,6 @@ function FormularioAccion({ alumno, seleccion, fechaInicial, ocupado, guardar, c
       Object.assign(d, { fecha: f.get('fecha') });
     if (['congelar', 'solicitarCongelamiento'].includes(accion))
       Object.assign(d, { hasta: f.get('hasta') || null, motivo: f.get('motivo') });
-    if (['asistencia', 'avisar'].includes(accion))
-      Object.assign(d, {
-        accion: 'asistencia',
-        fecha: f.get('fecha'),
-        estado: accion === 'avisar' ? 'avisada' : f.get('estado'),
-      });
     if (accion === 'recuperar')
       Object.assign(d, { fecha: f.get('fecha'), motivo: f.get('motivo') });
     if (accion === 'limiteRecuperaciones')
@@ -154,42 +147,6 @@ function FormularioAccion({ alumno, seleccion, fechaInicial, ocupado, guardar, c
                 className={campo}
               />
             </label>
-          </>
-        )}
-        {['asistencia', 'avisar'].includes(accion) && (
-          <>
-            <label className="block text-sm font-semibold">
-              Fecha de la sesión
-              <input
-                name="fecha"
-                type="date"
-                required
-                defaultValue={accion === 'avisar' && fechaInicial < hoy() ? hoy() : fechaInicial}
-                min={accion === 'avisar' ? hoy() : undefined}
-                className={campo}
-              />
-            </label>
-            {accion === 'asistencia' && (
-              <label className="block text-sm font-semibold">
-                Asistencia
-                <select
-                  name="estado"
-                  defaultValue={
-                    s.asistencias.find((a) => a.fecha === fechaInicial)?.estado ?? 'presente'
-                  }
-                  className={campo}
-                >
-                  <option value="presente">Presente</option>
-                  <option value="falta">Faltó</option>
-                  <option value="avisada">Avisó que faltará</option>
-                </select>
-              </label>
-            )}
-            <p className="text-sm text-gray-600">
-              La sesión ocupa una clase del plan. Si se autoriza su recuperación, esa clase
-              permanece pendiente para el siguiente día habitual. Los avisos futuros reservan esa
-              sesión; no aprueban una recuperación.
-            </p>
           </>
         )}
         {['congelar', 'solicitarCongelamiento'].includes(accion) && (
@@ -292,7 +249,6 @@ export default function Alumnos() {
   const [profesor, setProfesor] = useState('');
   const [profesores, setProfesores] = useState([]);
   const [vista, setVista] = useState('todos');
-  const [fechaAgenda, setFechaAgenda] = useState(hoy);
   const [claseId, setClaseId] = useState('');
   const [seleccion, setSeleccion] = useState(null);
   const { ocupado, aviso, setAviso, ejecutar } = useOperacion();
@@ -347,38 +303,15 @@ export default function Alumnos() {
     });
     if (ok) setSeleccion(null);
   }
-  const diaAgenda = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'][
-    new Date(`${fechaAgenda}T00:00:00Z`).getUTCDay()
-  ];
-  function programado(a) {
-    const s = a.seguimiento;
-    return (
-      s.plan?.dias.includes(diaAgenda) &&
-      !s.congelamientos.some(
-        (c) =>
-          c.desde <= fechaAgenda &&
-          (!c.hasta || fechaAgenda < c.hasta) &&
-          (!c.reactivado || fechaAgenda < c.reactivado),
-      ) &&
-      s.pagos.some((p) => p.fecha <= fechaAgenda)
-    );
-  }
   const visibles = alumnos.filter((a) => {
-    const s = a.seguimiento,
-      r = s.asistencias.find((item) => item.fecha === fechaAgenda);
+    const s = a.seguimiento;
     const coincide =
       vista === 'todos' ||
       (vista === 'congelados'
         ? s.congelado
         : vista === 'faltas'
           ? s.faltasPendientes > 0
-          : vista === 'programados'
-            ? programado(a)
-            : vista === 'avisadas'
-              ? r?.estado === 'avisada'
-              : vista === 'presentes'
-                ? r?.estado === 'presente'
-                : !s.plan);
+          : !s.plan);
     return (
       coincide &&
       a.nombre.toLocaleLowerCase('es').includes(busqueda.trim().toLocaleLowerCase('es')) &&
@@ -399,24 +332,18 @@ export default function Alumnos() {
       <Mensaje aviso={aviso} />
       <section className="space-y-3 rounded-2xl border border-gray-200 bg-white p-4">
         <h2 className="text-lg font-bold">
-          {alumnoPropio
-            ? 'Mi plan y asistencia'
-            : admin
-              ? 'Alumnos y asistencia'
-              : 'Mis alumnos y clases'}
+          {alumnoPropio ? 'Mi plan' : admin ? 'Planes de alumnos' : 'Mis alumnos'}
         </h2>
         <p className="text-sm text-gray-600">
           Planes continuos de 4, 8 o 12 clases. Se conservan las clases pendientes al renovar. Las
           recuperaciones las autoriza manualmente el profesor o administrador.
         </p>
-        {!alumnoPropio && (
-          <a
-            href="/calendario"
-            className="inline-flex min-h-11 items-center rounded-xl bg-dojo-600 px-4 py-2 font-semibold text-white"
-          >
-            Calendario de asistencia
-          </a>
-        )}
+        <a
+          href="/calendario"
+          className="inline-flex min-h-11 items-center rounded-xl bg-dojo-600 px-4 py-2 font-semibold text-white"
+        >
+          Calendario de asistencia
+        </a>
         {admin && (
           <a
             href="/cuentas"
@@ -465,26 +392,11 @@ export default function Alumnos() {
             ))}
           </select>
         </label>
-        <label className="block text-sm font-semibold">
-          Fecha de asistencia
-          <input
-            type="date"
-            required
-            value={fechaAgenda}
-            onChange={(e) => {
-              if (e.target.value) setFechaAgenda(e.target.value);
-            }}
-            className={campo}
-          />
-        </label>
         {!alumnoPropio && (
           <label className="block text-sm font-semibold">
             Mostrar
             <select value={vista} onChange={(e) => setVista(e.target.value)} className={campo}>
               <option value="todos">Todos los alumnos</option>
-              <option value="programados">Programados para la fecha</option>
-              <option value="avisadas">Avisaron que faltarán en la fecha</option>
-              <option value="presentes">Presentes en la fecha</option>
               <option value="sin-plan">Sin plan registrado</option>
               <option value="congelados">Planes congelados</option>
               <option value="faltas">Con faltas sin recuperación</option>
@@ -511,7 +423,6 @@ export default function Alumnos() {
         const s = alumno.seguimiento,
           pausa = s.congelamientos.at(-1),
           abrir = (accion, datos = {}) => setSeleccion({ alumnoId: alumno.id, accion, ...datos });
-        const registro = s.asistencias.find((a) => a.fecha === fechaAgenda);
         return (
           <article key={alumno.id} className="rounded-2xl border border-gray-200 bg-white p-4">
             <h2 className="text-lg font-bold">{alumno.nombre}</h2>
@@ -545,37 +456,7 @@ export default function Alumnos() {
                 · {pausa.motivo}
               </p>
             )}
-            {s.plan && (
-              <p className="mt-2 text-sm text-gray-600">
-                {fechaVisible(fechaAgenda)}:{' '}
-                {registro?.estado === 'presente'
-                  ? 'Presente'
-                  : registro?.estado === 'avisada'
-                    ? 'Ausencia avisada'
-                    : registro?.estado === 'falta'
-                      ? 'Falta registrada'
-                      : programado(alumno)
-                        ? 'Programado, asistencia pendiente'
-                        : 'Sin sesión programada'}
-              </p>
-            )}
             <div className="mt-4 flex flex-wrap gap-2">
-              {registro?.estado === 'avisada' && fechaAgenda >= hoy() && (
-                <button
-                  type="button"
-                  disabled={ocupado}
-                  onClick={() =>
-                    guardar(alumno.id, {
-                      accion: 'retirarAviso',
-                      version: s.version,
-                      fecha: fechaAgenda,
-                    })
-                  }
-                  className={secundario}
-                >
-                  Retirar aviso
-                </button>
-              )}
               {!s.plan && admin && alumno.clase && (
                 <button
                   type="button"
@@ -588,14 +469,6 @@ export default function Alumnos() {
               )}
               {s.plan && alumno.clase && !s.congelado && (
                 <>
-                  <button
-                    type="button"
-                    disabled={ocupado}
-                    onClick={() => abrir(alumnoPropio ? 'avisar' : 'asistencia')}
-                    className={boton}
-                  >
-                    {alumnoPropio ? 'Avisar ausencia' : 'Asistencia'}
-                  </button>
                   {admin && (
                     <>
                       <button
@@ -696,11 +569,10 @@ export default function Alumnos() {
             ))}
             {seleccion?.alumnoId === alumno.id && (
               <FormularioAccion
-                key={`${alumno.id}-${seleccion.accion}-${seleccion.id ?? ''}-${fechaAgenda}`}
+                key={`${alumno.id}-${seleccion.accion}-${seleccion.id ?? ''}`}
                 alumno={alumno}
                 planes={planes}
                 seleccion={seleccion}
-                fechaInicial={fechaAgenda}
                 ocupado={ocupado}
                 guardar={guardar}
                 cerrar={() => setSeleccion(null)}

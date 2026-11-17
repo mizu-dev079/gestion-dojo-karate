@@ -127,7 +127,7 @@ function GestionSesion({ sesion, profesores, admin, ocupado, guardar, cerrar }) 
     </form>
   );
 }
-export default function Asistencia({ calendario = false }) {
+export default function Asistencia() {
   const acceso = useSesion();
   const [fecha, setFecha] = useState(hoy);
   const [datos, setDatos] = useState(null);
@@ -215,27 +215,7 @@ export default function Asistencia({ calendario = false }) {
           no genera faltas automáticamente. Las cancelaciones del dojo no consumen clases ni
           recuperaciones.
         </p>
-        {calendario ? (
-          <SelectorFechaAsistencia
-            fecha={fecha}
-            cambiar={setFecha}
-            disabled={ocupado || cargando}
-          />
-        ) : (
-          <label className="block text-sm font-semibold">
-            Fecha
-            <input
-              className={campo}
-              type="date"
-              value={fecha}
-              disabled={ocupado || cargando}
-              required
-              onChange={(e) => {
-                if (e.target.value) setFecha(e.target.value);
-              }}
-            />
-          </label>
-        )}
+        <SelectorFechaAsistencia fecha={fecha} cambiar={setFecha} disabled={ocupado || cargando} />
         <button
           className={boton}
           disabled={ocupado || cargando}

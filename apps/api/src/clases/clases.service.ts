@@ -5,7 +5,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { cargarDatosPrueba } from '../portal/datos-prueba.js';
 import { libroNuevo } from '../portal/libro.js';
 import { validarEdadTurno } from '../portal/registros.js';
 import { catalogo, prepararTurnos } from '../portal/turnos.js';
@@ -80,11 +79,6 @@ export class ClasesService {
         turnos: [t],
       })),
     };
-  }
-  async cargarDatosPrueba() {
-    const libro = await libroNuevo();
-    if (!libro) throw new ConflictException('Primero importa la estructura profesional de Sheets.');
-    return libro.modificar(cargarDatosPrueba);
   }
   async prepararTurnos() {
     const libro = await libroNuevo();
@@ -379,24 +373,6 @@ export class ClasesService {
       };
 
       return this.clasesRepository.actualizar(claseActualizada);
-    });
-  }
-
-  async eliminarClase(id: number) {
-    return this.enClase(0, async () => {
-      const clases = await this.clasesRepository.obtenerTodas();
-
-      const clase = clases.find((item) => item.id === id);
-
-      if (!clase) {
-        throw new Error('Clase no encontrada');
-      }
-
-      await this.clasesRepository.eliminar(id);
-
-      return {
-        mensaje: 'Clase eliminada correctamente',
-      };
     });
   }
 }

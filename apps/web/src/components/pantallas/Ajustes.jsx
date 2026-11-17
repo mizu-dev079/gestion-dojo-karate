@@ -12,10 +12,9 @@ export default function Ajustes({ version }) {
               Consultar clases
             </summary>
             <p className="pb-3 leading-6">
-              En Clases verás los horarios registrados del dojo en Google Sheets. Usa Todas para
-              consultar también las próximas y finalizadas. El menú de tres puntos permite editar o
-              eliminar. El sistema avisa si el profesor tiene otra clase que coincide en fecha, día
-              y hora.
+              En Clases se muestran las tres clases oficiales y sus turnos. Desde Editar turno se
+              pueden ajustar la sede, los días, el horario, el profesor y los cupos. Las clases
+              oficiales no se crean ni se eliminan desde la aplicación.
             </p>
           </details>
           <details className="py-2">
@@ -36,8 +35,7 @@ export default function Ajustes({ version }) {
             </summary>
             <p className="pb-3 leading-6">
               En la tarjeta de la clase, pulsa Compartir. Puedes copiar el enlace, enviarlo por
-              WhatsApp o descargar el QR. La convocatoria puede compartirse antes de que empiece la
-              clase.
+              WhatsApp o descargar el QR del formulario de inscripción.
             </p>
           </details>
           <details className="py-2">
@@ -45,9 +43,31 @@ export default function Ajustes({ version }) {
               Revisar postulaciones y cupos
             </summary>
             <p className="pb-3 leading-6">
-              Pulsa Ver postulaciones en la clase. Busca por nombre, correo o número de solicitud y
-              filtra por estado. Las pendientes no reservan vacante: al aceptar una, se actualizan
-              los cupos. No se pueden aceptar más personas si la clase está completa.
+              Pulsa Ver postulaciones en la clase. Selecciona el turno y filtra por estado. Las
+              pendientes no reservan vacante: al aceptar una, se actualizan los cupos. No se pueden
+              aceptar más personas si la clase está completa.
+            </p>
+          </details>
+          <details className="py-2">
+            <summary className="flex min-h-11 cursor-pointer items-center font-semibold text-gray-800">
+              Registrar asistencia
+            </summary>
+            <p className="pb-3 leading-6">
+              En Calendario se selecciona la fecha. El profesor marca su propia presencia y la de
+              los alumnos asignados. Administración puede corregir registros o cancelar una sesión.
+              Una cancelación del dojo no consume clases ni recuperaciones. Cada alumno consulta su
+              asistencia y puede avisar una ausencia desde su calendario.
+            </p>
+          </details>
+          <details className="py-2">
+            <summary className="flex min-h-11 cursor-pointer items-center font-semibold text-gray-800">
+              Administrar planes y recuperaciones
+            </summary>
+            <p className="pb-3 leading-6">
+              En Alumnos se activan y renuevan paquetes de 4, 8 o 12 clases. Cambiar plan programa
+              el siguiente paquete y conserva las clases pendientes. El profesor o administrador
+              puede autorizar recuperaciones y congelamientos. El alumno puede solicitar el
+              congelamiento desde Mi plan.
             </p>
           </details>
           <details className="py-2">
