@@ -338,6 +338,52 @@ describe('Portal sobre la nueva estructura de Sheets (HTTP y persistencia reales
     await api().post(`/alumnos/${id}`).set('Cookie', cookie).send(body).expect(500);
     expect(tablas).toEqual(original);
   });
+  it('lee y escribe asistencias y sesiones con los nombres nuevos sin crear pestañas duplicadas', async () => {
+    for (const [anterior, nuevo] of [
+      ['Asistencias', 'Asistencias de alumnos'],
+      ['Sesiones', 'Sesiones y profesores'],
+    ]) {
+      tablas[nuevo] = tablas[anterior];
+      ids[nuevo] = ids[anterior];
+      delete tablas[anterior];
+      delete ids[anterior];
+    }
+    const cuenta = await alumnoManual();
+    const id = cuenta.alumnoCreado.id;
+    const plan = await api()
+      .post(`/alumnos/${id}`)
+      .set('Cookie', cookie)
+      .send({ accion: 'activarPlan', cantidad: 4, dias: [dia], fecha: hoy, version: 0 })
+      .expect(201);
+    await api()
+      .post(`/alumnos/${id}`)
+      .set('Cookie', cookie)
+      .send({ accion: 'asistencia', version: plan.body.version, fecha: hoy, estado: 'presente' })
+      .expect(201);
+    expect(tablas['Asistencias de alumnos'][1][2]).toBe(id);
+    expect(tablas['Sesiones y profesores'][1][0]).toBe(`11:${hoy}`);
+    expect(tablas.Asistencias).toBeUndefined();
+    expect(tablas.Sesiones).toBeUndefined();
+    const sesiones = await api().get(`/sesiones?fecha=${hoy}`).set('Cookie', cookie).expect(200);
+    const version = sesiones.body.sesiones.find(
+      (s: { claseId: number }) => s.claseId === 11,
+    ).version;
+    await api()
+      .post(`/sesiones/11/${hoy}`)
+      .set('Cookie', cookie)
+      .send({ accion: 'estado', estado: 'cancelada', version, motivo: 'Cancelación del dojo' })
+      .expect(201);
+    const alumnos = await api().get('/alumnos').set('Cookie', cookie).expect(200);
+    expect(alumnos.body[0].seguimiento.pendientes).toBe(4);
+    expect(tablas['Sesiones y profesores'][1][10]).toBe('Cancelada');
+  });
+  it('rechaza pestañas duplicadas con ambos nombres sin modificar datos', async () => {
+    tablas['Asistencias de alumnos'] = structuredClone(tablas.Asistencias);
+    ids['Asistencias de alumnos'] = 999;
+    const original = structuredClone(tablas);
+    await api().get('/alumnos').set('Cookie', cookie).expect(409);
+    expect(tablas).toEqual(original);
+  });
   it('lee clases y catálogo, sin crear hojas antiguas ni registros al consultar', async () => {
     const c = await api().get('/clases').set('Cookie', cookie).expect(200);
     expect(c.body[0]).toMatchObject({

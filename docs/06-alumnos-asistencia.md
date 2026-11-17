@@ -100,3 +100,7 @@ No editar manualmente el JSON. Se rechazan encabezados, identificadores duplicad
 - Acciones del alumno propio: `asistencia` solo para avisos actuales/futuros no registrados, `retirarAviso` y `solicitarCongelamiento`.
 
 Se mantienen las fechas de negocio en `America/Lima`. Las pruebas no escriben datos de demostración en la hoja real del dojo.
+
+## Nombres de las pestañas de asistencia
+
+Las pestañas visibles se llaman **Asistencias de alumnos** (antes Asistencias) y **Sesiones y profesores** (antes Sesiones). Los encabezados, identificadores y relaciones no cambian. La API admite tanto los nombres anteriores como los nuevos y escribe en la pestaña existente, sin crear copias. No deben coexistir ambos nombres para el mismo tipo de registro. La asistencia del profesor continúa vinculada a su sesión; no se duplica en la tabla de alumnos.

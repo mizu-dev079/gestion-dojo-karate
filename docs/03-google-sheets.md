@@ -80,3 +80,7 @@ La edición anónima por enlace en el navegador no sustituye la autenticación q
 La API utiliza `GOOGLE_CREDENTIALS_JSON`, con credenciales disponibles directamente en el proceso, o el archivo privado indicado en `GOOGLE_CREDENTIALS_PATH` (por defecto `credentials/google-service-account.json`, relativo a apps/api). La cuenta de servicio debe tener permiso de Editor. No subir llaves a Git ni escribirlas en celdas. Los secretos de proxy que solo sustituyen credenciales en solicitudes de red no sirven para firmar localmente un JWT con una llave JSON.
 
 Antes de usar datos oficiales se deben completar la carga de grupos, asignaciones de profesores, pruebas de aceptación y respaldo de la hoja. Las pruebas automatizadas usan Google simulado y no modifican la hoja real.
+
+## Nombres de las pestañas de asistencia
+
+Las pestañas visibles se llaman **Asistencias de alumnos** (antes Asistencias) y **Sesiones y profesores** (antes Sesiones). Los encabezados, identificadores y relaciones no cambian. La API admite tanto los nombres anteriores como los nuevos y escribe en la pestaña existente, sin crear copias. No deben coexistir ambos nombres para el mismo tipo de registro. La asistencia del profesor continúa vinculada a su sesión; no se duplica en la tabla de alumnos.

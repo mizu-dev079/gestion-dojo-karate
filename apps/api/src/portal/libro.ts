@@ -11,6 +11,20 @@ import {
   type Tabla,
 } from './estructura.js';
 
+const nombresAsistencia: Record<string, string> = {
+  Asistencias: 'Asistencias de alumnos',
+  Sesiones: 'Sesiones y profesores',
+};
+function tituloTabla(
+  tabla: string,
+  existentes: Set<string | null | undefined>,
+  renovaciones: boolean,
+) {
+  if (tabla === 'Pagos' && renovaciones) return 'Renovaciones';
+  const nombre = nombresAsistencia[tabla];
+  return nombre && existentes.has(nombre) ? nombre : tabla;
+}
+
 let cola: Promise<unknown> = Promise.resolve();
 export class LibroPortal {
   private lecturaEnCurso: Promise<Libro> | null = null;
@@ -40,8 +54,14 @@ export class LibroPortal {
       throw new ConflictException(
         'La hoja tiene Pagos y Renovaciones a la vez. Revisa la migración antes de continuar.',
       );
+    for (const [anterior, nuevo] of Object.entries(nombresAsistencia)) {
+      if (existentes.has(anterior) && existentes.has(nuevo))
+        throw new ConflictException(
+          `Existen ${anterior} y ${nuevo} a la vez. Conserva una sola pestaña para evitar registros duplicados.`,
+        );
+    }
     const usaRenovaciones = existentes.has('Renovaciones');
-    const nombreFisico = (t: string) => (t === 'Pagos' && usaRenovaciones ? 'Renovaciones' : t);
+    const nombreFisico = (t: string) => tituloTabla(t, existentes, usaRenovaciones);
     const tablas = (Object.keys(estructura) as Tabla[]).filter((t) =>
       existentes.has(nombreFisico(t)),
     );
@@ -148,7 +168,11 @@ export class LibroPortal {
       let siguienteId = Math.max(0, ...propiedades.map((p) => p.sheetId ?? 0)) + 1;
       const requests: sheets_v4.Schema$Request[] = [];
       for (const tabla of modificadas) {
-        const titulo = tabla === 'Pagos' && libro.usaRenovaciones ? 'Renovaciones' : tabla;
+        const titulo = tituloTabla(
+          tabla,
+          new Set(propiedades.map((p) => p.title)),
+          !!libro.usaRenovaciones,
+        );
         const existente = propiedades.find((p) => p.title === titulo);
         const sheetId = existente?.sheetId ?? siguienteId++;
         const ancho = Math.max(
