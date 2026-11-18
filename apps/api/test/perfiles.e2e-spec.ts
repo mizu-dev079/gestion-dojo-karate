@@ -577,17 +577,60 @@ describe('Perfiles y aislamiento de acceso (HTTP)', () => {
       .expect(201);
     await request(app.getHttpServer()).get('/auth/me').set('Cookie', cookies.ana).expect(401);
   });
-  it('las sesiones exigen sesión y excluyen el perfil alumno', async () => {
+  it('las sesiones exigen sesión y el alumno solo consulta su horario', async () => {
     await request(app.getHttpServer()).get('/sesiones?fecha=2026-11-16').expect(401);
-    await request(app.getHttpServer())
+    const horario = await request(app.getHttpServer())
       .get('/sesiones?fecha=2026-11-16')
       .set('Cookie', cookies.ana)
-      .expect(403);
+      .expect(200);
+    expect(horario.body).toEqual({
+      sesiones: [{ alumnoId: 1, claseId: 11, fecha: '2026-11-16', estado: 'programada' }],
+    });
     await request(app.getHttpServer())
       .post('/sesiones/11/2026-11-16')
       .set('Cookie', cookies.ana)
       .send({ accion: 'profesor', asistencia: 'presente', version: 0, motivo: 'Prueba' })
       .expect(403);
+  });
+  it('el alumno consulta cancelaciones por intervalo sin compañeros, auditorías ni escrituras', async () => {
+    await request(app.getHttpServer())
+      .post('/sesiones/11/2026-11-16')
+      .set('Cookie', cookies.admin)
+      .send({
+        accion: 'estado',
+        estado: 'cancelada',
+        version: 0,
+        motivo: 'Prueba del horario personal',
+      })
+      .expect(201);
+    const antes = structuredClone({ sesiones, estados });
+    const respuesta = await request(app.getHttpServer())
+      .get('/sesiones?desde=2026-11-16&hasta=2026-11-23')
+      .set('Cookie', cookies.ana)
+      .expect(200);
+    expect(respuesta.body.sesiones).toHaveLength(3);
+    expect(respuesta.body.sesiones[0]).toEqual({
+      alumnoId: 1,
+      claseId: 11,
+      fecha: '2026-11-16',
+      estado: 'cancelada',
+    });
+    for (const sesion of respuesta.body.sesiones) {
+      expect(Object.keys(sesion).sort()).toEqual(['alumnoId', 'claseId', 'estado', 'fecha']);
+      expect(sesion.alumnoId).toBe(1);
+    }
+    expect({ sesiones, estados }).toEqual(antes);
+    for (const query of [
+      'desde=2026-11-16&hasta=2027-05-01',
+      'desde=2026-11-18&hasta=2026-11-16',
+      'fecha=2026-02-30',
+      'desde=2026-11-16&hasta=incorrecta',
+    ]) {
+      await request(app.getHttpServer())
+        .get(`/sesiones?${query}`)
+        .set('Cookie', cookies.ana)
+        .expect(400);
+    }
   });
   it('el profesor ve solo sus sesiones y puede marcar su propia presencia', async () => {
     const lista = await request(app.getHttpServer())

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { type MiddlewareConsumer, Module, type NestModule, RequestMethod } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import {
   ActualizacionesModule,
@@ -8,6 +8,7 @@ import { AlumnosModule } from './alumnos/alumnos.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { ClasesModule } from './clases/clases.module.js';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
+import { conLecturaCompartida } from './portal/libro.js';
 import { ProfesoresModule } from './profesores/profesores.module.js';
 
 @Module({
@@ -18,4 +19,10 @@ import { ProfesoresModule } from './profesores/profesores.module.js';
     { provide: APP_GUARD, useClass: JwtAuthGuard },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply((_req: unknown, _res: unknown, next: () => void) => conLecturaCompartida(next))
+      .forRoutes({ path: '{*path}', method: RequestMethod.ALL });
+  }
+}

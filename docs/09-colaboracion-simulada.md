@@ -58,7 +58,7 @@ Las fechas de ejemplo se calculan al iniciar con zona **America/Lima** y la vali
 | Profesor | `apps/web/src/components/perfiles/profesor/PanelProfesor.jsx` | `apps/web/src/components/perfiles/profesor/` |
 | Alumno | `apps/web/src/components/perfiles/alumno/PanelAlumno.jsx` | `apps/web/src/components/perfiles/alumno/` |
 
-Ambos componentes ya están conectados al inicio de su perfil en `/alumnos` y muestran la pantalla actual como punto de partida. No se cambió el diseño de las cuentas. Cada compañero puede sustituir su contenido y crear componentes dentro de su carpeta.
+Ambos componentes están conectados al inicio de su perfil en `/alumnos`. El alumno tiene un panel propio; el profesor conserva la gestión de alumnos y dispone de `AsistenciaProfesor.jsx` en `/calendario`. Los componentes de cada perfil se mantienen en su carpeta. La simulación también permite al alumno consultar exclusivamente sus sesiones y cancelaciones, sin datos de compañeros.
 
 Se utiliza `useSesion` para consultar la cuenta actual y `apiFetch`/`leerRespuesta`, de `src/lib/api.js`, para consultar y modificar datos. No escribir direcciones como `localhost:3000` ni cambiar el archivo compartido de acceso a la API.
 

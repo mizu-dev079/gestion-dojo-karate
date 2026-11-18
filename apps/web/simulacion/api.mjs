@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { cuentasPrueba, datosIniciales, diaSemana, hoyLima } from './datos.mjs';
+import { cuentasPrueba, datosIniciales, desplazar, diaSemana, hoyLima } from './datos.mjs';
 
 export const PREFIJO_SIMULADO = '/api-simulada';
 const COOKIE = 'dojo_simulacion';
@@ -46,8 +46,8 @@ function resumen(s, hoy) {
 }
 
 /** Datos ficticios en memoria. No importa ni inicia la API real ni clientes de Google. */
-export function crearApiSimulada({ hoy: hoyFijo } = {}) {
-  const datos = datosIniciales(hoyFijo ?? hoyLima()),
+export function crearApiSimulada({ hoy: hoyFijo, crearDatos = datosIniciales } = {}) {
+  const datos = crearDatos(hoyFijo ?? hoyLima()),
     accesos = new Map();
   const claves = new Map(cuentasPrueba.map((c) => [c.usuario, c.usuario]));
   for (const a of datos.alumnos) recalcular(a.seguimiento);
@@ -136,6 +136,33 @@ export function crearApiSimulada({ hoy: hoyFijo } = {}) {
         return salida(
           visibles(cuenta).map((a) => ({ ...a, seguimiento: resumen(a.seguimiento, hoy) })),
         );
+      if (ruta === '/sesiones' && method === 'GET' && cuenta.perfil === 'alumno') {
+        const desde = url.searchParams.get('desde') ?? url.searchParams.get('fecha');
+        const hasta = url.searchParams.get('hasta') ?? desde;
+        exigir(
+          validarFecha(desde) &&
+            validarFecha(hasta) &&
+            hasta >= desde &&
+            hasta <= desplazar(desde, 120),
+          'Selecciona un intervalo de hasta 121 días.',
+        );
+        const propias = visibles(cuenta);
+        const sesiones = [];
+        for (let fecha = desde; fecha <= hasta; fecha = desplazar(fecha, 1)) {
+          for (const alumno of propias) {
+            const clase = alumno.clase;
+            if (!clase?.frecuencia.includes(diaSemana(fecha))) continue;
+            const sesion = datos.sesiones.get(`${clase.id}:${fecha}`);
+            sesiones.push({
+              alumnoId: alumno.id,
+              claseId: clase.id,
+              fecha,
+              estado: sesion?.estado ?? 'programada',
+            });
+          }
+        }
+        return salida({ sesiones });
+      }
       if (ruta === '/sesiones' && method === 'GET') {
         exigir(cuenta.perfil === 'profesor', 'Acceso reservado al profesor.', 403);
         const fecha = url.searchParams.get('fecha');
@@ -181,9 +208,12 @@ export function crearApiSimulada({ hoy: hoyFijo } = {}) {
                       version: t.version,
                       pendientes: resumen(t, hoy).pendientes,
                       programado,
-                      estado: pausa
-                        ? 'congelado'
-                        : (registro?.estado ?? (programado ? 'pendiente' : 'sin sesión')),
+                      estado:
+                        s.estado === 'cancelada'
+                          ? 'cancelada'
+                          : pausa
+                            ? 'congelado'
+                            : (registro?.estado ?? (programado ? 'pendiente' : 'sin sesión')),
                       tienePlan: !!t.plan,
                     };
                   }),
@@ -215,6 +245,7 @@ export function crearApiSimulada({ hoy: hoyFijo } = {}) {
           'La sesión cambió. Actualiza la lista.',
           409,
         );
+        exigir(anterior?.estado !== 'cancelada', 'La sesión fue cancelada por el dojo.', 409);
         const s = {
           claseId: clase.id,
           fecha,
@@ -260,6 +291,15 @@ export function crearApiSimulada({ hoy: hoyFijo } = {}) {
         );
         exigir(s.plan, 'El alumno todavía no tiene un plan.');
         if (c.accion === 'asistencia') {
+          exigir(
+            Object.keys(c).every((k) => ['accion', 'version', 'fecha', 'estado'].includes(k)),
+            'La asistencia solo admite acción, versión, fecha y estado.',
+          );
+          exigir(
+            datos.sesiones.get(`${a.claseId}:${c.fecha}`)?.estado !== 'cancelada',
+            'La sesión fue cancelada por el dojo.',
+            409,
+          );
           const previa = s.asistencias.find((r) => r.fecha === c.fecha);
           if (alumno)
             exigir(
@@ -289,7 +329,8 @@ export function crearApiSimulada({ hoy: hoyFijo } = {}) {
           exigir(
             validarFecha(c.fecha) &&
               c.fecha >= hoy &&
-              s.asistencias.some((r) => r.fecha === c.fecha && r.estado === 'avisada'),
+              s.asistencias.some((r) => r.fecha === c.fecha && r.estado === 'avisada') &&
+              !s.recuperaciones.some((r) => r.fecha === c.fecha && !r.revocada),
             'No hay un aviso vigente para retirar.',
           );
           s.asistencias = s.asistencias.filter((r) => r.fecha !== c.fecha);

@@ -45,9 +45,9 @@ El administrador del entorno no se cambia ni desactiva desde estas pantallas, y 
 | Profesor | `/alumnos` | Sus alumnos y turnos, asistencia propia y de alumnos, recuperaciones y congelamientos |
 | Alumno | `/alumnos` | Su plan e historial, avisos o retiro de ausencia en Calendario y solicitudes de congelamiento |
 
-En `/alumnos`, `InicioPerfil.jsx` selecciona `PanelProfesor.jsx`, `PanelAlumno.jsx` o la gestión administrativa. Los componentes propios de cada perfil están en `apps/web/src/components/perfiles/` y reutilizan la pantalla actual como punto de partida.
+En `/alumnos`, `InicioPerfil.jsx` selecciona `PanelProfesor.jsx`, `PanelAlumno.jsx` o la gestión administrativa. Los componentes propios de cada perfil están en `apps/web/src/components/perfiles/` con un panel propio de alumno y un calendario específico de profesor.
 
-Las rutas privadas son administrativas por defecto. Las de identidad y sesión, cambio de contraseña propio, planes y seguimiento declaran los perfiles admitidos; las sesiones se reservan a profesor y administración. El catálogo, la consulta del turno del formulario y el envío de postulaciones son públicos.
+Las rutas privadas son administrativas por defecto. Las de identidad y sesión, cambio de contraseña propio, planes y seguimiento declaran los perfiles admitidos; el alumno puede consultar exclusivamente las fechas y cancelaciones de sus propias inscripciones; el detalle de sesiones y sus modificaciones se reservan a profesor y administración. El catálogo, la consulta del turno del formulario y el envío de postulaciones son públicos.
 
 El profesor no administra cuentas, no consulta postulaciones generales, no cambia el plan ni renueva paquetes y no cancela sesiones por el dojo. Solo marca su propia presencia en una sesión asignada. Un reemplazante puede tomar asistencia en la sesión concreta que le asignó administración, sin adquirir permisos generales sobre los planes del grupo.
 

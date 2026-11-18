@@ -36,7 +36,10 @@ test('sesiones independientes, rechazo de contraseña incorrecta y separación d
     llamar(api, profesor, '/alumnos').body.some((a) => a.id === 105),
     false,
   );
-  assert.equal(llamar(api, alumno, '/sesiones?fecha=2026-11-17').status, 403);
+  const horario = llamar(api, alumno, '/sesiones?fecha=2026-11-18');
+  assert.equal(horario.status, 200);
+  assert.ok(horario.body.sesiones.every((s) => s.alumnoId === 101 && s.claseId === 11));
+  assert.ok(horario.body.sesiones.every((s) => !('alumnos' in s)));
   assert.equal(
     llamar(api, alumno, '/alumnos/104', {
       accion: 'asistencia',

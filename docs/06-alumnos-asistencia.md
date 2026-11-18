@@ -80,6 +80,8 @@ La hoja vigente ya utiliza Renovaciones y no requiere ejecutar una migración de
 
 Por compatibilidad, el estado interno y los DTO conservan nombres técnicos como `pagos` y `pagoId`. Representan paquetes de clases; las acciones nuevas no generan movimientos económicos. La interfaz utiliza Activaciones y renovaciones.
 
+Dentro de cada petición HTTP se comparte una lectura de Sheets entre autenticación y repositorios, para evitar consultas duplicadas. La siguiente petición vuelve a leer; no se mantiene una caché de cuentas entre peticiones. Cada escritura obtiene los datos actuales dentro de la cola e invalida la lectura de esa petición.
+
 Las escrituras se serializan y exigen `version` para evitar dobles renovaciones/autorizaciones en **una sola instancia de API**. No se proporciona bloqueo distribuido para varias instancias ni ediciones manuales concurrentes de Sheets. Tras un conflicto o una respuesta incierta, actualizar los datos antes de reintentar.
 
 No editar manualmente el JSON. Se rechazan encabezados, identificadores duplicados y datos inválidos sin sobrescribirlos. Antes de superar 45 000 caracteres por historial se detienen nuevas escrituras sin truncar datos. Para historiales extensos se necesita una migración a registros de eventos o una base de datos.
@@ -88,12 +90,15 @@ No editar manualmente el JSON. Se rechazan encabezados, identificadores duplicad
 
 - `GET /alumnos`: inscripciones aceptadas/aprobadas visibles para la sesión.
 - `GET /planes`: catálogo activo con precios y recuperaciones predeterminadas.
+- `GET /sesiones?fecha=AAAA-MM-DD`: administración y profesor consultan las sesiones visibles; el alumno recibe solo su horario personal, sin compañeros ni auditorías.
+- `GET /sesiones?desde=AAAA-MM-DD&hasta=AAAA-MM-DD`: consulta personal del alumno, con un máximo de 121 días. Devuelve `alumnoId`, `claseId`, `fecha` y `estado`; no crea sesiones ni modifica saldos. El próximo entrenamiento excluye cancelaciones del dojo.
+- `POST /sesiones/:turnoId/:fecha`: reservado a profesor y administración; el alumno nunca modifica sesiones.
 - `POST /alumnos/:inscripcionId`: comando con `version` y acción. La API valida perfil, asignación y reglas, aunque se invoque fuera de la web.
 - Acciones administrativas: `activarPlan` (cantidad, días y fecha), `configurarPlan` (cantidad y días) y `renovarPlan` (fecha). No admiten campos de cobro. Los comandos anteriores se conservan únicamente por compatibilidad.
 - Acciones de profesor/administrador: `asistencia`, `congelar`, `reactivar`, `recuperar`, `revocarRecuperacion`, `limiteRecuperaciones`, `resolverSolicitud`.
 - Acciones del alumno propio: `asistencia` solo para avisos actuales/futuros no registrados, `retirarAviso` y `solicitarCongelamiento`.
 
-Se mantienen las fechas de negocio en `America/Lima`. Las pruebas no escriben datos de demostración en la hoja real del dojo.
+Se mantienen las fechas de negocio en `America/Lima`. Las pruebas automatizadas usan repositorios aislados y no escriben datos en la hoja del dojo. Las comprobaciones manuales contra Sheets se realizan con registros de prueba identificados y con autorización previa.
 
 ## Desarrollo con datos simulados
 

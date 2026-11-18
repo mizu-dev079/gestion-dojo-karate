@@ -27,7 +27,7 @@ import {
   validarFechaClase,
 } from './sesiones.js';
 
-@Perfiles('administrador', 'profesor')
+@Perfiles('administrador', 'profesor', 'alumno')
 @Controller('sesiones')
 export class SesionesController {
   constructor(
@@ -50,7 +50,13 @@ export class SesionesController {
   }
 
   @Get()
-  async listar(@Query('fecha') fecha: string, @Req() request: SolicitudAutenticada) {
+  async listar(
+    @Query('fecha') fecha: string,
+    @Req() request: SolicitudAutenticada,
+    @Query('desde') desde?: string,
+    @Query('hasta') hasta?: string,
+  ) {
+    if (request.sesion.perfil === 'alumno') return this.listarAlumno(fecha, request, desde, hasta);
     if (!fechaSesion.safeParse(fecha).success)
       throw new BadRequestException('Selecciona una fecha válida.');
     const [clases, profesores, sesiones, matriculas, estados] = await Promise.all([
@@ -119,6 +125,54 @@ export class SesionesController {
     };
   }
 
+  /** Consulta personal: no expone listas de compañeros, auditoría ni datos de otros profesores. */
+  private async listarAlumno(
+    fecha: string,
+    request: SolicitudAutenticada,
+    desde = fecha,
+    hasta = desde,
+  ) {
+    if (!fechaSesion.safeParse(desde).success || !fechaSesion.safeParse(hasta).success)
+      throw new BadRequestException('Selecciona un intervalo de fechas válido.');
+    const inicio = Date.parse(`${desde}T00:00:00Z`);
+    const fin = Date.parse(`${hasta}T00:00:00Z`);
+    if (fin < inicio || fin - inicio > 120 * 86400000)
+      throw new BadRequestException('Selecciona un intervalo de hasta 121 días.');
+    const [clases, sesiones, matriculas] = await Promise.all([
+      this.clases.obtenerTodas(),
+      this.alumnos.obtenerSesiones(),
+      this.postulaciones.obtenerTodas(),
+    ]);
+    const propias = matriculas.filter(
+      (p) => request.sesion.alumnoIds.includes(p.id) && ['aceptado', 'aprobado'].includes(p.estado),
+    );
+    const resultado = [];
+    for (let dia = inicio; dia <= fin; dia += 86400000) {
+      const fechaDia = new Date(dia).toISOString().slice(0, 10);
+      for (const alumno of propias) {
+        const clase = clases.find((c) => c.id === alumno.claseId);
+        if (!clase) continue;
+        const guardada = sesiones.find((s) => s.claseId === clase.id && s.fecha === fechaDia);
+        if (!guardada) {
+          if (clase.estado === 'Inactiva') continue;
+          try {
+            validarFechaClase(clase, fechaDia);
+          } catch {
+            continue;
+          }
+        }
+        resultado.push({
+          alumnoId: alumno.id,
+          claseId: clase.id,
+          fecha: fechaDia,
+          estado: guardada?.estado ?? 'programada',
+        });
+      }
+    }
+    return { sesiones: resultado };
+  }
+
+  @Perfiles('administrador', 'profesor')
   @Post(':id/:fecha')
   async actualizar(
     @Param('id', ParseIntPipe) id: number,

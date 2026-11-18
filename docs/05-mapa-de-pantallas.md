@@ -42,7 +42,7 @@ Administración inicia en `/clases` o en una ruta interna válida pendiente en `
 - Alumno: `perfiles/alumno/PanelAlumno.jsx`.
 - Administrador: `pantallas/Alumnos.jsx`.
 
-Los paneles de profesor y alumno reutilizan actualmente `Alumnos.jsx` como punto de partida y tienen carpetas separadas para desarrollar sus interfaces. No son cuentas nuevas ni pantallas con permisos distintos. Ver [colaboración simulada](09-colaboracion-simulada.md).
+El alumno dispone de un panel propio con plan, próximo entrenamiento, clase, recuperaciones, congelamiento e historial. El profesor mantiene la gestión de sus alumnos en `Alumnos.jsx` y utiliza `perfiles/profesor/AsistenciaProfesor.jsx` en el calendario para su presencia, asistencia de alumnos y autorización de recuperaciones. Cada perfil conserva sus permisos. Ver [colaboración simulada](09-colaboracion-simulada.md).
 
 `ProtegerPagina.astro` comprueba la sesión antes de mostrar una página privada y adapta la navegación. La autorización real y las asignaciones se validan en la API. Para profesor y alumno, la navegación incluye Calendario, Alumnos/Mi plan y Usuario; Clases y Postulaciones quedan para administración.
 

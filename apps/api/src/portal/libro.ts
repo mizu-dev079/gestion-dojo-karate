@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { ConflictException, InternalServerErrorException } from '@nestjs/common';
 import type { sheets_v4 } from 'googleapis';
 import { env } from '../config/env.js';
@@ -48,11 +49,30 @@ function filasFisicas(libro: Libro, tabla: Tabla): Fila[] {
       ])
     : libro[tabla];
 }
+const contextoLectura = new AsyncLocalStorage<{
+  deteccion?: Promise<LibroPortal | null>;
+  lecturas?: Map<LibroPortal, Promise<Libro>>;
+}>();
+/** Comparte una lectura solo durante la petición; la siguiente petición vuelve a consultar Sheets. */
+export function conLecturaCompartida<T>(tarea: () => T): T {
+  return contextoLectura.run({}, tarea);
+}
 let cola: Promise<unknown> = Promise.resolve();
 export class LibroPortal {
   private lecturaEnCurso: Promise<Libro> | null = null;
   constructor(private readonly sheets: sheets_v4.Sheets) {}
   async leer(): Promise<Libro> {
+    const contexto = contextoLectura.getStore();
+    if (contexto) {
+      contexto.lecturas ??= new Map();
+      let lectura = contexto.lecturas.get(this);
+      if (!lectura) {
+        lectura = this.leerActual();
+        contexto.lecturas.set(this, lectura);
+        lectura.catch(() => contexto.lecturas?.delete(this));
+      }
+      return structuredClone(await lectura);
+    }
     if (!this.lecturaEnCurso) {
       const lectura = this.leerActual();
       this.lecturaEnCurso = lectura;
@@ -173,6 +193,8 @@ export class LibroPortal {
   }
   modificar<T>(cambiar: (libro: Libro) => T): Promise<T> {
     const resultado = cola.then(async () => {
+      this.lecturaEnCurso = null;
+      contextoLectura.getStore()?.lecturas?.delete(this);
       const libro = await this.leerActual();
       const original = structuredClone(libro);
       const resultado = cambiar(libro);
@@ -396,6 +418,8 @@ export class LibroPortal {
         spreadsheetId: env.GOOGLE_SPREADSHEET_ID,
         requestBody: { requests },
       });
+      this.lecturaEnCurso = null;
+      contextoLectura.getStore()?.lecturas?.delete(this);
       return resultado;
     });
     cola = resultado.catch(() => undefined);
@@ -404,6 +428,11 @@ export class LibroPortal {
 }
 let deteccionEnCurso: Promise<LibroPortal | null> | null = null;
 export function libroNuevo(): Promise<LibroPortal | null> {
+  const contexto = contextoLectura.getStore();
+  if (contexto) {
+    contexto.deteccion ??= detectarLibro();
+    return contexto.deteccion;
+  }
   if (!deteccionEnCurso) {
     const deteccion = detectarLibro();
     deteccionEnCurso = deteccion;
