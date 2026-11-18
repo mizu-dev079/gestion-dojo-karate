@@ -1,21 +1,21 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useOperacion } from '../../hooks/useOperacion.js';
 import { useSesion } from '../../hooks/useSesion.js';
 import { apiFetch, leerRespuesta } from '../../lib/api.js';
 import Mensaje from '../Mensaje.jsx';
-import { proximoEntrenamiento } from '../perfiles/alumno/utilidades.js';
+import { hoyLima, proximoEntrenamiento } from '../perfiles/alumno/utilidades.js';
 import IconoPerfil from '../perfiles/IconoPerfil.jsx';
 import AsistenciaProfesor from '../perfiles/profesor/AsistenciaProfesor.jsx';
-import SelectorFechaAsistencia from '../SelectorFechaAsistencia.jsx';
+import SelectorDiasAsistencia from '../SelectorDiasAsistencia.jsx';
 import Asistencia from './Asistencia.jsx';
 
-const hoy = () =>
-  new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'America/Lima',
-  }).format(new Date());
+const hoy = hoyLima;
 
 function CalendarioAlumno() {
   const [fecha, setFecha] = useState(hoy);
+  const [limite, setLimite] = useState(hoy);
+  const diaAnterior = useRef(limite);
+  const cargaActual = useRef(0);
   const [alumnos, setAlumnos] = useState([]);
   const [sesiones, setSesiones] = useState([]);
   const [error, setError] = useState('');
@@ -23,6 +23,7 @@ function CalendarioAlumno() {
   const { ocupado, aviso, ejecutar } = useOperacion();
 
   const cargar = useCallback(async () => {
+    const carga = ++cargaActual.current;
     setCargando(true);
     setError('');
 
@@ -35,18 +36,51 @@ function CalendarioAlumno() {
           leerRespuesta(r, 'No se pudo cargar el horario.'),
         ),
       ]);
+      if (carga !== cargaActual.current) return;
       setAlumnos(datos);
       setSesiones(horario.sesiones ?? []);
     } catch (e) {
-      setError(e.message);
+      if (carga === cargaActual.current) setError(e.message);
     } finally {
-      setCargando(false);
+      if (carga === cargaActual.current) setCargando(false);
     }
   }, [fecha]);
 
   useEffect(() => {
     cargar();
+    return () => {
+      cargaActual.current += 1;
+    };
   }, [cargar]);
+
+  useEffect(() => {
+    const actualizar = () => {
+      const actual = hoy();
+      if (actual === diaAnterior.current) return;
+      const anterior = diaAnterior.current;
+      diaAnterior.current = actual;
+      setLimite(actual);
+      setFecha((valor) => (valor === anterior || valor > actual ? actual : valor));
+    };
+    actualizar();
+    const intervalo = setInterval(actualizar, 30000);
+    window.addEventListener('focus', actualizar);
+    document.addEventListener('visibilitychange', actualizar);
+    return () => {
+      clearInterval(intervalo);
+      window.removeEventListener('focus', actualizar);
+      document.removeEventListener('visibilitychange', actualizar);
+    };
+  }, []);
+
+  function elegirFecha(dia) {
+    const actual = hoy();
+    const elegida = dia > actual ? actual : dia;
+    if (elegida !== fecha) {
+      setCargando(true);
+      setFecha(elegida);
+    }
+  }
 
   async function avisar(alumno, retirar = false) {
     await ejecutar(async () => {
@@ -91,25 +125,30 @@ function CalendarioAlumno() {
           <IconoPerfil nombre="clase" />
           <span>Mis clases</span>
         </a>
-        <a href="#calendario-personal">
+        <a href="#asistencia-diaria">
           <IconoPerfil nombre="calendario" />
-          <span>Calendario</span>
+          <span>Elegir día</span>
         </a>
       </nav>
       <Mensaje aviso={aviso} />
 
       <section
-        id="calendario-personal"
-        className="perfil-tarjeta perfil-calendario space-y-4 rounded-2xl border border-gray-200 bg-white p-5"
+        id="asistencia-diaria"
+        className="perfil-tarjeta perfil-selector-diario space-y-4 rounded-2xl border border-gray-200 bg-white p-5"
       >
         <h2 className="perfil-titulo">
           <span className="perfil-icono">
             <IconoPerfil nombre="calendario" />
           </span>
-          Mi calendario
+          Fecha de asistencia
         </h2>
 
-        <SelectorFechaAsistencia fecha={fecha} cambiar={setFecha} disabled={cargando || ocupado} />
+        <SelectorDiasAsistencia
+          fecha={fecha}
+          maximo={limite}
+          cambiar={elegirFecha}
+          disabled={cargando || ocupado}
+        />
 
         <button
           type="button"

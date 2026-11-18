@@ -28,7 +28,7 @@ Las rutas están en `apps/web/src/pages/`. Los componentes indicados en la tabla
 
 **Postulaciones** permite seleccionar clase, elegir turno cuando hay más de uno y filtrar por estado. No incluye un filtro de búsqueda por nombre, correo o código. La aceptación genera inscripción y reserva de cupo; los enlaces y QR se comparten desde la clase, sin una pantalla de vista previa adicional.
 
-**Calendario** concentra la asistencia. Profesor y administración registran las sesiones y la participación de alumnos. El alumno consulta su asistencia propia y puede avisar o retirar una ausencia actual o futura. El calendario no administra clases ni genera convocatorias.
+**Calendario** concentra la asistencia. Profesor y administración registran las sesiones y la participación de alumnos. El alumno consulta su asistencia propia con un selector horizontal de días que no permite superar hoy en America/Lima. Puede avisar o retirar una ausencia de hoy; los avisos futuros siguen disponibles desde el próximo entrenamiento en Mis clases. El calendario no administra clases ni genera convocatorias.
 
 **Alumnos** concentra planes, saldo, renovaciones, cambio de plan programado, recuperaciones y congelamientos. El listado administrativo de cuentas y contactos se encuentra en Usuario → Profesores y alumnos, no en esta gestión del plan.
 
@@ -51,7 +51,8 @@ El alumno dispone de un panel propio con plan, próximo entrenamiento, clase, re
 - `LayoutAdministracion.astro`, en `layouts/`: encabezado, navegación y protección de páginas privadas.
 - `NavegacionInferior.astro`, `ProtegerPagina.astro` y `CerrarSesion.astro`: navegación y sesión.
 - `TarjetaClase.jsx`, `SelectorClaseTurno.jsx` e `IndicadorCupos.jsx`: clases y selección de turno.
-- `SelectorFechaAsistencia.jsx`: calendario de fechas.
+- `SelectorFechaAsistencia.jsx`: calendario administrativo.
+- `SelectorDiasAsistencia.jsx`: selector horizontal del alumno, con gestos nativos, teclado y límite en la fecha actual de Lima.
 - `CampoContrasena.jsx`: visualización de contraseñas al escribir.
 - `ConfirmarAccion.jsx` y `Mensaje.jsx`: confirmaciones y resultado de operaciones.
 - `QrFormulario.jsx` y `CopiarEnlace.jsx`: descarga del QR y copia del enlace.

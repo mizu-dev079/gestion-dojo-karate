@@ -499,3 +499,98 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"]) .cuenta-salida .user-s
   flex-shrink: 0;
   color: #b92323;
 }
+
+/* Selector diario: desplazamiento nativo para no interferir con el scroll de la página. */
+.selector-dias {
+  min-width: 0;
+}
+.selector-dias__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.selector-dias__cabecera > button {
+  flex: 0 0 2.75rem;
+  width: 2.75rem;
+  border: 1px solid #e8e3df;
+  border-radius: 0.85rem;
+  background: #faf8f6;
+  font-size: 1.5rem;
+  color: #34302e;
+}
+.selector-dias__cabecera > button:disabled {
+  opacity: 0.3;
+}
+.selector-dias__fecha {
+  min-width: 0;
+  text-align: center;
+  font-weight: 750;
+  text-transform: capitalize;
+}
+.selector-dias__fecha-completa {
+  display: block;
+  margin-top: 0.2rem;
+  color: #68615d;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+.selector-dias__tira {
+  position: relative;
+  display: flex;
+  gap: 0.5rem;
+  min-width: 0;
+  margin-top: 1.25rem;
+  padding: 0.3rem 0.2rem 0.8rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  scrollbar-color: #dfd6d0 transparent;
+}
+.selector-dias__tira > .selector-dias__dia {
+  display: flex;
+  flex: 0 0 3.6rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  min-height: 5rem;
+  border: 1px solid #e8e3df;
+  border-radius: 1rem;
+  background: #fff;
+  color: #68615d;
+  scroll-snap-align: center;
+}
+.selector-dias__etiqueta {
+  font-size: 0.75rem;
+  text-transform: capitalize;
+}
+.selector-dias__dia strong {
+  color: #262626;
+  font-size: 1.4rem;
+  line-height: 1.2;
+}
+.selector-dias__dia[aria-pressed="true"] {
+  border-color: #c62828;
+  background: #c62828;
+  color: white;
+  box-shadow: 0 4px 9px #c6282820;
+}
+.selector-dias__dia[aria-pressed="true"] strong {
+  color: white;
+}
+.selector-dias__hoy {
+  display: block;
+  width: 100%;
+  margin-top: 0.5rem;
+  border-radius: 0.8rem;
+  background: #fff1f0;
+  color: #a61b1b;
+  font-weight: 650;
+}
+@media (min-width: 760px) {
+  .selector-dias__tira > .selector-dias__dia {
+    flex: 1 0 4rem;
+  }
+}

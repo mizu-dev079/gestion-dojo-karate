@@ -148,7 +148,7 @@ export default function MiAsistencia({ alumno, hoy, hora, ocupado, aviso, enviar
       </div>
 
       <a href="/calendario" className={`${enlace} mt-2`}>
-        Ver mi calendario de asistencia
+        Ver mi asistencia
       </a>
 
       {confirmar && (
