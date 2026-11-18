@@ -11,7 +11,6 @@ export default function Bienvenida({ alumno }) {
       : { texto: 'Plan activo', estilo: etiqueta.activo };
   return (
     <header className="perfil-hero">
-      <p className="perfil-eyebrow">MI DOJO</p>
       <h2 className="perfil-saludo">Hola, {primerNombre(alumno.nombre)}</h2>
       {alumno.clase && (
         <p className="mt-1 text-sm text-gray-300">{alumno.clase.turno ?? alumno.clase.nivel}</p>

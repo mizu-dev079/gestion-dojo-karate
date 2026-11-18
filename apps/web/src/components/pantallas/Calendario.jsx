@@ -78,7 +78,6 @@ function CalendarioAlumno() {
       aria-busy={cargando || ocupado}
     >
       <header className="perfil-hero">
-        <p className="perfil-eyebrow">MI DOJO</p>
         <h2 className="perfil-saludo">Tu entrenamiento</h2>
         <div className="perfil-hero__pie">
           <span className="perfil-cuenta__rol">Mi asistencia</span>
@@ -90,7 +89,7 @@ function CalendarioAlumno() {
       <nav className="perfil-accesos" aria-label="Accesos de asistencia">
         <a href="/alumnos">
           <IconoPerfil nombre="clase" />
-          <span>Mi plan</span>
+          <span>Mis clases</span>
         </a>
         <a href="#calendario-personal">
           <IconoPerfil nombre="calendario" />

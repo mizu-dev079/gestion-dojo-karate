@@ -34,14 +34,14 @@
       document.documentElement.dataset.perfil = sesion.perfil;
       document.querySelectorAll('[data-solo-admin]').forEach((elemento) => { elemento.hidden = sesion.perfil !== 'administrador'; });
       if (sesion.perfil !== 'administrador') document.querySelectorAll('a.app-back[href="/clases"]').forEach((a) => a.setAttribute('href','/alumnos'));
-      if (sesion.perfil === 'alumno') document.querySelectorAll('a[href="/alumnos"] .app-bottom-nav__label').forEach((elemento) => { elemento.textContent = 'Mi plan'; });
+      if (sesion.perfil === 'alumno') document.querySelectorAll('a[href="/alumnos"] .app-bottom-nav__label').forEach((elemento) => { elemento.textContent = 'Mis clases'; });
       if (sesion.perfil !== 'administrador') {
         document.querySelectorAll('a[href="/calendario"] .app-bottom-nav__label').forEach((el) => { el.textContent = 'Asistencia'; });
         document.querySelectorAll('a[href="/usuario"] .app-bottom-nav__label').forEach((el) => { el.textContent = 'Mi cuenta'; });
       }
       if (sesion.perfil !== 'administrador') {
         const ruta = window.location.pathname.replace(/\/$/, '');
-        const titulos: Record<string, string> = { '/alumnos': sesion.perfil === 'alumno' ? 'Mi plan' : 'Mis alumnos', '/calendario': 'Asistencia', '/usuario': 'Mi cuenta' };
+        const titulos: Record<string, string> = { '/alumnos': sesion.perfil === 'alumno' ? 'Mis clases' : 'Mis alumnos', '/calendario': 'Asistencia', '/usuario': 'Mi cuenta' };
         const titulo = titulos[ruta];
         if (titulo) {
           const encabezado = document.querySelector('.app-header__title h1');

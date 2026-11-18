@@ -1,6 +1,6 @@
 import IconoPerfil from '../IconoPerfil.jsx';
 import { tarjeta, tituloTarjeta } from './estilos.js';
-import { cambioProgramado, fechaVisible, pendientesAntesDelCambio, unidad } from './utilidades.js';
+import { cambioProgramado, pendientesAntesDelCambio, unidad } from './utilidades.js';
 
 export default function ResumenPlan({ alumno }) {
   const s = alumno.seguimiento;
@@ -8,22 +8,19 @@ export default function ResumenPlan({ alumno }) {
     return (
       <section className={tarjeta} aria-labelledby={`plan-${alumno.id}`}>
         <h2 id={`plan-${alumno.id}`} className={tituloTarjeta}>
-          Mi plan
+          <span className="perfil-icono">
+            <IconoPerfil nombre="clase" />
+          </span>
+          Mis clases
         </h2>
-        <p className="mt-2 text-gray-700">
-          Todavía no tienes un plan activo. Coordina con la administración del dojo para empezar tus
-          clases.
-        </p>
+        <p className="mt-3 text-gray-700">Aún no tienes un plan activo.</p>
       </section>
     );
 
-  const conSaldo = s.pagos
-    .filter((p) => p.restantes > 0)
-    .sort((a, b) => a.fecha.localeCompare(b.fecha));
-  const total = conSaldo.reduce((n, p) => n + p.cantidad, 0) || s.plan.cantidad;
-  const porcentaje = Math.round((Math.min(s.pendientes, total) / total) * 100);
   const cambio = cambioProgramado(s);
-  const pendientesAnteriores = pendientesAntesDelCambio(s);
+  const actuales = pendientesAntesDelCambio(s);
+  const siguientes = cambio ? Math.max(0, s.pendientes - actuales) : 0;
+  const renovaciones = s.pagos.filter((p) => p.restantes > 0).length;
 
   return (
     <section className={tarjeta} aria-labelledby={`plan-${alumno.id}`}>
@@ -31,52 +28,59 @@ export default function ResumenPlan({ alumno }) {
         <span className="perfil-icono">
           <IconoPerfil nombre="clase" />
         </span>
-        Mi plan
+        Mis clases
       </h2>
       <div className="perfil-saldo-principal">
         <p className="perfil-saldo-numero">{s.pendientes}</p>
         <p className="pb-1 text-gray-700">
-          {s.pendientes === 1 ? 'clase pendiente' : 'clases pendientes'}
-          <span className="block text-sm text-gray-500">
-            Plan de {s.plan.cantidad} clases · {s.plan.dias.join(', ')}
-          </span>
+          {s.pendientes === 1 ? 'clase disponible' : 'clases disponibles'}
+          <span className="block text-sm text-gray-500">en total</span>
         </p>
       </div>
-      <div
-        className="mt-4 h-3 overflow-hidden rounded-full bg-gray-200"
-        role="progressbar"
-        aria-valuemin={0}
-        aria-valuemax={total}
-        aria-valuenow={s.pendientes}
-        aria-label="Clases pendientes"
-      >
-        <div className="h-full rounded-full bg-dojo-600" style={{ width: `${porcentaje}%` }} />
-      </div>
 
-      {conSaldo.length > 1 && (
-        <ul className="mt-3 space-y-1 text-sm text-gray-700">
-          {conSaldo.map((p) => (
-            <li key={p.id}>
-              {unidad(p.restantes, 'clase', 'clases')} del paquete activado el{' '}
-              {fechaVisible(p.fecha)}
+      {cambio ? (
+        <ol className="perfil-plan-etapas" aria-label="Orden de tus clases">
+          {actuales > 0 && (
+            <li>
+              <span className="perfil-plan-paso" aria-hidden="true">
+                1
+              </span>
+              <div>
+                <h3>Primero</h3>
+                <p className="perfil-plan-clases">
+                  <strong>{unidad(actuales, 'clase', 'clases')}</strong> de tu plan actual
+                </p>
+              </div>
             </li>
-          ))}
-        </ul>
-      )}
-
-      {s.pendientes === 0 && (
-        <p className="mt-3 font-semibold text-dojo-700">Sin clases pendientes.</p>
-      )}
-
-      {cambio && (
-        <div className="mt-4 rounded-xl border border-dashed border-gray-400 p-3">
-          <p className="text-sm font-bold text-gray-900">Cambio de plan programado</p>
-          <p className="mt-1 text-sm text-gray-700">
-            Tu próximo plan será de {cambio.cantidad} clases ({cambio.dias.join(', ')}).{' '}
-            {pendientesAnteriores > 0
-              ? `Empezará cuando termines ${pendientesAnteriores === 1 ? 'tu clase pendiente' : `tus ${pendientesAnteriores} clases pendientes`} del plan actual.`
-              : 'Se aplicará en tu próxima renovación.'}
-          </p>
+          )}
+          <li>
+            <span className="perfil-plan-paso" aria-hidden="true">
+              {actuales > 0 ? '2' : '1'}
+            </span>
+            <div>
+              <h3>{actuales > 0 ? 'Después' : 'Próximo plan'}</h3>
+              <p className="perfil-plan-clases">
+                <strong>{unidad(siguientes || cambio.cantidad, 'clase', 'clases')}</strong> de tu
+                nuevo plan
+              </p>
+              <span className="perfil-plan-nota">
+                {siguientes > 0 ? 'Ya incluidas en el total' : 'Se añaden al renovar'}
+              </span>
+            </div>
+          </li>
+        </ol>
+      ) : (
+        <div className="perfil-plan-vigente">
+          <IconoPerfil nombre="clase" />
+          <div>
+            <p className="font-semibold text-gray-900">Plan de {s.plan.cantidad} clases</p>
+            {renovaciones > 1 && (
+              <p className="mt-1 text-sm text-gray-600">Incluye las clases de tu renovación.</p>
+            )}
+            {s.pendientes === 0 && (
+              <p className="mt-1 text-sm text-gray-600">Coordina la renovación con el dojo.</p>
+            )}
+          </div>
         </div>
       )}
     </section>

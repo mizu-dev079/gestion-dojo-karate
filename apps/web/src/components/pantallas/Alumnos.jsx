@@ -366,7 +366,9 @@ export default function Alumnos() {
       <section className="space-y-3 rounded-2xl border border-gray-200 bg-white p-4">
         {!esProfesor && (
           <>
-            <h2 className="text-lg font-bold">{alumnoPropio ? 'Mi plan' : 'Planes de alumnos'}</h2>
+            <h2 className="text-lg font-bold">
+              {alumnoPropio ? 'Mis clases' : 'Planes de alumnos'}
+            </h2>
 
             <a
               href="/calendario"

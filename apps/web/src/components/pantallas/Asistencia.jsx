@@ -200,7 +200,7 @@ export default function Asistencia() {
   if (acceso.perfil === 'alumno')
     return (
       <p className="p-4">
-        Consulta tu asistencia desde <a href="/alumnos">Mi plan</a>.
+        Consulta tu asistencia desde <a href="/alumnos">Mis clases</a>.
       </p>
     );
   return (

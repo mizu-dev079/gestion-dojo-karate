@@ -37,7 +37,7 @@ export default function CuentaPerfil({ usuario, perfil }) {
   return (
     <div className="perfil-page perfil-cuenta space-y-5">
       <header className="perfil-hero">
-        <p className="perfil-eyebrow">{profesor ? 'ÁREA DEL PROFESOR' : 'MI DOJO'}</p>
+        {profesor && <p className="perfil-eyebrow">ÁREA DEL PROFESOR</p>}
         <h2 className="perfil-saludo perfil-cuenta__usuario">{usuario}</h2>
         <div className="perfil-hero__pie">
           <span className="perfil-cuenta__rol">{profesor ? 'Profesor' : 'Alumno'}</span>
@@ -49,7 +49,7 @@ export default function CuentaPerfil({ usuario, perfil }) {
       <nav className="perfil-accesos" aria-label="Accesos de mi cuenta">
         <a href="/alumnos">
           <IconoPerfil nombre={profesor ? 'alumnos' : 'clase'} />
-          <span>{profesor ? 'Mis alumnos' : 'Mi plan'}</span>
+          <span>{profesor ? 'Mis alumnos' : 'Mis clases'}</span>
         </a>
         <a href="#clave-cuenta">
           <IconoPerfil nombre="seguridad" />

@@ -67,7 +67,7 @@ export default function Ajustes({ version }) {
               En Alumnos se activan y renuevan paquetes de 4, 8 o 12 clases. Cambiar plan programa
               el siguiente paquete y conserva las clases pendientes. El profesor o administrador
               puede autorizar recuperaciones y congelamientos. El alumno puede solicitar el
-              congelamiento desde Mi plan.
+              congelamiento desde Mis clases.
             </p>
           </details>
           <details className="py-2">
