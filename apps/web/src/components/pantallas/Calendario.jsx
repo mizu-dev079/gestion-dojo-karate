@@ -95,10 +95,6 @@ function CalendarioAlumno() {
           <IconoPerfil nombre="calendario" />
           <span>Calendario</span>
         </a>
-        <a href="/usuario">
-          <IconoPerfil nombre="cuenta" />
-          <span>Mi cuenta</span>
-        </a>
       </nav>
       <Mensaje aviso={aviso} />
 

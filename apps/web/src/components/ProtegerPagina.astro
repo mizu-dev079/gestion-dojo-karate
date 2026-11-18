@@ -11,6 +11,7 @@
 
 <script>
   import { API_URL } from "../lib/api.js";
+  import { enlaceCuenta, origenCuenta } from "../lib/navegacionPerfil.js";
 
   const mostrar = () => {
     document.documentElement.style.visibility = "visible";
@@ -33,14 +34,27 @@
       window.dojoSesion = sesion;
       document.documentElement.dataset.perfil = sesion.perfil;
       document.querySelectorAll('[data-solo-admin]').forEach((elemento) => { elemento.hidden = sesion.perfil !== 'administrador'; });
-      if (sesion.perfil !== 'administrador') document.querySelectorAll('a.app-back[href="/clases"]').forEach((a) => a.setAttribute('href','/alumnos'));
-      if (sesion.perfil === 'alumno') document.querySelectorAll('a[href="/alumnos"] .app-bottom-nav__label').forEach((elemento) => { elemento.textContent = 'Mis clases'; });
-      if (sesion.perfil !== 'administrador') {
-        document.querySelectorAll('a[href="/calendario"] .app-bottom-nav__label').forEach((el) => { el.textContent = 'Asistencia'; });
-        document.querySelectorAll('a[href="/usuario"] .app-bottom-nav__label').forEach((el) => { el.textContent = 'Mi cuenta'; });
-      }
-      if (sesion.perfil !== 'administrador') {
+      const esPerfil = sesion.perfil !== 'administrador';
+      document.querySelectorAll<HTMLElement>('[data-solo-perfiles]').forEach((elemento) => { elemento.hidden = !esPerfil; });
+      const inferior = document.querySelector<HTMLElement>('.app-bottom-nav');
+      if (inferior) inferior.hidden = esPerfil;
+      if (esPerfil) {
         const ruta = window.location.pathname.replace(/\/$/, '');
+        const origen = ruta === '/calendario' ? '/calendario' : ruta === '/alumnos' ? '/alumnos' : origenCuenta(window.location.search);
+        const cuenta = document.querySelector<HTMLAnchorElement>('.app-account');
+        if (cuenta) {
+          cuenta.href = enlaceCuenta(origen);
+          if (ruta === '/usuario') cuenta.setAttribute('aria-current', 'page');
+        }
+        const atras = document.querySelector<HTMLAnchorElement>('.app-back');
+        if (atras) {
+          atras.hidden = ruta === '/alumnos';
+          const destino = ruta === '/usuario' ? origen : ruta === '/ajustes' ? enlaceCuenta(origen) : '/alumnos';
+          const etiqueta = ruta === '/ajustes' ? 'Volver a mi cuenta' : destino === '/calendario' ? 'Volver a asistencia' : sesion.perfil === 'alumno' ? 'Volver a mis clases' : 'Volver a mis alumnos';
+          atras.href = destino;
+          atras.setAttribute('aria-label', etiqueta);
+          atras.title = etiqueta;
+        }
         const titulos: Record<string, string> = { '/alumnos': sesion.perfil === 'alumno' ? 'Mis clases' : 'Mis alumnos', '/calendario': 'Asistencia', '/usuario': 'Mi cuenta' };
         const titulo = titulos[ruta];
         if (titulo) {

@@ -1,5 +1,6 @@
 import { useId, useState } from 'react';
 import { apiFetch, leerRespuesta } from '../../lib/api.js';
+import { enlaceAyuda } from '../../lib/navegacionPerfil.js';
 import CampoContrasena from '../CampoContrasena.jsx';
 import { botonPrincipal, campo, tarjeta, tituloTarjeta } from './alumno/estilos.js';
 import IconoPerfil from './IconoPerfil.jsx';
@@ -10,6 +11,7 @@ export default function CuentaPerfil({ usuario, perfil }) {
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
   const profesor = perfil === 'profesor';
+  const ayuda = enlaceAyuda(typeof window === 'undefined' ? '' : window.location.search);
 
   async function cambiarClave(event) {
     event.preventDefault();
@@ -55,7 +57,7 @@ export default function CuentaPerfil({ usuario, perfil }) {
           <IconoPerfil nombre="seguridad" />
           <span>Contraseña</span>
         </a>
-        <a href="/ajustes">
+        <a href={ayuda}>
           <IconoPerfil nombre="ayuda" />
           <span>Ayuda</span>
         </a>
@@ -119,7 +121,7 @@ export default function CuentaPerfil({ usuario, perfil }) {
           </span>
           Ayuda
         </h2>
-        <a href="/ajustes" className="perfil-enlace-fila">
+        <a href={ayuda} className="perfil-enlace-fila">
           <span>Guía de uso e información</span>
           <IconoPerfil nombre="flecha" />
         </a>

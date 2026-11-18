@@ -76,7 +76,7 @@ export default function Ajustes({ version }) {
             </summary>
             <p className="pb-3 leading-6">
               Necesitas conexión con el servidor e internet para guardar y consultar los datos. Al
-              terminar en un equipo compartido, entra a Usuario y pulsa Cerrar sesión.
+              terminar en un equipo compartido, abre tu cuenta y pulsa Cerrar sesión.
             </p>
           </details>
         </div>

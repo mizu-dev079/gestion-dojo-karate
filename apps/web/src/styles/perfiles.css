@@ -287,13 +287,6 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"]) .admin-body {
 .perfil-asistente[data-estado="congelado"] {
   background: #f6f4f1;
 }
-html:is([data-perfil="profesor"], [data-perfil="alumno"])
-  .app-bottom-nav__link[aria-current="page"]
-  .app-bottom-nav__icon {
-  background: #c62828;
-  color: white;
-  box-shadow: 0 3px 8px #c6282824;
-}
 @media (min-width: 760px) {
   .perfil-page {
     padding: 1.5rem 2rem 2rem;
@@ -332,11 +325,6 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"])
 .perfil-saldo-principal > p:last-child {
   flex: 1;
   min-width: 0;
-}
-html:is([data-perfil="profesor"], [data-perfil="alumno"]) .app-bottom-nav__label {
-  font-size: 0.78rem;
-  line-height: 1.3;
-  font-weight: 650;
 }
 
 /* Asistencia y cuenta comparten la misma jerarquía de las tarjetas del plan. */

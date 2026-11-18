@@ -369,9 +369,33 @@
   font-size: clamp(0.875rem, 3vw, 1rem);
 }
 
-html:is([data-perfil="profesor"], [data-perfil="alumno"]) .app-bottom-nav__items {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
 .app-bottom-nav__link[hidden] {
   display: none;
+}
+
+.app-back[hidden],
+.app-account[hidden],
+.app-bottom-nav[hidden] {
+  display: none;
+}
+.app-account {
+  display: inline-flex;
+  flex: 0 0 2.75rem;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.875rem;
+  background: var(--surface-subtle);
+  color: var(--text-secondary);
+}
+.app-account:hover,
+.app-account[aria-current="page"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: #f0c8c4;
+}
+html:is([data-perfil="profesor"], [data-perfil="alumno"]) .admin-body {
+  --nav-height: 0rem;
 }

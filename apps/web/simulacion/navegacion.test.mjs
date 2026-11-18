@@ -1,0 +1,28 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { enlaceAyuda, enlaceCuenta, origenCuenta } from '../src/lib/navegacionPerfil.js';
+
+test('cuenta y ayuda conservan un origen interno y no generan bucles', () => {
+  for (const ruta of ['/alumnos', '/calendario']) {
+    const cuenta = new URL(enlaceCuenta(ruta), 'https://dojo.test');
+    assert.equal(cuenta.pathname, '/usuario');
+    assert.equal(origenCuenta(cuenta.search), ruta);
+    const ayuda = new URL(enlaceAyuda(cuenta.search), cuenta);
+    assert.equal(ayuda.pathname, '/ajustes');
+    assert.equal(enlaceCuenta(origenCuenta(ayuda.search)), cuenta.pathname + cuenta.search);
+  }
+});
+test('destinos externos, desconocidos o la propia cuenta vuelven al inicio', () => {
+  for (const destino of [
+    '',
+    '/usuario',
+    '/ajustes',
+    'https://otro.test',
+    '//otro.test',
+    'javascript:alert(1)',
+    '/calendario?otro=1',
+  ]) {
+    assert.equal(origenCuenta(`?volver=${encodeURIComponent(destino)}`), '/alumnos');
+    assert.equal(enlaceCuenta(destino), '/usuario?volver=%2Falumnos');
+  }
+});

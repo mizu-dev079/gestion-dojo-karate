@@ -33,7 +33,7 @@ El ID alumno de Sheets identifica a la persona. Los `alumnoIds` internos de la c
 
 El usuario admite de 3 a 60 caracteres: letras minúsculas, números, punto, guion y guion bajo. Las contraseñas requieren de 8 a 200 caracteres. El contacto no se utiliza obligatoriamente como usuario; no se necesita un correo de Google para ingresar.
 
-El login y los formularios de registro permiten mostrar u ocultar la contraseña mientras se escribe. Profesor y alumno pueden cambiar su contraseña desde **Usuario**. Administración puede restablecerla o desactivar el acceso desde su ficha. El cambio, restablecimiento o desactivación invalida las sesiones previas.
+El login y los formularios de registro permiten mostrar u ocultar la contraseña mientras se escribe. Profesor y alumno abren **Mi cuenta** con el icono de la esquina superior derecha; desde allí pueden cambiar su contraseña. Administración puede restablecerla o desactivar el acceso desde su ficha. El cambio, restablecimiento o desactivación invalida las sesiones previas.
 
 El administrador del entorno no se cambia ni desactiva desde estas pantallas, y el sistema no crea administradores adicionales. El entorno real no incluye cuentas de prueba predeterminadas.
 
