@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./tema.css";
+@import "./perfiles.css";
 
 /* Paleta única de Shinken Dojo: blanco, negro y rojo. */
 @theme {

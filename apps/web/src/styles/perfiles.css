@@ -1,0 +1,340 @@
+/* Diseño compartido de profesor y alumno; no cambia las pantallas administrativas. */
+html:is([data-perfil="profesor"], [data-perfil="alumno"]) .admin-body {
+  --app-width: 60rem;
+  background: #f4f3f1;
+}
+.perfil-page {
+  max-width: 60rem;
+  margin-inline: auto;
+  color: #202020;
+}
+.perfil-page [id] {
+  scroll-margin-top: 8rem;
+}
+.perfil-page button,
+.perfil-page input,
+.perfil-page select,
+.perfil-page textarea {
+  font-size: 1rem;
+}
+.perfil-page button {
+  min-height: 2.875rem;
+}
+.perfil-page :is(button, a) {
+  -webkit-tap-highlight-color: transparent;
+}
+.perfil-page :is(button, input, select, textarea):disabled {
+  cursor: not-allowed;
+}
+.perfil-hero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  padding: 1.6rem;
+  border-radius: 1.5rem;
+  color: #fff;
+  background: linear-gradient(120deg, #202020, #171717 70%, #3b1b1b);
+  box-shadow: 0 10px 26px #17171714;
+}
+.perfil-hero::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 13rem;
+  height: 13rem;
+  right: -6rem;
+  top: -6rem;
+  border: 2rem solid #c628282e;
+  border-radius: 50%;
+}
+.perfil-eyebrow {
+  margin: 0 0 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.17em;
+  color: #f1b3af;
+}
+.perfil-saludo {
+  font-size: clamp(1.6rem, 5.5vw, 2rem);
+  font-weight: 750;
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+}
+.perfil-hero__pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+.perfil-hero__emblema {
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border: 1px solid #ffffff29;
+  border-radius: 1.1rem;
+  color: #efb7b2;
+  background: #ffffff08;
+}
+.perfil-hero__accion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  min-height: 3rem;
+  margin-top: 1.4rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.9rem;
+  background: #c62828;
+  color: white;
+  font-weight: 700;
+}
+.perfil-hero__accion svg:last-child {
+  margin-left: auto;
+}
+.perfil-resumen {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+  margin-top: 1.35rem;
+}
+.perfil-resumen > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  border-left: 2px solid #b92d2d;
+  padding-left: 0.85rem;
+}
+.perfil-resumen strong {
+  font-size: 1.9rem;
+  line-height: 1.1;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+.perfil-resumen span {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: #dedad7;
+}
+.perfil-accesos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+.perfil-accesos a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-height: 5.5rem;
+  padding: 0.85rem 0.25rem;
+  border: 1px solid #e8e3df;
+  border-radius: 1.1rem;
+  background: white;
+  color: #34302e;
+  text-align: center;
+  text-decoration: none;
+  box-shadow: 0 2px 3px #17171703;
+}
+.perfil-accesos svg {
+  color: #b92323;
+}
+.perfil-accesos span {
+  font-size: 0.78rem;
+  line-height: 1.35;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.perfil-tarjeta {
+  border-color: #e8e3df;
+  box-shadow: 0 3px 12px #29211a05;
+}
+.perfil-titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 1.05rem;
+  font-weight: 750;
+  line-height: 1.4;
+  color: #24211f;
+}
+.perfil-icono {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: 0.8rem;
+  background: #fff0ed;
+  color: #b92323;
+}
+.perfil-saldo-principal {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.2rem;
+}
+.perfil-saldo-numero {
+  font-size: 4rem;
+  font-weight: 750;
+  line-height: 1;
+  letter-spacing: -0.06em;
+  color: #b92323;
+  font-variant-numeric: tabular-nums;
+}
+.perfil-entrenamiento {
+  border: 1px solid #f1d6d0;
+  background: #fff8f6;
+}
+.perfil-principal {
+  display: grid;
+  gap: 1rem;
+}
+.perfil-principal > section {
+  min-width: 0;
+}
+.perfil-ficha-alumno :where(details) summary {
+  border-top: 1px solid #eee9e5;
+}
+.perfil-filtros summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  cursor: pointer;
+  min-height: 3rem;
+  font-weight: 700;
+  list-style: none;
+}
+.perfil-filtros summary::-webkit-details-marker {
+  display: none;
+}
+.perfil-filtros summary span {
+  font-size: 1.4rem;
+  color: #b92323;
+}
+.perfil-filtros[open] summary {
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #eee8e4;
+  padding-bottom: 0.7rem;
+}
+.perfil-filtros[open] summary span {
+  transform: rotate(180deg);
+}
+.perfil-filtros > label {
+  margin-block: 0.8rem;
+}
+.perfil-ficha-alumno h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  overflow-wrap: anywhere;
+}
+.perfil-avatar {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 2.8rem;
+  height: 2.8rem;
+  border-radius: 50%;
+  background: #f9ece8;
+  color: #9d2323;
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+.perfil-estado {
+  display: inline-flex;
+  margin-top: 1rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 0.5rem;
+  color: #34302e;
+  background: #f2f0ed;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.perfil-estado[data-estado="congelado"] {
+  background: #262626;
+  color: white;
+}
+.perfil-estado[data-estado="sin-plan"] {
+  color: #9e2222;
+  background: #fff0ed;
+}
+.perfil-saldo-ficha {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  margin-top: 0.7rem;
+  color: #68615d;
+  font-size: 0.9rem;
+}
+.perfil-saldo-ficha strong {
+  font-size: 2rem;
+  font-weight: 750;
+  color: #b92323;
+}
+.perfil-asistente[data-estado="presente"] {
+  border-left: 4px solid #292929;
+}
+.perfil-asistente[data-estado="falta"],
+.perfil-asistente[data-estado="avisada"] {
+  border-left: 4px solid #c62828;
+}
+.perfil-asistente[data-estado="congelado"] {
+  background: #f6f4f1;
+}
+html:is([data-perfil="profesor"], [data-perfil="alumno"])
+  .app-bottom-nav__link[aria-current="page"]
+  .app-bottom-nav__icon {
+  background: #c62828;
+  color: white;
+  box-shadow: 0 3px 8px #c6282824;
+}
+@media (min-width: 760px) {
+  .perfil-page {
+    padding: 1.5rem 2rem 2rem;
+  }
+  .perfil-hero {
+    padding: 2rem;
+  }
+  .perfil-principal {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    align-items: start;
+  }
+  .perfil-accesos a {
+    flex-direction: row;
+    min-height: 4.2rem;
+    gap: 0.85rem;
+  }
+  .perfil-accesos span {
+    font-size: 0.9rem;
+  }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .perfil-accesos a {
+    transition:
+      border-color 0.15s,
+      box-shadow 0.15s;
+  }
+  .perfil-accesos a:hover {
+    border-color: #d8a49b;
+    box-shadow: 0 4px 12px #29211a0c;
+  }
+  .perfil-hero__accion:hover {
+    background: #a61b1b;
+  }
+}
+
+.perfil-saldo-principal > p:last-child {
+  flex: 1;
+  min-width: 0;
+}
+html:is([data-perfil="profesor"], [data-perfil="alumno"]) .app-bottom-nav__label {
+  font-size: 0.78rem;
+  line-height: 1.3;
+  font-weight: 650;
+}

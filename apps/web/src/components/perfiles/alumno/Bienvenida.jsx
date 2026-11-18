@@ -1,3 +1,4 @@
+import IconoPerfil from '../IconoPerfil.jsx';
 import { chip, etiqueta } from './estilos.js';
 import { primerNombre } from './utilidades.js';
 
@@ -9,13 +10,18 @@ export default function Bienvenida({ alumno }) {
       ? { texto: 'Plan congelado', estilo: 'bg-white text-gray-900' }
       : { texto: 'Plan activo', estilo: etiqueta.activo };
   return (
-    <header className="rounded-2xl bg-gray-900 p-5 text-white shadow-sm">
-      <p className="text-sm text-gray-300">Bienvenido a tu dojo</p>
-      <h2 className="mt-1 text-2xl font-bold">Hola, {primerNombre(alumno.nombre)}</h2>
+    <header className="perfil-hero">
+      <p className="perfil-eyebrow">MI DOJO</p>
+      <h2 className="perfil-saludo">Hola, {primerNombre(alumno.nombre)}</h2>
       {alumno.clase && (
         <p className="mt-1 text-sm text-gray-300">{alumno.clase.turno ?? alumno.clase.nivel}</p>
       )}
-      <span className={`${chip} ${estado.estilo} mt-3`}>{estado.texto}</span>
+      <div className="perfil-hero__pie">
+        <span className={`${chip} ${estado.estilo}`}>{estado.texto}</span>
+        <span className="perfil-hero__emblema">
+          <IconoPerfil nombre="clase" size={32} />
+        </span>
+      </div>
     </header>
   );
 }

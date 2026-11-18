@@ -68,7 +68,11 @@ export default function Congelamiento({ alumno, hoy, ocupado, enviar }) {
   }
 
   return (
-    <section className={tarjeta} aria-labelledby={`congelamiento-${alumno.id}`}>
+    <section
+      id={`pausa-${alumno.id}`}
+      className={tarjeta}
+      aria-labelledby={`congelamiento-${alumno.id}`}
+    >
       <h2 id={`congelamiento-${alumno.id}`} className={tituloTarjeta}>
         Congelamiento del plan
       </h2>

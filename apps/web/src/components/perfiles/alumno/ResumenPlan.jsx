@@ -1,3 +1,4 @@
+import IconoPerfil from '../IconoPerfil.jsx';
 import { tarjeta, tituloTarjeta } from './estilos.js';
 import { cambioProgramado, fechaVisible, pendientesAntesDelCambio, unidad } from './utilidades.js';
 
@@ -27,10 +28,13 @@ export default function ResumenPlan({ alumno }) {
   return (
     <section className={tarjeta} aria-labelledby={`plan-${alumno.id}`}>
       <h2 id={`plan-${alumno.id}`} className={tituloTarjeta}>
+        <span className="perfil-icono">
+          <IconoPerfil nombre="clase" />
+        </span>
         Mi plan
       </h2>
-      <div className="mt-3 flex items-end gap-3">
-        <p className="text-5xl font-bold leading-none text-dojo-600">{s.pendientes}</p>
+      <div className="perfil-saldo-principal">
+        <p className="perfil-saldo-numero">{s.pendientes}</p>
         <p className="pb-1 text-gray-700">
           {s.pendientes === 1 ? 'clase pendiente' : 'clases pendientes'}
           <span className="block text-sm text-gray-500">

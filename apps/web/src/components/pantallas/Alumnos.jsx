@@ -3,6 +3,7 @@ import { useOperacion } from '../../hooks/useOperacion.js';
 import { useSesion } from '../../hooks/useSesion.js';
 import { apiFetch, leerRespuesta } from '../../lib/api.js';
 import Mensaje from '../Mensaje.jsx';
+import IconoPerfil from '../perfiles/IconoPerfil.jsx';
 
 const hoy = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(new Date());
 const campo = 'mt-1 min-h-11 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-base';
@@ -327,20 +328,54 @@ export default function Alumnos() {
     );
   const alumnoPropio = sesion.perfil === 'alumno',
     admin = sesion.perfil === 'administrador';
+  const esProfesor = sesion.perfil === 'profesor';
+  const ContenedorFiltros = esProfesor ? 'details' : 'div';
   return (
-    <main className="space-y-4 px-4 pb-6 pt-4" aria-busy={cargando || ocupado}>
+    <main
+      className={`${esProfesor ? 'perfil-page perfil-profesor-alumnos' : ''} space-y-4 px-4 pb-6 pt-4`}
+      aria-busy={cargando || ocupado}
+    >
+      {esProfesor && (
+        <header className="perfil-hero">
+          <p className="perfil-eyebrow">ÁREA DEL PROFESOR</p>
+          <h2 className="perfil-saludo">Tu grupo</h2>
+          <div className="perfil-resumen">
+            <div>
+              <strong>{cargando ? '—' : alumnos.length}</strong>
+              <span>Alumnos</span>
+            </div>
+            <div>
+              <strong>
+                {cargando
+                  ? '—'
+                  : alumnos.filter((a) =>
+                      a.seguimiento.solicitudes.some((s) => s.estado === 'pendiente'),
+                    ).length}
+              </strong>
+              <span>Solicitudes por revisar</span>
+            </div>
+          </div>
+          <a href="/calendario" className="perfil-hero__accion">
+            <IconoPerfil nombre="calendario" />
+            Registrar asistencia
+            <IconoPerfil nombre="flecha" />
+          </a>
+        </header>
+      )}
       <Mensaje aviso={aviso} />
       <section className="space-y-3 rounded-2xl border border-gray-200 bg-white p-4">
-        <h2 className="text-lg font-bold">
-          {alumnoPropio ? 'Mi plan' : admin ? 'Planes de alumnos' : 'Mis alumnos'}
-        </h2>
+        {!esProfesor && (
+          <>
+            <h2 className="text-lg font-bold">{alumnoPropio ? 'Mi plan' : 'Planes de alumnos'}</h2>
 
-        <a
-          href="/calendario"
-          className="inline-flex min-h-11 items-center rounded-xl bg-dojo-600 px-4 py-2 font-semibold text-white"
-        >
-          Calendario de asistencia
-        </a>
+            <a
+              href="/calendario"
+              className="inline-flex min-h-11 items-center rounded-xl bg-dojo-600 px-4 py-2 font-semibold text-white"
+            >
+              Calendario de asistencia
+            </a>
+          </>
+        )}
         {admin && (
           <a
             href="/cuentas"
@@ -349,65 +384,80 @@ export default function Alumnos() {
             Administrar profesores y alumnos
           </a>
         )}
-        {!alumnoPropio && (
+        <ContenedorFiltros className={esProfesor ? 'perfil-filtros' : 'space-y-3'}>
+          {esProfesor && (
+            <summary>
+              Buscar y filtrar alumnos<span aria-hidden="true">⌄</span>
+            </summary>
+          )}
+          {!alumnoPropio && (
+            <label className="block text-sm font-semibold">
+              Buscar alumno
+              <input
+                type="search"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                className={campo}
+              />
+            </label>
+          )}
+          {admin && (
+            <label className="block text-sm font-semibold">
+              Profesor
+              <select
+                value={profesor}
+                onChange={(e) => setProfesor(e.target.value)}
+                className={campo}
+              >
+                <option value="">Todos</option>
+                {profesores.map((p) => (
+                  <option key={p}>{p}</option>
+                ))}
+              </select>
+            </label>
+          )}
           <label className="block text-sm font-semibold">
-            Buscar alumno
-            <input
-              type="search"
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              className={campo}
-            />
-          </label>
-        )}
-        {admin && (
-          <label className="block text-sm font-semibold">
-            Profesor
-            <select
-              value={profesor}
-              onChange={(e) => setProfesor(e.target.value)}
-              className={campo}
-            >
-              <option value="">Todos</option>
-              {profesores.map((p) => (
-                <option key={p}>{p}</option>
+            Clase
+            <select value={claseId} onChange={(e) => setClaseId(e.target.value)} className={campo}>
+              <option value="">Todas</option>
+              {[
+                ...new Map(
+                  alumnos.filter((a) => a.clase).map((a) => [a.claseId, a.clase]),
+                ).values(),
+              ].map((c) => (
+                <option key={c.id} value={c.id}>
+                  {esProfesor ? (
+                    `${c.turno || c.nivel} · ${c.horaInicio}`
+                  ) : (
+                    <>
+                      {c.nivel}
+                      {c.turno ? ` · ${c.turno}` : ''} · {c.sede} · {c.horaInicio}
+                    </>
+                  )}
+                </option>
               ))}
             </select>
           </label>
-        )}
-        <label className="block text-sm font-semibold">
-          Clase
-          <select value={claseId} onChange={(e) => setClaseId(e.target.value)} className={campo}>
-            <option value="">Todas</option>
-            {[
-              ...new Map(alumnos.filter((a) => a.clase).map((a) => [a.claseId, a.clase])).values(),
-            ].map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nivel}
-                {c.turno ? ` · ${c.turno}` : ''} · {c.sede} · {c.horaInicio}
-              </option>
-            ))}
-          </select>
-        </label>
-        {!alumnoPropio && (
-          <label className="block text-sm font-semibold">
-            Mostrar
-            <select value={vista} onChange={(e) => setVista(e.target.value)} className={campo}>
-              <option value="todos">Todos los alumnos</option>
-              <option value="sin-plan">Sin plan registrado</option>
-              <option value="congelados">Planes congelados</option>
-              <option value="faltas">Con faltas sin recuperación</option>
-            </select>
-          </label>
-        )}
-        <button
-          type="button"
-          onClick={cargar}
-          disabled={ocupado || cargando}
-          className="min-h-11 font-semibold text-dojo-700"
-        >
-          {cargando ? 'Cargando…' : 'Actualizar datos'}
-        </button>
+          {!alumnoPropio && (
+            <label className="block text-sm font-semibold">
+              Mostrar
+              <select value={vista} onChange={(e) => setVista(e.target.value)} className={campo}>
+                <option value="todos">Todos los alumnos</option>
+                <option value="sin-plan">Sin plan registrado</option>
+                <option value="congelados">Planes congelados</option>
+                <option value="faltas">Con faltas sin recuperación</option>
+              </select>
+            </label>
+          )}
+          <button
+            type="button"
+            onClick={cargar}
+            disabled={ocupado || cargando}
+            className="min-h-11 font-semibold text-dojo-700"
+          >
+            {cargando ? 'Cargando…' : 'Actualizar datos'}
+          </button>
+        </ContenedorFiltros>
       </section>
       {!cargando && !visibles.length && (
         <p className="rounded-xl bg-white p-4 text-gray-600">
@@ -421,17 +471,40 @@ export default function Alumnos() {
           pausa = s.congelamientos.at(-1),
           abrir = (accion, datos = {}) => setSeleccion({ alumnoId: alumno.id, accion, ...datos });
         return (
-          <article key={alumno.id} className="rounded-2xl border border-gray-200 bg-white p-4">
-            <h2 className="text-lg font-bold">{alumno.nombre}</h2>
+          <article
+            key={alumno.id}
+            className={`${esProfesor ? 'perfil-tarjeta perfil-ficha-alumno' : ''} rounded-2xl border border-gray-200 bg-white ${esProfesor ? 'p-5' : 'p-4'}`}
+          >
+            <h2 className="text-lg font-bold">
+              {esProfesor && (
+                <span className="perfil-avatar" aria-hidden="true">
+                  {alumno.nombre
+                    .trim()
+                    .split(/\s+/)
+                    .slice(0, 2)
+                    .map((n) => n[0])
+                    .join('')}
+                </span>
+              )}
+              {alumno.nombre}
+            </h2>
             <p className="mt-1 text-sm text-gray-600">
               {alumno.clase
                 ? `${alumno.clase.nivel} · ${alumno.clase.sede} · Prof. ${alumno.clase.profesor} · ${alumno.clase.horaInicio} – ${alumno.clase.horaFin}`
                 : 'La clase ya no existe. Consulta al administrador.'}
             </p>
-            <p className="mt-2 font-semibold text-dojo-800">
+            <p
+              className={esProfesor ? 'perfil-estado' : 'mt-2 font-semibold text-dojo-800'}
+              data-estado={s.congelado ? 'congelado' : s.plan ? 'activo' : 'sin-plan'}
+            >
               {!s.plan ? 'Sin plan' : s.congelado ? 'Congelado · cupo reservado' : 'Activo'}
-              {s.plan && ` · ${s.pendientes} clases pendientes`}
+              {s.plan && !esProfesor && ` · ${s.pendientes} clases pendientes`}
             </p>
+            {esProfesor && s.plan && (
+              <p className="perfil-saldo-ficha">
+                <strong>{s.pendientes}</strong> clases pendientes
+              </p>
+            )}
             {s.plan && (
               <p className="mt-1 text-sm text-gray-600">
                 {s.plan.dias.join(', ')} · {s.plan.cantidad} clases por paquete

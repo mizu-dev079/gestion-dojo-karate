@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useOperacion } from '../../../hooks/useOperacion.js';
 import { apiFetch, leerRespuesta } from '../../../lib/api.js';
 import Mensaje from '../../Mensaje.jsx';
+import IconoPerfil from '../IconoPerfil.jsx';
 import Bienvenida from './Bienvenida.jsx';
 import Congelamiento from './Congelamiento.jsx';
 import { botonPrincipal, tarjeta } from './estilos.js';
@@ -112,7 +113,10 @@ export default function PanelAlumno() {
   }
 
   return (
-    <main className="mx-auto max-w-xl space-y-4 px-4 pb-8 pt-4" aria-busy={cargando || ocupado}>
+    <main
+      className="perfil-page perfil-alumno-page space-y-5 px-4 pb-8 pt-4"
+      aria-busy={cargando || ocupado}
+    >
       <Mensaje aviso={aviso} />
       {cargando ? (
         <Esqueleto />
@@ -136,16 +140,34 @@ export default function PanelAlumno() {
         alumnos.map((alumno) => (
           <div key={alumno.id} className="space-y-4">
             <Bienvenida alumno={alumno} />
-            <ResumenPlan alumno={alumno} />
-            <MiAsistencia
-              alumno={alumno}
-              sesiones={sesiones}
-              hoy={ahora.hoy}
-              hora={ahora.hora}
-              ocupado={ocupado}
-              aviso={aviso}
-              enviar={enviar}
-            />
+            <nav className="perfil-accesos" aria-label={`Accesos de ${alumno.nombre}`}>
+              <a href="/calendario">
+                <IconoPerfil nombre="calendario" />
+                <span>Asistencia</span>
+              </a>
+              <a href={`#clase-${alumno.id}`}>
+                <IconoPerfil nombre="clase" />
+                <span>Mi clase</span>
+              </a>
+              {alumno.seguimiento.plan && (
+                <a href={`#pausa-${alumno.id}`}>
+                  <IconoPerfil nombre="pausa" />
+                  <span>Congelar plan</span>
+                </a>
+              )}
+            </nav>
+            <div className="perfil-principal">
+              <ResumenPlan alumno={alumno} />
+              <MiAsistencia
+                alumno={alumno}
+                sesiones={sesiones}
+                hoy={ahora.hoy}
+                hora={ahora.hora}
+                ocupado={ocupado}
+                aviso={aviso}
+                enviar={enviar}
+              />
+            </div>
             <MiClase alumno={alumno} />
             <Recuperaciones alumno={alumno} />
             <Congelamiento alumno={alumno} hoy={ahora.hoy} ocupado={ocupado} enviar={enviar} />

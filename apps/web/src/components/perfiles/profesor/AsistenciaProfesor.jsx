@@ -3,6 +3,7 @@ import { useOperacion } from '../../../hooks/useOperacion.js';
 import { useSesion } from '../../../hooks/useSesion.js';
 import { apiFetch, leerRespuesta } from '../../../lib/api.js';
 import Mensaje from '../../Mensaje.jsx';
+import IconoPerfil from '../IconoPerfil.jsx';
 
 const hoyLima = () =>
   new Intl.DateTimeFormat('en-CA', {
@@ -244,28 +245,60 @@ export default function AsistenciaProfesor() {
 
   const fechaActualHoy = fecha === hoyLima();
   const fechaPasada = fecha < hoyLima();
-  const periodo = fecha.slice(0, 7);
 
   return (
-    <main className="space-y-4 p-4" aria-busy={ocupado || cargando}>
+    <main
+      className="perfil-page perfil-profesor-page space-y-5 p-4"
+      aria-busy={ocupado || cargando}
+    >
+      <header className="perfil-hero">
+        <p className="perfil-eyebrow">ÁREA DEL PROFESOR</p>
+        <h2 className="perfil-saludo">Tu jornada</h2>
+        <div className="perfil-resumen">
+          <div>
+            <strong>{cargando ? '—' : sesiones.length}</strong>
+            <span>Turnos</span>
+          </div>
+          <div>
+            <strong>
+              {cargando
+                ? '—'
+                : new Set(
+                    sesiones.flatMap((s) => s.alumnos.filter((a) => a.programado).map((a) => a.id)),
+                  ).size}
+            </strong>
+            <span>Alumnos del día</span>
+          </div>
+        </div>
+      </header>
+      <nav className="perfil-accesos" aria-label="Secciones de asistencia">
+        <a href="#asistencia-propia">
+          <IconoPerfil nombre="presente" />
+          <span>Mi asistencia</span>
+        </a>
+        <a href="#asistencia-alumnos">
+          <IconoPerfil nombre="alumnos" />
+          <span>Alumnos</span>
+        </a>
+        <a href="#recuperaciones">
+          <IconoPerfil nombre="historial" />
+          <span>Recuperaciones</span>
+        </a>
+      </nav>
       <Mensaje aviso={aviso} />
 
       <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="text-base font-bold text-gray-900">Panel de Control (Día a Día)</h2>
+          <h2 className="text-base font-bold text-gray-900">Fecha de asistencia</h2>
 
           <div className="flex items-center gap-2">
-            <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600">
-              {periodo}
-            </span>
-
             <button
               type="button"
               disabled={ocupado || cargando}
               onClick={cargar}
               className="min-h-9 rounded-xl border border-gray-200 bg-white px-3 text-xs font-semibold text-dojo-700 disabled:opacity-50"
             >
-              Actualizar lista
+              Actualizar
             </button>
           </div>
         </div>
@@ -337,8 +370,16 @@ export default function AsistenciaProfesor() {
         <p role="status">Cargando sesiones…</p>
       ) : (
         <>
-          <section className="space-y-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-            <h2 className="text-lg font-bold">1. Asistencia del profesor</h2>
+          <section
+            id="asistencia-propia"
+            className="perfil-tarjeta space-y-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"
+          >
+            <h2 className="perfil-titulo">
+              <span className="perfil-icono">
+                <IconoPerfil nombre="presente" />
+              </span>
+              Mi asistencia
+            </h2>
 
             {!sesiones.length && (
               <p className="text-sm text-gray-600">No hay turnos asignados para esta fecha.</p>
@@ -351,9 +392,9 @@ export default function AsistenciaProfesor() {
                 )}
                 {sesionTurno.asistenciaProfesor === 'presente' &&
                 gestionProfesor !== sesionTurno.claseId ? (
-                  <div className="flex items-center justify-between gap-3 rounded-2xl border border-green-200 bg-green-50/70 px-4 py-3">
+                  <div className="flex items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
                     <div className="flex min-w-0 items-start gap-2">
-                      <span className="font-bold text-green-700">✓</span>
+                      <span className="font-bold text-gray-900">✓</span>
 
                       <div className="min-w-0">
                         <p className="font-bold text-gray-900">Asistencia confirmada</p>
@@ -397,7 +438,7 @@ export default function AsistenciaProfesor() {
                         type="button"
                         disabled={ocupado || sesionTurno.estado === 'cancelada'}
                         onClick={() => setGestionProfesor(sesionTurno.claseId)}
-                        className="rounded-xl border border-dojo-600 bg-white px-4 py-2 text-sm font-semibold text-dojo-700 disabled:opacity-50"
+                        className="rounded-xl border border-dojo-600 bg-dojo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
                       >
                         Marcar mi asistencia
                       </button>
@@ -462,8 +503,16 @@ export default function AsistenciaProfesor() {
             ))}
           </section>
 
-          <section className="space-y-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-            <h2 className="text-lg font-bold">2. Asistencia de alumnos</h2>
+          <section
+            id="asistencia-alumnos"
+            className="perfil-tarjeta space-y-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"
+          >
+            <h2 className="perfil-titulo">
+              <span className="perfil-icono">
+                <IconoPerfil nombre="alumnos" />
+              </span>
+              Asistencia de alumnos
+            </h2>
 
             {!sesiones.length && (
               <p className="text-sm text-gray-600">No hay sesiones para mostrar.</p>
@@ -496,7 +545,8 @@ export default function AsistenciaProfesor() {
                     return (
                       <li
                         key={alumno.id}
-                        className="rounded-xl border border-gray-200 bg-white p-3.5"
+                        className="perfil-asistente rounded-xl border border-gray-200 bg-white p-4"
+                        data-estado={alumno.estado}
                       >
                         <p className="font-bold">{alumno.nombre}</p>
 
@@ -513,8 +563,8 @@ export default function AsistenciaProfesor() {
                               onClick={() => marcarAlumno(alumno, 'presente')}
                               className={
                                 alumno.estado === 'presente'
-                                  ? 'rounded-xl border border-green-600 bg-green-600 px-3 py-2 text-sm font-semibold text-white'
-                                  : 'rounded-xl border border-dojo-600 bg-white px-3 py-2 text-sm font-semibold text-dojo-700'
+                                  ? 'rounded-xl border border-gray-900 bg-gray-900 px-3 py-2 text-sm font-semibold text-white'
+                                  : 'rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-900'
                               }
                             >
                               Presente
@@ -555,8 +605,16 @@ export default function AsistenciaProfesor() {
             ))}
           </section>
 
-          <section className="space-y-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-            <h2 className="text-lg font-bold">3. Ausencias y recuperaciones</h2>
+          <section
+            id="recuperaciones"
+            className="perfil-tarjeta space-y-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"
+          >
+            <h2 className="perfil-titulo">
+              <span className="perfil-icono">
+                <IconoPerfil nombre="historial" />
+              </span>
+              Ausencias y recuperaciones
+            </h2>
             {justificaciones.map(({ alumno, asistencia }) => (
               <div
                 key={`${alumno.id}-${asistencia.fecha}`}

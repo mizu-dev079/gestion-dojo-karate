@@ -4,7 +4,7 @@ export default function MiClase({ alumno }) {
   const c = alumno.clase;
   if (!c)
     return (
-      <section className={tarjeta}>
+      <section id={`clase-${alumno.id}`} className={tarjeta}>
         <h2 className={tituloTarjeta}>Mi clase</h2>
         <p className="mt-2 text-gray-700">
           Tu clase ya no está disponible. Consulta con la administración del dojo.
@@ -24,7 +24,7 @@ export default function MiClase({ alumno }) {
     ['Sede', c.sede],
   ].filter(([, valor]) => valor);
   return (
-    <section className={tarjeta} aria-labelledby={`clase-${alumno.id}`}>
+    <section id={`clase-${alumno.id}`} className={tarjeta} aria-labelledby={`clase-${alumno.id}`}>
       <h2 id={`clase-${alumno.id}`} className={tituloTarjeta}>
         Mi clase
       </h2>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import ConfirmarAccion from '../../ConfirmarAccion.jsx';
+import IconoPerfil from '../IconoPerfil.jsx';
 import { botonSecundario, enlace, tarjeta, tituloTarjeta } from './estilos.js';
 import {
   avisosVigentes,
@@ -56,10 +57,13 @@ export default function MiAsistencia({ alumno, hoy, hora, ocupado, aviso, enviar
   return (
     <section className={tarjeta} aria-labelledby={`asistencia-${alumno.id}`}>
       <h2 id={`asistencia-${alumno.id}`} className={tituloTarjeta}>
+        <span className="perfil-icono">
+          <IconoPerfil nombre="calendario" />
+        </span>
         Próximo entrenamiento
       </h2>
       {proximo.fecha ? (
-        <div className="mt-3 rounded-xl bg-gray-50 p-4">
+        <div className="perfil-entrenamiento mt-4 rounded-xl p-4">
           <p className="text-xl font-bold text-gray-900">
             {nombreDia(proximo.fecha, hoy)}{' '}
             <span className="font-semibold text-gray-600">{fechaVisible(proximo.fecha)}</span>
