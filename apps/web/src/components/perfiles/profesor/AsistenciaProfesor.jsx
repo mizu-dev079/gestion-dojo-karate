@@ -3,18 +3,9 @@ import { useOperacion } from '../../../hooks/useOperacion.js';
 import { useSesion } from '../../../hooks/useSesion.js';
 import { apiFetch, leerRespuesta } from '../../../lib/api.js';
 import Mensaje from '../../Mensaje.jsx';
+import SelectorDiasAsistencia from '../../SelectorDiasAsistencia.jsx';
+import { hoyLima } from '../alumno/utilidades.js';
 import IconoPerfil from '../IconoPerfil.jsx';
-
-const hoyLima = () =>
-  new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'America/Lima',
-  }).format(new Date());
-
-const desplazarFecha = (fecha, dias) => {
-  const valor = new Date(`${fecha}T00:00:00Z`);
-  valor.setUTCDate(valor.getUTCDate() + dias);
-  return valor.toISOString().slice(0, 10);
-};
 
 const fechaEspañol = (fecha) =>
   new Intl.DateTimeFormat('es-PE', {
@@ -42,13 +33,14 @@ const etiquetas = {
 
 export default function AsistenciaProfesor() {
   const sesion = useSesion();
-  const hoy = hoyLima();
-  const [fecha, setFecha] = useState(hoy);
+  const [limite, setLimite] = useState(hoyLima);
+  const hoy = limite;
+  const [fecha, setFecha] = useState(hoyLima);
+  const diaAnterior = useRef(limite);
   const [sesiones, setSesiones] = useState([]);
   const [alumnos, setAlumnos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [gestionProfesor, setGestionProfesor] = useState(null);
-  const [gestionAlumno, setGestionAlumno] = useState(null);
   const [justificacionesAbiertas, setJustificacionesAbiertas] = useState(false);
   const [alumnoSeleccionado, setAlumnoSeleccionado] = useState(null);
   const [fechaAusencia, setFechaAusencia] = useState(hoy);
@@ -85,34 +77,41 @@ export default function AsistenciaProfesor() {
   useEffect(() => {
     if (sesion?.perfil !== 'profesor') return;
     cargar();
+    return () => {
+      cargaActual.current += 1;
+    };
   }, [sesion, cargar]);
 
   useEffect(() => {
-    let fechaAnterior = hoyLima();
-
     const verificarCambio = () => {
       const actual = hoyLima();
-
-      if (actual !== fechaAnterior) {
-        const estabaEnHoy = fecha === fechaAnterior;
-        fechaAnterior = actual;
-
-        if (estabaEnHoy) {
-          setFecha(actual);
-        }
-      }
+      if (actual === diaAnterior.current) return;
+      const anterior = diaAnterior.current;
+      diaAnterior.current = actual;
+      setLimite(actual);
+      setFecha((valor) => (valor === anterior || valor > actual ? actual : valor));
+      setGestionProfesor(null);
     };
-
+    verificarCambio();
     const intervalo = window.setInterval(verificarCambio, 30000);
     window.addEventListener('focus', verificarCambio);
     document.addEventListener('visibilitychange', verificarCambio);
-
     return () => {
       window.clearInterval(intervalo);
       window.removeEventListener('focus', verificarCambio);
       document.removeEventListener('visibilitychange', verificarCambio);
     };
-  }, [fecha]);
+  }, []);
+
+  function elegirFecha(dia) {
+    const actual = hoyLima();
+    const elegida = dia > actual ? actual : dia;
+    if (elegida === fecha) return;
+    setCargando(true);
+    setGestionProfesor(null);
+    cerrarFormularioJustificacion();
+    setFecha(elegida);
+  }
 
   const justificaciones = useMemo(
     () =>
@@ -175,7 +174,6 @@ export default function AsistenciaProfesor() {
         'No se pudo registrar la asistencia.',
       );
 
-      setGestionAlumno(null);
       await cargar();
       return estado === 'avisada' ? 'Aviso de ausencia registrado.' : 'Asistencia registrada.';
     });
@@ -243,9 +241,6 @@ export default function AsistenciaProfesor() {
     return null;
   }
 
-  const fechaActualHoy = fecha === hoyLima();
-  const fechaPasada = fecha < hoyLima();
-
   return (
     <main
       className="perfil-page perfil-profesor-page perfil-asistencia-page space-y-5 p-4"
@@ -287,88 +282,27 @@ export default function AsistenciaProfesor() {
       </nav>
       <Mensaje aviso={aviso} />
 
-      <section className="perfil-tarjeta perfil-calendario rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="perfil-titulo">
-            <span className="perfil-icono">
-              <IconoPerfil nombre="calendario" />
-            </span>
-            Fecha de asistencia
-          </h2>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              disabled={ocupado || cargando}
-              onClick={cargar}
-              className="min-h-9 rounded-xl border border-gray-200 bg-white px-3 text-xs font-semibold text-dojo-700 disabled:opacity-50"
-            >
-              Actualizar
-            </button>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between gap-2">
-          <button
-            type="button"
-            aria-label="Ir al día anterior"
-            onClick={() => setFecha(desplazarFecha(fecha, -1))}
-            disabled={ocupado || cargando}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-dojo-50 disabled:opacity-50"
-          >
-            ‹
-          </button>
-
-          <div className="min-w-0 flex-1 text-center">
-            <button
-              type="button"
-              onClick={() => setGestionAlumno(`fecha:${fecha}`)}
-              className="text-sm font-bold text-gray-900"
-            >
-              {fechaActualHoy
-                ? `Hoy (${capitalizar(fechaEspañol(fecha))})`
-                : `${capitalizar(fechaEspañol(fecha))} (Historial)`}
-            </button>
-
-            {fechaPasada && (
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setFecha(hoyLima())}
-                  className="text-xs font-bold text-dojo-600 underline"
-                >
-                  Volver a Hoy
-                </button>
-              </div>
-            )}
-
-            {gestionAlumno === `fecha:${fecha}` && (
-              <input
-                aria-label="Seleccionar fecha pasada"
-                type="date"
-                max={hoyLima()}
-                value={fecha}
-                onChange={(event) => {
-                  if (event.target.value && event.target.value <= hoyLima()) {
-                    setFecha(event.target.value);
-                    setGestionAlumno(null);
-                  }
-                }}
-                className="mx-auto mt-2 max-w-52"
-              />
-            )}
-          </div>
-
-          <button
-            type="button"
-            aria-label="Ir al día siguiente"
-            disabled={fecha >= hoyLima() || ocupado || cargando}
-            onClick={() => setFecha(desplazarFecha(fecha, 1))}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-dojo-50 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-40"
-          >
-            ›
-          </button>
-        </div>
+      <section className="perfil-tarjeta perfil-selector-diario space-y-4 rounded-2xl border border-gray-200 bg-white p-5">
+        <h2 className="perfil-titulo">
+          <span className="perfil-icono">
+            <IconoPerfil nombre="calendario" />
+          </span>
+          Fecha de asistencia
+        </h2>
+        <SelectorDiasAsistencia
+          fecha={fecha}
+          maximo={limite}
+          cambiar={elegirFecha}
+          disabled={cargando || ocupado}
+        />
+        <button
+          type="button"
+          disabled={ocupado || cargando}
+          onClick={cargar}
+          className="min-h-11 font-semibold text-dojo-700"
+        >
+          Actualizar asistencia
+        </button>
       </section>
 
       {cargando ? (

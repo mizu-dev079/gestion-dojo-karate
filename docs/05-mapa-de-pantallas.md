@@ -52,7 +52,7 @@ El alumno dispone de un panel propio con plan, próximo entrenamiento, clase, re
 - `NavegacionInferior.astro`, `ProtegerPagina.astro` y `CerrarSesion.astro`: navegación y sesión.
 - `TarjetaClase.jsx`, `SelectorClaseTurno.jsx` e `IndicadorCupos.jsx`: clases y selección de turno.
 - `SelectorFechaAsistencia.jsx`: calendario administrativo.
-- `SelectorDiasAsistencia.jsx`: selector horizontal del alumno, con gestos nativos, teclado y límite en la fecha actual de Lima.
+- `SelectorDiasAsistencia.jsx`: selector horizontal compartido por alumno y profesor, con gestos nativos, teclado y límite en la fecha actual de Lima.
 - `CampoContrasena.jsx`: visualización de contraseñas al escribir.
 - `ConfirmarAccion.jsx` y `Mensaje.jsx`: confirmaciones y resultado de operaciones.
 - `QrFormulario.jsx` y `CopiarEnlace.jsx`: descarga del QR y copia del enlace.
