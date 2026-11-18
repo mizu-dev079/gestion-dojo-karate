@@ -4,6 +4,7 @@ import { useSesion } from '../../hooks/useSesion.js';
 import { apiFetch, leerRespuesta } from '../../lib/api.js';
 import Mensaje from '../Mensaje.jsx';
 import { proximoEntrenamiento } from '../perfiles/alumno/utilidades.js';
+import IconoPerfil from '../perfiles/IconoPerfil.jsx';
 import AsistenciaProfesor from '../perfiles/profesor/AsistenciaProfesor.jsx';
 import SelectorFechaAsistencia from '../SelectorFechaAsistencia.jsx';
 import Asistencia from './Asistencia.jsx';
@@ -72,11 +73,46 @@ function CalendarioAlumno() {
   }
 
   return (
-    <main className="space-y-4 p-4">
+    <main
+      className="perfil-page perfil-asistencia-page space-y-5 p-4"
+      aria-busy={cargando || ocupado}
+    >
+      <header className="perfil-hero">
+        <p className="perfil-eyebrow">MI DOJO</p>
+        <h2 className="perfil-saludo">Tu entrenamiento</h2>
+        <div className="perfil-hero__pie">
+          <span className="perfil-cuenta__rol">Mi asistencia</span>
+          <span className="perfil-hero__emblema">
+            <IconoPerfil nombre="calendario" size={32} />
+          </span>
+        </div>
+      </header>
+      <nav className="perfil-accesos" aria-label="Accesos de asistencia">
+        <a href="/alumnos">
+          <IconoPerfil nombre="clase" />
+          <span>Mi plan</span>
+        </a>
+        <a href="#calendario-personal">
+          <IconoPerfil nombre="calendario" />
+          <span>Calendario</span>
+        </a>
+        <a href="/usuario">
+          <IconoPerfil nombre="cuenta" />
+          <span>Mi cuenta</span>
+        </a>
+      </nav>
       <Mensaje aviso={aviso} />
 
-      <section className="space-y-4 rounded-2xl border border-gray-200 bg-white p-4">
-        <h2 className="text-lg font-bold">Mi asistencia</h2>
+      <section
+        id="calendario-personal"
+        className="perfil-tarjeta perfil-calendario space-y-4 rounded-2xl border border-gray-200 bg-white p-5"
+      >
+        <h2 className="perfil-titulo">
+          <span className="perfil-icono">
+            <IconoPerfil nombre="calendario" />
+          </span>
+          Mi calendario
+        </h2>
 
         <SelectorFechaAsistencia fecha={fecha} cambiar={setFecha} disabled={cargando || ocupado} />
 
@@ -127,20 +163,62 @@ function CalendarioAlumno() {
                 }[asistencia.estado]
               : pausa
                 ? 'Plan congelado'
-                : 'Sin asistencia registrada';
+                : !seguimiento.plan
+                  ? 'Sin plan activo'
+                  : !sesiones.some((s) => s.alumnoId === alumno.id && s.fecha === fecha)
+                    ? 'Sin clase programada'
+                    : 'Sin asistencia registrada';
 
           return (
             <section
               key={alumno.id}
-              className="space-y-2 rounded-2xl border border-gray-200 bg-white p-4"
+              className="perfil-tarjeta space-y-3 rounded-2xl border border-gray-200 bg-white p-5"
             >
-              <h3 className="font-bold">{alumno.nombre}</h3>
+              <div className="perfil-asistencia-nombre">
+                <span className="perfil-avatar" aria-hidden="true">
+                  {alumno.nombre
+                    .trim()
+                    .split(/\s+/)
+                    .slice(0, 2)
+                    .map((n) => n[0])
+                    .join('')}
+                </span>
+                <h3 className="font-bold">{alumno.nombre}</h3>
+              </div>
 
               <p className="text-sm text-gray-600">
                 {alumno.clase?.turno ?? alumno.clase?.nivel ?? 'Clase asignada'}
               </p>
 
-              <p className="font-semibold text-dojo-700">{etiqueta}</p>
+              <p
+                className="perfil-estado"
+                data-estado={
+                  cancelada
+                    ? 'cancelada'
+                    : pausa
+                      ? 'congelado'
+                      : (asistencia?.estado ?? 'pendiente')
+                }
+              >
+                <IconoPerfil
+                  nombre={
+                    cancelada
+                      ? 'pausa'
+                      : asistencia?.estado === 'presente'
+                        ? 'presente'
+                        : 'calendario'
+                  }
+                  size={18}
+                />
+                {etiqueta}
+              </p>
+
+              {recuperada && (
+                <p className="perfil-estado">
+                  <IconoPerfil nombre="historial" size={18} />
+                  Recuperación autorizada
+                </p>
+              )}
 
               {fecha >= hoy() &&
                 seguimiento.plan &&
@@ -153,7 +231,7 @@ function CalendarioAlumno() {
                     type="button"
                     disabled={ocupado || cargando}
                     onClick={() => avisar(alumno, asistencia?.estado === 'avisada')}
-                    className="min-h-11 rounded-xl border border-dojo-600 px-3 py-2 font-semibold text-dojo-700 disabled:opacity-50"
+                    className="perfil-accion-asistencia min-h-12 rounded-xl border border-dojo-600 bg-dojo-600 px-4 py-3 font-semibold text-white disabled:opacity-50"
                   >
                     {asistencia?.estado === 'avisada' ? 'Retirar aviso' : 'Avisar ausencia'}
                   </button>

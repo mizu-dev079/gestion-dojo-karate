@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiFetch, leerRespuesta } from '../../lib/api.js';
+import CuentaPerfil from '../perfiles/CuentaPerfil.jsx';
 
 export default function Usuario() {
   const [usuario, setUsuario] = useState('');
   const [perfil, setPerfil] = useState('');
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
-  const [cambiando, setCambiando] = useState(false);
   const cargar = useCallback(async () => {
     setCargando(true);
     setError('');
@@ -26,6 +26,8 @@ export default function Usuario() {
   useEffect(() => {
     cargar();
   }, [cargar]);
+  if (!cargando && !error && ['profesor', 'alumno'].includes(perfil))
+    return <CuentaPerfil usuario={usuario} perfil={perfil} />;
   return (
     <div className="space-y-4">
       <section
@@ -44,8 +46,8 @@ export default function Usuario() {
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              stroke-width="1.7"
-              stroke-linecap="round"
+              strokeWidth="1.7"
+              strokeLinecap="round"
             >
               <circle cx="12" cy="8" r="4" />
               <path d="M4 21v-2a8 8 0 0 1 16 0v2" />
@@ -87,69 +89,6 @@ export default function Usuario() {
           </div>
         )}
       </section>
-      {perfil && perfil !== 'administrador' && (
-        <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-          <h2 className="font-bold">Cambiar mi contraseña</h2>
-          <form
-            className="mt-3 space-y-3"
-            onSubmit={async (event) => {
-              event.preventDefault();
-              const f = new FormData(event.currentTarget);
-              setCambiando(true);
-              setError('');
-              try {
-                await leerRespuesta(
-                  await apiFetch('/auth/password', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ actual: f.get('actual'), nueva: f.get('nueva') }),
-                  }),
-                  'No se pudo cambiar la contraseña.',
-                );
-                window.location.replace('/login?claveActualizada=1');
-              } catch (error) {
-                setError(error.message);
-              } finally {
-                setCambiando(false);
-              }
-            }}
-          >
-            <label className="block text-sm font-semibold">
-              Contraseña actual
-              <input
-                className="mt-1 w-full rounded-xl border border-gray-300 p-3"
-                type="password"
-                name="actual"
-                autoComplete="current-password"
-                required
-                maxLength={200}
-              />
-            </label>
-            <label className="block text-sm font-semibold">
-              Nueva contraseña
-              <input
-                className="mt-1 w-full rounded-xl border border-gray-300 p-3"
-                type="password"
-                name="nueva"
-                autoComplete="new-password"
-                required
-                minLength={8}
-                maxLength={200}
-              />
-            </label>
-            <p className="text-sm text-gray-600">
-              Usa al menos 8 caracteres. Al guardar, deberás volver a iniciar sesión.
-            </p>
-            <button
-              type="submit"
-              disabled={cambiando}
-              className="min-h-11 rounded-xl bg-dojo-600 px-4 text-white"
-            >
-              {cambiando ? 'Guardando…' : 'Cambiar contraseña'}
-            </button>
-          </form>
-        </section>
-      )}
       <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
         <h2 className="mb-3 text-base font-bold text-gray-900">Administración y ayuda</h2>
         <div className="divide-y divide-gray-100">
@@ -183,9 +122,9 @@ export default function Usuario() {
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  stroke-width="1.8"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                   aria-hidden="true"
                 >
                   <path d="m9 5 7 7-7 7" />

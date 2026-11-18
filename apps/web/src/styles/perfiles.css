@@ -338,3 +338,110 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"]) .app-bottom-nav__label
   line-height: 1.3;
   font-weight: 650;
 }
+
+/* Asistencia y cuenta comparten la misma jerarquía de las tarjetas del plan. */
+.perfil-cuenta {
+  padding: 0;
+}
+.perfil-cuenta__usuario {
+  overflow-wrap: anywhere;
+}
+.perfil-cuenta__rol {
+  display: inline-flex;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid #ffffff30;
+  border-radius: 999px;
+  color: #fff;
+  background: #ffffff0d;
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+.perfil-enlace-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 3.5rem;
+  margin-top: 0.7rem;
+  padding-block: 0.75rem;
+  font-weight: 650;
+}
+.perfil-enlace-fila svg {
+  flex-shrink: 0;
+  color: #b92323;
+}
+.perfil-asistencia-nombre {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  overflow-wrap: anywhere;
+}
+.perfil-asistencia-nombre > :last-child {
+  min-width: 0;
+}
+.perfil-asistencia-page .perfil-estado {
+  align-items: center;
+  gap: 0.45rem;
+  line-height: 1.4;
+}
+.perfil-asistencia-page .perfil-estado[data-estado="presente"] {
+  background: #262626;
+  color: #fff;
+}
+.perfil-asistencia-page .perfil-estado[data-estado="avisada"],
+.perfil-asistencia-page .perfil-estado[data-estado="falta"] {
+  background: #fff0ed;
+  color: #9e2222;
+}
+.perfil-asistencia-page .perfil-estado[data-estado="cancelada"] {
+  background: #b92323;
+  color: #fff;
+}
+.perfil-accion-asistencia {
+  display: block;
+  width: 100%;
+  margin-top: 0.8rem;
+}
+.perfil-calendario [aria-pressed="true"] {
+  box-shadow: 0 3px 8px #c6282820;
+}
+.perfil-calendario fieldset > div:last-child {
+  padding-top: 0.8rem;
+  border-top: 1px solid #eee9e5;
+}
+html:is([data-perfil="profesor"], [data-perfil="alumno"]) .cuenta-page {
+  max-width: 60rem;
+  margin-inline: auto;
+}
+html:is([data-perfil="profesor"], [data-perfil="alumno"]) .cuenta-salida {
+  border-color: #e8e3df;
+  padding: 1.25rem;
+  box-shadow: 0 3px 12px #29211a05;
+}
+html:is([data-perfil="profesor"], [data-perfil="alumno"]) .cuenta-salida > p {
+  display: none;
+}
+html:is([data-perfil="profesor"], [data-perfil="alumno"]) .cuenta-salida .user-session__button {
+  width: 100%;
+  min-height: 3rem;
+  border-radius: 0.9rem;
+  font-size: 1rem;
+}
+@media (min-width: 760px) {
+  html:is([data-perfil="profesor"], [data-perfil="alumno"]) .cuenta-page {
+    padding: 1.5rem 2rem 2rem;
+  }
+  .perfil-cuenta .perfil-hero {
+    padding: 2rem;
+  }
+  .perfil-cuenta form {
+    max-width: 34rem;
+  }
+}
+.perfil-calendario button[aria-label="Mes anterior"],
+.perfil-calendario button[aria-label="Mes siguiente"] {
+  flex: 0 0 2.75rem;
+  min-width: 2.75rem;
+  border: 1px solid #eee9e5;
+  background: #faf8f6;
+}

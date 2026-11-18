@@ -248,7 +248,7 @@ export default function AsistenciaProfesor() {
 
   return (
     <main
-      className="perfil-page perfil-profesor-page space-y-5 p-4"
+      className="perfil-page perfil-profesor-page perfil-asistencia-page space-y-5 p-4"
       aria-busy={ocupado || cargando}
     >
       <header className="perfil-hero">
@@ -287,9 +287,14 @@ export default function AsistenciaProfesor() {
       </nav>
       <Mensaje aviso={aviso} />
 
-      <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+      <section className="perfil-tarjeta perfil-calendario rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="text-base font-bold text-gray-900">Fecha de asistencia</h2>
+          <h2 className="perfil-titulo">
+            <span className="perfil-icono">
+              <IconoPerfil nombre="calendario" />
+            </span>
+            Fecha de asistencia
+          </h2>
 
           <div className="flex items-center gap-2">
             <button
@@ -548,9 +553,19 @@ export default function AsistenciaProfesor() {
                         className="perfil-asistente rounded-xl border border-gray-200 bg-white p-4"
                         data-estado={alumno.estado}
                       >
-                        <p className="font-bold">{alumno.nombre}</p>
+                        <div className="perfil-asistencia-nombre">
+                          <span className="perfil-avatar" aria-hidden="true">
+                            {alumno.nombre
+                              .trim()
+                              .split(/\s+/)
+                              .slice(0, 2)
+                              .map((n) => n[0])
+                              .join('')}
+                          </span>
+                          <p className="font-bold">{alumno.nombre}</p>
+                        </div>
 
-                        <p className="text-sm text-gray-600">
+                        <p className="perfil-estado" data-estado={alumno.estado}>
                           {etiquetas[alumno.estado] ?? alumno.estado} · {alumno.pendientes} clases
                           pendientes
                         </p>
@@ -620,7 +635,17 @@ export default function AsistenciaProfesor() {
                 key={`${alumno.id}-${asistencia.fecha}`}
                 className="space-y-2 rounded-xl border border-gray-200 p-3"
               >
-                <p className="font-bold">{alumno.nombre}</p>
+                <div className="perfil-asistencia-nombre">
+                  <span className="perfil-avatar" aria-hidden="true">
+                    {alumno.nombre
+                      .trim()
+                      .split(/\s+/)
+                      .slice(0, 2)
+                      .map((n) => n[0])
+                      .join('')}
+                  </span>
+                  <p className="font-bold">{alumno.nombre}</p>
+                </div>
                 <p className="text-sm text-gray-600">
                   {alumno.clase?.turno} · {capitalizar(fechaEspañol(asistencia.fecha))}
                 </p>
