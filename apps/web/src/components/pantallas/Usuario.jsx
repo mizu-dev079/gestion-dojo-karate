@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiFetch, leerRespuesta } from '../../lib/api.js';
+import { origenCuentaAdmin } from '../../lib/navegacionAdmin.js';
 import CuentaPerfil from '../perfiles/CuentaPerfil.jsx';
+import IconoPerfil from '../perfiles/IconoPerfil.jsx';
 
 export default function Usuario() {
   const [usuario, setUsuario] = useState('');
@@ -28,6 +30,38 @@ export default function Usuario() {
   }, [cargar]);
   if (!cargando && !error && ['profesor', 'alumno'].includes(perfil))
     return <CuentaPerfil usuario={usuario} perfil={perfil} />;
+  if (!cargando && !error && perfil === 'administrador')
+    return (
+      <div className="perfil-page space-y-4">
+        <section className="perfil-tarjeta rounded-2xl bg-white p-5">
+          <div className="perfil-titulo">
+            <span className="perfil-icono">
+              <IconoPerfil nombre="cuenta" />
+            </span>
+            <h2 className="break-all">{usuario}</h2>
+          </div>
+          <p className="mt-3 text-sm text-gray-500">Administrador</p>
+        </section>
+        <nav className="admin-cuenta-opciones" aria-label="Opciones de mi cuenta">
+          {[
+            { href: '/cuentas', nombre: 'Profesores y alumnos', icono: 'alumnos' },
+            {
+              href: `/ajustes?volver=${encodeURIComponent(origenCuentaAdmin(typeof window === 'undefined' ? '' : window.location.search))}`,
+              nombre: 'Ayuda e información',
+              icono: 'ayuda',
+            },
+          ].map((enlace) => (
+            <a key={enlace.href} href={enlace.href}>
+              <span className="perfil-icono">
+                <IconoPerfil nombre={enlace.icono} />
+              </span>
+              <span>{enlace.nombre}</span>
+              <IconoPerfil nombre="flecha" size={18} />
+            </a>
+          ))}
+        </nav>
+      </div>
+    );
   return (
     <div className="space-y-4">
       <section

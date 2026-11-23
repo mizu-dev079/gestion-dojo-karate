@@ -29,11 +29,11 @@ Los datos se guardan en una hoja de cálculo de Google. La estructura del almace
 
 ## Organización del portal
 
-La administración de personas se concentra en **Usuario → Profesores y alumnos**, con apartados individuales para profesores y alumnos. El nombre es obligatorio; teléfono y correo son opcionales. El registro manual del alumno incluye su clase y turno, y permite crear el acceso y activar el primer plan en una sola operación.
+La administración de personas se concentra en **Mi cuenta → Profesores y alumnos**, con apartados individuales para profesores y alumnos. El nombre es obligatorio; teléfono y correo son opcionales. El registro manual del alumno incluye su clase y turno, y permite crear el acceso y activar el primer plan en una sola operación.
 
 Cuando el ingreso se realiza por postulación, administración acepta la solicitud y después puede crear el acceso y activar el plan sin duplicar la inscripción ni ocupar otro cupo.
 
-**Clases** permite consultar los grupos oficiales y editar los datos de sus turnos. **Calendario** concentra la asistencia de profesores y alumnos. **Alumnos** reúne los planes, renovaciones, recuperaciones y congelamientos. La guía de uso y la versión se consultan en **Usuario → Ayuda e información**.
+**Clases** permite consultar los grupos oficiales y editar los datos de sus turnos. **Asistencia** concentra la asistencia de profesores y alumnos. **Alumnos** reúne los planes, renovaciones, recuperaciones y congelamientos. La guía de uso y la versión se consultan en **Mi cuenta → Ayuda e información**.
 
 | Perfil | Funciones disponibles |
 |---|---|
@@ -122,7 +122,7 @@ pnpm dev
 - Web: http://localhost:4321 (presenta el inicio de sesión).
 - API: http://localhost:3000 (no es la interfaz del sistema).
 
-El primer acceso de administración utiliza `ADMIN_USUARIO` y `ADMIN_PASSWORD`. Las cuentas de profesor y alumno se crean desde **Usuario → Profesores y alumnos**; no se incluyen cuentas de prueba predeterminadas. Tras iniciar sesión, administración accede a Clases, el profesor a sus alumnos y grupos, y el alumno a su plan y asistencia.
+El primer acceso de administración utiliza `ADMIN_USUARIO` y `ADMIN_PASSWORD`. Las cuentas de profesor y alumno se crean desde **Mi cuenta → Profesores y alumnos**; no se incluyen cuentas de prueba predeterminadas. Tras iniciar sesión, administración accede a Clases, el profesor a sus alumnos y grupos, y el alumno a su plan y asistencia.
 
 El arranque diario se realiza con `pnpm dev` desde la raíz del proyecto. Se inician el frontend y el backend en una sola terminal y se mantiene la compilación del paquete compartido. Los procesos se detienen con **Ctrl+C**. Cuando existe un frontend iniciado en segundo plano, se detiene con `pnpm stop:web`; también se detienen las instancias de la API abiertas por separado para liberar los puertos.
 

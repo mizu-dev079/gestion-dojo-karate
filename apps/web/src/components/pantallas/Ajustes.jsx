@@ -22,7 +22,7 @@ export default function Ajustes({ version }) {
               Administrar profesores y alumnos
             </summary>
             <p className="pb-3 leading-6">
-              Desde Usuario → Profesores y alumnos puedes crear un profesor y su acceso al mismo
+              Desde Mi cuenta → Profesores y alumnos puedes crear un profesor y su acceso al mismo
               tiempo, con nombre obligatorio y teléfono y correo opcionales. En la misma pantalla
               puedes activar, desactivar o eliminar. Desactivar permite conservar el registro para
               usarlo después; eliminar lo quita definitivamente de la lista. Las clases ya
@@ -53,7 +53,7 @@ export default function Ajustes({ version }) {
               Registrar asistencia
             </summary>
             <p className="pb-3 leading-6">
-              En Calendario se selecciona la fecha. El profesor marca su propia presencia y la de
+              En Asistencia se selecciona la fecha. El profesor marca su propia presencia y la de
               los alumnos asignados. Administración puede corregir registros o cancelar una sesión.
               Una cancelación del dojo no consume clases ni recuperaciones. Cada alumno consulta su
               asistencia y puede avisar una ausencia desde su calendario.

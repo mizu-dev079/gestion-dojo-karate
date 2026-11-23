@@ -1,0 +1,131 @@
+/* Administración comparte la identidad y los componentes visuales de los perfiles. */
+html[data-perfil="administrador"] .admin-body {
+  --app-width: 60rem;
+  --nav-height: 0rem;
+  background: #f4f3f1;
+}
+
+.admin-cabecera {
+  padding: 1rem 1rem 0;
+}
+
+.admin-hero__fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.admin-hero .perfil-saludo {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-accesos {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 1rem;
+}
+
+.admin-accesos a {
+  min-width: 0;
+  padding: 0.75rem 0.2rem;
+  font-size: 0.85rem;
+  flex-direction: row;
+  min-height: 4rem;
+}
+.admin-accesos span {
+  font-size: 0.85rem;
+  overflow-wrap: normal;
+}
+.admin-accesos svg {
+  flex-shrink: 0;
+}
+
+.admin-accesos a[aria-current="page"] {
+  color: #a61b1b;
+  background: #fff1f0;
+  border-color: #f0bcb8;
+}
+
+html[data-perfil="administrador"] .admin-content :is(main, .cuenta-page) {
+  max-width: 60rem;
+  margin-inline: auto;
+}
+
+html[data-perfil="administrador"] .admin-content :is(section, article, details).rounded-2xl {
+  border-color: #e8e2dc;
+  border-radius: 1.25rem;
+  box-shadow: 0 2px 6px #201a1405;
+}
+
+html[data-perfil="administrador"]
+  .admin-content
+  :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  border-color: #dfdbd6;
+  border-radius: 0.85rem;
+  min-height: 3rem;
+  font-size: 1rem;
+}
+
+html[data-perfil="administrador"] .admin-content :is(button, summary) {
+  min-height: 2.75rem;
+}
+
+html[data-perfil="administrador"] .admin-content summary {
+  cursor: pointer;
+  padding-block: 0.5rem;
+}
+
+.admin-alumno__resumen {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.admin-alumno__datos {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee8e3;
+}
+
+html[data-perfil="administrador"] .cuenta-salida > p {
+  display: none;
+}
+
+@media (min-width: 600px) {
+  .admin-accesos {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.admin-cuenta-opciones {
+  display: grid;
+  gap: 0.75rem;
+}
+.admin-cuenta-opciones a {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 4.5rem;
+  padding: 1rem;
+  border: 1px solid #e8e2dc;
+  border-radius: 1.25rem;
+  background: white;
+  font-weight: 650;
+}
+.admin-cuenta-opciones a > svg:last-child {
+  margin-left: auto;
+}
+.admin-alumno__resumen::after {
+  content: "⌄";
+  color: #a61b1b;
+  font-size: 1.25rem;
+}
+.admin-alumno__resumen strong {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.admin-alumno__resumen span {
+  flex-shrink: 0;
+}

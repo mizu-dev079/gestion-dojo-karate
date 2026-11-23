@@ -28,9 +28,9 @@ Las rutas están en `apps/web/src/pages/`. Los componentes indicados en la tabla
 
 **Postulaciones** permite seleccionar clase, elegir turno cuando hay más de uno y filtrar por estado. No incluye un filtro de búsqueda por nombre, correo o código. La aceptación genera inscripción y reserva de cupo; los enlaces y QR se comparten desde la clase, sin una pantalla de vista previa adicional.
 
-**Calendario** concentra la asistencia. Profesor y administración registran las sesiones y la participación de alumnos. El alumno consulta su asistencia propia con un selector horizontal de días que no permite superar hoy en America/Lima. Puede avisar o retirar una ausencia de hoy; los avisos futuros siguen disponibles desde el próximo entrenamiento en Mis clases. El calendario no administra clases ni genera convocatorias.
+**Asistencia** concentra la asistencia. Profesor y administración registran las sesiones y la participación de alumnos. El alumno consulta su asistencia propia con un selector horizontal de días que no permite superar hoy en America/Lima. Puede avisar o retirar una ausencia de hoy; los avisos futuros siguen disponibles desde el próximo entrenamiento en Mis clases. El calendario no administra clases ni genera convocatorias.
 
-**Alumnos** concentra planes, saldo, renovaciones, cambio de plan programado, recuperaciones y congelamientos. El listado administrativo de cuentas y contactos se encuentra en Usuario → Profesores y alumnos, no en esta gestión del plan.
+**Alumnos** concentra planes, saldo, renovaciones, cambio de plan programado, recuperaciones y congelamientos. El listado administrativo de cuentas y contactos se encuentra en Mi cuenta → Profesores y alumnos, no en esta gestión del plan.
 
 **Usuario** muestra la cuenta, el cambio de contraseña propio cuando corresponde, el cierre de sesión y los accesos de administración y ayuda. La guía y la versión se reúnen en Ayuda e información.
 
@@ -44,7 +44,7 @@ Administración inicia en `/clases` o en una ruta interna válida pendiente en `
 
 El alumno dispone de un panel propio con plan, próximo entrenamiento, clase, recuperaciones, congelamiento e historial. El profesor mantiene la gestión de sus alumnos en `Alumnos.jsx` y utiliza `perfiles/profesor/AsistenciaProfesor.jsx` en el calendario para su presencia, asistencia de alumnos y autorización de recuperaciones. Cada perfil conserva sus permisos. Ver [colaboración simulada](09-colaboracion-simulada.md).
 
-`ProtegerPagina.astro` comprueba la sesión antes de mostrar una página privada y adapta la navegación. La autorización real y las asignaciones se validan en la API. Profesor y alumno navegan mediante los accesos bajo la cabecera de su perfil; no utilizan barra inferior. Mi cuenta se abre desde el icono superior derecho. La pantalla principal no tiene una flecha que regrese a sí misma; las pantallas secundarias ofrecen un regreso explícito. Cuenta y Ayuda conservan el origen de Asistencia. Clases y Postulaciones, junto con la barra inferior administrativa, quedan para administración.
+`ProtegerPagina.astro` comprueba la sesión antes de mostrar una página privada y adapta la navegación. La autorización real y las asignaciones se validan en la API. Los tres perfiles navegan mediante los accesos bajo su cabecera; no utilizan barra inferior. Mi cuenta se abre desde el icono superior derecho. La pantalla principal no tiene una flecha que regrese a sí misma; las pantallas secundarias ofrecen un regreso explícito. Cuenta y Ayuda conservan el origen de Asistencia. Clases y Postulaciones quedan para administración. Sus accesos principales son Clases, Postulaciones, Asistencia y Alumnos. Las fichas de alumnos se abren para gestionar sus planes; la búsqueda está visible y los filtros adicionales se despliegan cuando se necesitan.
 
 ## Piezas compartidas
 

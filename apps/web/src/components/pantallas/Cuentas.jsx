@@ -6,6 +6,7 @@ import { apiFetch, leerRespuesta } from '../../lib/api.js';
 import CampoContrasena from '../CampoContrasena.jsx';
 import ConfirmarAccion from '../ConfirmarAccion.jsx';
 import Mensaje from '../Mensaje.jsx';
+import IconoPerfil from '../perfiles/IconoPerfil.jsx';
 import SelectorClaseTurno from '../SelectorClaseTurno.jsx';
 
 const campo = 'mt-1 min-h-11 w-full rounded-xl border border-gray-300 bg-white px-3 py-2';
@@ -25,7 +26,10 @@ const normalizarNombre = (valor) =>
 function ListadoPersonas({ tipo, busqueda, buscar, children }) {
   return (
     <section className={tarjeta}>
-      <h2 className="font-bold">
+      <h2 className="perfil-titulo">
+        <span className="perfil-icono">
+          <IconoPerfil nombre="alumnos" />
+        </span>
         {tipo === 'profesores' ? 'Profesores registrados' : 'Alumnos registrados'}
       </h2>
       <label className="block text-sm font-semibold">

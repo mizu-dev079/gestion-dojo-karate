@@ -301,6 +301,8 @@ export default function Alumnos() {
     admin = sesion.perfil === 'administrador';
   const esProfesor = sesion.perfil === 'profesor';
   const ContenedorFiltros = esProfesor ? 'details' : 'div';
+  const OpcionesFiltros = admin ? 'details' : 'div';
+  const filtrosActivos = [profesor, claseId, vista === 'todos' ? '' : vista].filter(Boolean).length;
   return (
     <main
       className={`${esProfesor ? 'perfil-page perfil-profesor-alumnos' : ''} space-y-4 px-4 pb-6 pt-4`}
@@ -337,24 +339,29 @@ export default function Alumnos() {
       <section className="space-y-3 rounded-2xl border border-gray-200 bg-white p-4">
         {!esProfesor && (
           <>
-            <h2 className="text-lg font-bold">
+            <h2 className="perfil-titulo">
+              <span className="perfil-icono">
+                <IconoPerfil nombre="alumnos" />
+              </span>
               {alumnoPropio ? 'Mis clases' : 'Planes de alumnos'}
             </h2>
 
-            <a
-              href="/calendario"
-              className="inline-flex min-h-11 items-center rounded-xl bg-dojo-600 px-4 py-2 font-semibold text-white"
-            >
-              Calendario de asistencia
-            </a>
+            {!admin && (
+              <a
+                href="/calendario"
+                className="inline-flex min-h-11 items-center rounded-xl bg-dojo-600 px-4 py-2 font-semibold text-white"
+              >
+                Asistencia
+              </a>
+            )}
           </>
         )}
         {admin && (
           <a
-            href="/cuentas"
+            href="/cuentas/alumnos"
             className="inline-flex min-h-11 items-center font-semibold text-dojo-700"
           >
-            Administrar profesores y alumnos
+            Cuentas de alumnos
           </a>
         )}
         <ContenedorFiltros className={esProfesor ? 'perfil-filtros' : 'space-y-3'}>
@@ -374,54 +381,68 @@ export default function Alumnos() {
               />
             </label>
           )}
-          {admin && (
+          <OpcionesFiltros className="space-y-3">
+            {admin && (
+              <summary className="font-semibold text-dojo-700">
+                Filtros
+                {filtrosActivos
+                  ? ` · ${filtrosActivos} ${filtrosActivos === 1 ? 'activo' : 'activos'}`
+                  : ''}
+              </summary>
+            )}
+            {admin && (
+              <label className="block text-sm font-semibold">
+                Profesor
+                <select
+                  value={profesor}
+                  onChange={(e) => setProfesor(e.target.value)}
+                  className={campo}
+                >
+                  <option value="">Todos</option>
+                  {profesores.map((p) => (
+                    <option key={p}>{p}</option>
+                  ))}
+                </select>
+              </label>
+            )}
             <label className="block text-sm font-semibold">
-              Profesor
+              Clase
               <select
-                value={profesor}
-                onChange={(e) => setProfesor(e.target.value)}
+                value={claseId}
+                onChange={(e) => setClaseId(e.target.value)}
                 className={campo}
               >
-                <option value="">Todos</option>
-                {profesores.map((p) => (
-                  <option key={p}>{p}</option>
+                <option value="">Todas</option>
+                {[
+                  ...new Map(
+                    alumnos.filter((a) => a.clase).map((a) => [a.claseId, a.clase]),
+                  ).values(),
+                ].map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {esProfesor ? (
+                      `${c.turno || c.nivel} · ${c.horaInicio}`
+                    ) : (
+                      <>
+                        {c.nivel}
+                        {c.turno ? ` · ${c.turno}` : ''} · {c.sede} · {c.horaInicio}
+                      </>
+                    )}
+                  </option>
                 ))}
               </select>
             </label>
-          )}
-          <label className="block text-sm font-semibold">
-            Clase
-            <select value={claseId} onChange={(e) => setClaseId(e.target.value)} className={campo}>
-              <option value="">Todas</option>
-              {[
-                ...new Map(
-                  alumnos.filter((a) => a.clase).map((a) => [a.claseId, a.clase]),
-                ).values(),
-              ].map((c) => (
-                <option key={c.id} value={c.id}>
-                  {esProfesor ? (
-                    `${c.turno || c.nivel} · ${c.horaInicio}`
-                  ) : (
-                    <>
-                      {c.nivel}
-                      {c.turno ? ` · ${c.turno}` : ''} · {c.sede} · {c.horaInicio}
-                    </>
-                  )}
-                </option>
-              ))}
-            </select>
-          </label>
-          {!alumnoPropio && (
-            <label className="block text-sm font-semibold">
-              Mostrar
-              <select value={vista} onChange={(e) => setVista(e.target.value)} className={campo}>
-                <option value="todos">Todos los alumnos</option>
-                <option value="sin-plan">Sin plan registrado</option>
-                <option value="congelados">Planes congelados</option>
-                <option value="faltas">Con faltas sin recuperación</option>
-              </select>
-            </label>
-          )}
+            {!alumnoPropio && (
+              <label className="block text-sm font-semibold">
+                Mostrar
+                <select value={vista} onChange={(e) => setVista(e.target.value)} className={campo}>
+                  <option value="todos">Todos los alumnos</option>
+                  <option value="sin-plan">Sin plan registrado</option>
+                  <option value="congelados">Planes congelados</option>
+                  <option value="faltas">Con faltas sin recuperación</option>
+                </select>
+              </label>
+            )}
+          </OpcionesFiltros>
           <button
             type="button"
             onClick={cargar}
@@ -444,265 +465,291 @@ export default function Alumnos() {
           pausa = s.congelamientos.at(-1),
           abrir = (accion, datos = {}) => setSeleccion({ alumnoId: alumno.id, accion, ...datos });
         return (
-          <article
+          <FichaAlumno
+            compacta={admin}
             key={alumno.id}
             className={`${esProfesor ? 'perfil-tarjeta perfil-ficha-alumno' : ''} rounded-2xl border border-gray-200 bg-white ${esProfesor ? 'p-5' : 'p-4'}`}
           >
-            <h2 className="text-lg font-bold">
-              {esProfesor && (
-                <span className="perfil-avatar" aria-hidden="true">
-                  {alumno.nombre
-                    .trim()
-                    .split(/\s+/)
-                    .slice(0, 2)
-                    .map((n) => n[0])
-                    .join('')}
+            {admin && (
+              <summary className="admin-alumno__resumen">
+                <strong>
+                  {alumno.nombre}
+                  {(s.congelado ||
+                    s.solicitudes.some((solicitud) => solicitud.estado === 'pendiente')) && (
+                    <span className="mt-1 block text-xs font-medium text-dojo-700">
+                      {s.solicitudes.some((solicitud) => solicitud.estado === 'pendiente')
+                        ? 'Solicitud pendiente'
+                        : 'Congelado'}
+                    </span>
+                  )}
+                </strong>
+                <span className="text-sm text-dojo-700">
+                  {s.plan ? `${s.pendientes} clases` : 'Sin plan'}
                 </span>
-              )}
-              {alumno.nombre}
-            </h2>
-            <p className="mt-1 text-sm text-gray-600">
-              {alumno.clase
-                ? `${alumno.clase.nivel} · ${alumno.clase.sede} · Prof. ${alumno.clase.profesor} · ${alumno.clase.horaInicio} – ${alumno.clase.horaFin}`
-                : 'La clase ya no existe. Consulta al administrador.'}
-            </p>
-            <p
-              className={esProfesor ? 'perfil-estado' : 'mt-2 font-semibold text-dojo-800'}
-              data-estado={s.congelado ? 'congelado' : s.plan ? 'activo' : 'sin-plan'}
-            >
-              {!s.plan ? 'Sin plan' : s.congelado ? 'Congelado · cupo reservado' : 'Activo'}
-              {s.plan && !esProfesor && ` · ${s.pendientes} clases pendientes`}
-            </p>
-            {esProfesor && s.plan && (
-              <p className="perfil-saldo-ficha">
-                <strong>{s.pendientes}</strong> clases pendientes
-              </p>
+              </summary>
             )}
-            {s.plan && (
+            <div className={admin ? 'admin-alumno__datos' : undefined}>
+              <h2 className="text-lg font-bold">
+                {esProfesor && (
+                  <span className="perfil-avatar" aria-hidden="true">
+                    {alumno.nombre
+                      .trim()
+                      .split(/\s+/)
+                      .slice(0, 2)
+                      .map((n) => n[0])
+                      .join('')}
+                  </span>
+                )}
+                {alumno.nombre}
+              </h2>
               <p className="mt-1 text-sm text-gray-600">
-                {s.plan.dias.join(', ')} · {s.plan.cantidad} clases por paquete
+                {alumno.clase
+                  ? `${alumno.clase.nivel} · ${alumno.clase.sede} · Prof. ${alumno.clase.profesor} · ${alumno.clase.horaInicio} – ${alumno.clase.horaFin}`
+                  : 'La clase ya no existe. Consulta al administrador.'}
               </p>
-            )}
-            {s.proximoPlan &&
-              (s.proximoPlan.cantidad !== s.plan?.cantidad ||
-                s.proximoPlan.dias.join(',') !== s.plan?.dias.join(',')) && (
-                <p className="mt-2 rounded-xl bg-dojo-50 p-3 text-sm text-dojo-800">
-                  Cambio programado: {s.proximoPlan.cantidad} clases por paquete. Se aplicará cuando
-                  se terminen las clases pendientes del plan actual.
+              <p
+                className={esProfesor ? 'perfil-estado' : 'mt-2 font-semibold text-dojo-800'}
+                data-estado={s.congelado ? 'congelado' : s.plan ? 'activo' : 'sin-plan'}
+              >
+                {!s.plan ? 'Sin plan' : s.congelado ? 'Congelado · cupo reservado' : 'Activo'}
+                {s.plan && !esProfesor && ` · ${s.pendientes} clases pendientes`}
+              </p>
+              {esProfesor && s.plan && (
+                <p className="perfil-saldo-ficha">
+                  <strong>{s.pendientes}</strong> clases pendientes
                 </p>
               )}
-            {s.congelado && (
-              <p className="mt-2 text-sm text-gray-600">
-                {pausa.hasta
-                  ? `Regresa el ${fechaVisible(pausa.hasta)}`
-                  : 'Sin fecha de regreso. Requiere reactivación manual.'}{' '}
-                · {pausa.motivo}
-              </p>
-            )}
-            <div className="mt-4 flex flex-wrap gap-2">
-              {!s.plan && admin && alumno.clase && (
-                <button
-                  type="button"
-                  disabled={ocupado}
-                  onClick={() => abrir('activarPlan')}
-                  className={boton}
-                >
-                  Activar plan
-                </button>
+              {s.plan && (
+                <p className="mt-1 text-sm text-gray-600">
+                  {s.plan.dias.join(', ')} · {s.plan.cantidad} clases por paquete
+                </p>
               )}
-              {s.plan && alumno.clase && !s.congelado && (
-                <>
-                  {admin && (
-                    <>
-                      <button
-                        type="button"
-                        disabled={ocupado}
-                        onClick={() => abrir('renovarPlan')}
-                        className={secundario}
-                      >
-                        Renovar
-                      </button>
-                      <button
-                        type="button"
-                        disabled={ocupado}
-                        onClick={() => abrir('configurarPlan')}
-                        className={secundario}
-                      >
-                        Cambiar plan
-                      </button>
-                    </>
-                  )}
-                  {alumnoPropio && (
-                    <button
-                      type="button"
-                      disabled={ocupado || s.solicitudes.some((r) => r.estado === 'pendiente')}
-                      onClick={() => abrir('solicitarCongelamiento')}
-                      className={secundario}
-                    >
-                      Solicitar congelamiento
-                    </button>
-                  )}
-                </>
+              {s.proximoPlan &&
+                (s.proximoPlan.cantidad !== s.plan?.cantidad ||
+                  s.proximoPlan.dias.join(',') !== s.plan?.dias.join(',')) && (
+                  <p className="mt-2 rounded-xl bg-dojo-50 p-3 text-sm text-dojo-800">
+                    Cambio programado: {s.proximoPlan.cantidad} clases por paquete. Se aplicará
+                    cuando se terminen las clases pendientes del plan actual.
+                  </p>
+                )}
+              {s.congelado && (
+                <p className="mt-2 text-sm text-gray-600">
+                  {pausa.hasta
+                    ? `Regresa el ${fechaVisible(pausa.hasta)}`
+                    : 'Sin fecha de regreso. Requiere reactivación manual.'}{' '}
+                  · {pausa.motivo}
+                </p>
               )}
-              {s.plan && !alumnoPropio && s.congelado && (
-                <button
-                  type="button"
-                  disabled={ocupado}
-                  onClick={() => guardar(alumno.id, { accion: 'reactivar', version: s.version })}
-                  className={boton}
-                >
-                  Reactivar
-                </button>
-              )}
-            </div>
-            {s.plan && !alumnoPropio && alumno.clase && (
-              <details className="mt-3">
-                <summary className="min-h-11 cursor-pointer py-3 font-semibold text-dojo-700">
-                  Gestionar plan
-                </summary>
-                <div className="flex flex-wrap gap-2">
-                  {!s.congelado && (
-                    <button
-                      type="button"
-                      disabled={ocupado}
-                      onClick={() => abrir('congelar')}
-                      className={secundario}
-                    >
-                      Congelar plan
-                    </button>
-                  )}
+              <div className="mt-4 flex flex-wrap gap-2">
+                {!s.plan && admin && alumno.clase && (
                   <button
                     type="button"
                     disabled={ocupado}
-                    onClick={() => abrir('recuperar')}
-                    className={secundario}
+                    onClick={() => abrir('activarPlan')}
+                    className={boton}
                   >
-                    Brindar recuperación
-                  </button>
-                </div>
-              </details>
-            )}
-            {s.solicitudes.map((r) => (
-              <section key={r.id} className="mt-4 rounded-xl border border-gray-200 p-3">
-                <h3 className="font-semibold">Solicitud de congelamiento · {r.estado}</h3>
-                <p className="text-sm">
-                  {r.motivo} ·{' '}
-                  {r.hasta ? `Regreso: ${fechaVisible(r.hasta)}` : 'Sin fecha de regreso'}
-                </p>
-                {r.respuesta && <p className="text-sm">Respuesta: {r.respuesta}</p>}
-                {!alumnoPropio && r.estado === 'pendiente' && (
-                  <button
-                    type="button"
-                    disabled={ocupado}
-                    onClick={() => abrir('resolverSolicitud', { id: r.id })}
-                    className={secundario}
-                  >
-                    Revisar solicitud
+                    Activar plan
                   </button>
                 )}
-              </section>
-            ))}
-            {seleccion?.alumnoId === alumno.id && (
-              <FormularioAccion
-                key={`${alumno.id}-${seleccion.accion}-${seleccion.id ?? ''}`}
-                alumno={alumno}
-                planes={planes}
-                seleccion={seleccion}
-                ocupado={ocupado}
-                guardar={guardar}
-                cerrar={() => setSeleccion(null)}
-              />
-            )}
-            {s.plan && (
-              <details className="mt-4">
-                <summary className="min-h-11 cursor-pointer py-3 font-semibold">
-                  Planes, recuperaciones e historial
-                </summary>
-                <h3 className="font-semibold">Activaciones y renovaciones</h3>
-                <ul className="space-y-2 text-sm">
-                  {s.pagos.map((p) => (
-                    <li key={p.id} className="rounded-lg bg-gray-50 p-3">
-                      {fechaVisible(p.fecha)} · {p.restantes} de {p.cantidad} clases pendientes ·
-                      Recuperaciones:{' '}
-                      {s.recuperaciones.filter((r) => r.pagoId === p.id && !r.revocada).length} de{' '}
-                      {base(p)} autorizadas
-                    </li>
-                  ))}
-                </ul>
-                <h3 className="mt-4 font-semibold">Recuperaciones</h3>
-                {!s.recuperaciones.length && (
-                  <p className="text-sm text-gray-600">Sin autorizaciones.</p>
-                )}
-                <ul className="space-y-3 text-sm">
-                  {s.recuperaciones.map((r) => (
-                    <li key={r.id}>
-                      {fechaVisible(r.fecha)} ·{' '}
-                      {r.revocada ? 'Revocada' : 'Autorizada: completar en el horario habitual'} ·{' '}
-                      {r.motivo} · {r.autorizadaPor}
-                      {!alumnoPropio && !r.revocada && (
+                {s.plan && alumno.clase && !s.congelado && (
+                  <>
+                    {admin && (
+                      <>
                         <button
                           type="button"
                           disabled={ocupado}
-                          onClick={() => abrir('revocarRecuperacion', { id: r.id })}
-                          className="ml-2 min-h-11 font-semibold text-dojo-700"
+                          onClick={() => abrir('renovarPlan')}
+                          className={secundario}
                         >
-                          Revocar
+                          Renovar
                         </button>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-                <h3 className="mt-4 font-semibold">Asistencia</h3>
-                {!s.asistencias.length && <p className="text-sm text-gray-600">Sin registros.</p>}
-                <ul className="space-y-2 text-sm">
-                  {s.asistencias.map((a) => (
-                    <li key={a.fecha}>
-                      {fechaVisible(a.fecha)} ·{' '}
-                      {a.estado === 'presente'
-                        ? 'Presente'
-                        : a.estado === 'avisada'
-                          ? 'Ausencia avisada'
-                          : 'Falta'}
-                      {a.estado !== 'presente' && a.politica === 'pendiente'
-                        ? ' · Registro anterior pendiente de revisión'
-                        : ''}
-                    </li>
-                  ))}
-                </ul>
-                <h3 className="mt-4 font-semibold">Congelamientos</h3>
-                {!s.congelamientos.length && (
-                  <p className="text-sm text-gray-600">Sin congelamientos.</p>
-                )}
-                <ul className="space-y-2 text-sm">
-                  {s.congelamientos.map((c) => (
-                    <li key={c.id}>
-                      {fechaVisible(c.desde)} · {c.motivo} ·{' '}
-                      {c.reactivado
-                        ? `Reactivado el ${fechaVisible(c.reactivado)}`
-                        : c.hasta
-                          ? `Regreso: ${fechaVisible(c.hasta)}`
-                          : 'Sin fecha'}
-                    </li>
-                  ))}
-                </ul>
-                {!alumnoPropio && (
-                  <>
-                    <h3 className="mt-4 font-semibold">Actividad</h3>
-                    <ul className="space-y-2 text-sm">
-                      {s.auditoria.map((a) => (
-                        <li key={a.id}>
-                          {fechaVisible(a.fecha)} · {a.usuario} · {titulos[a.accion] ?? a.accion}
-                          {a.motivo && ` · ${a.motivo}`}
-                        </li>
-                      ))}
-                    </ul>
+                        <button
+                          type="button"
+                          disabled={ocupado}
+                          onClick={() => abrir('configurarPlan')}
+                          className={secundario}
+                        >
+                          Cambiar plan
+                        </button>
+                      </>
+                    )}
+                    {alumnoPropio && (
+                      <button
+                        type="button"
+                        disabled={ocupado || s.solicitudes.some((r) => r.estado === 'pendiente')}
+                        onClick={() => abrir('solicitarCongelamiento')}
+                        className={secundario}
+                      >
+                        Solicitar congelamiento
+                      </button>
+                    )}
                   </>
                 )}
-              </details>
-            )}
-          </article>
+                {s.plan && !alumnoPropio && s.congelado && (
+                  <button
+                    type="button"
+                    disabled={ocupado}
+                    onClick={() => guardar(alumno.id, { accion: 'reactivar', version: s.version })}
+                    className={boton}
+                  >
+                    Reactivar
+                  </button>
+                )}
+              </div>
+              {s.plan && !alumnoPropio && alumno.clase && (
+                <details className="mt-3">
+                  <summary className="min-h-11 cursor-pointer py-3 font-semibold text-dojo-700">
+                    Gestionar plan
+                  </summary>
+                  <div className="flex flex-wrap gap-2">
+                    {!s.congelado && (
+                      <button
+                        type="button"
+                        disabled={ocupado}
+                        onClick={() => abrir('congelar')}
+                        className={secundario}
+                      >
+                        Congelar plan
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      disabled={ocupado}
+                      onClick={() => abrir('recuperar')}
+                      className={secundario}
+                    >
+                      Brindar recuperación
+                    </button>
+                  </div>
+                </details>
+              )}
+              {s.solicitudes.map((r) => (
+                <section key={r.id} className="mt-4 rounded-xl border border-gray-200 p-3">
+                  <h3 className="font-semibold">Solicitud de congelamiento · {r.estado}</h3>
+                  <p className="text-sm">
+                    {r.motivo} ·{' '}
+                    {r.hasta ? `Regreso: ${fechaVisible(r.hasta)}` : 'Sin fecha de regreso'}
+                  </p>
+                  {r.respuesta && <p className="text-sm">Respuesta: {r.respuesta}</p>}
+                  {!alumnoPropio && r.estado === 'pendiente' && (
+                    <button
+                      type="button"
+                      disabled={ocupado}
+                      onClick={() => abrir('resolverSolicitud', { id: r.id })}
+                      className={secundario}
+                    >
+                      Revisar solicitud
+                    </button>
+                  )}
+                </section>
+              ))}
+              {seleccion?.alumnoId === alumno.id && (
+                <FormularioAccion
+                  key={`${alumno.id}-${seleccion.accion}-${seleccion.id ?? ''}`}
+                  alumno={alumno}
+                  planes={planes}
+                  seleccion={seleccion}
+                  ocupado={ocupado}
+                  guardar={guardar}
+                  cerrar={() => setSeleccion(null)}
+                />
+              )}
+              {s.plan && (
+                <details className="mt-4">
+                  <summary className="min-h-11 cursor-pointer py-3 font-semibold">
+                    Planes, recuperaciones e historial
+                  </summary>
+                  <h3 className="font-semibold">Activaciones y renovaciones</h3>
+                  <ul className="space-y-2 text-sm">
+                    {s.pagos.map((p) => (
+                      <li key={p.id} className="rounded-lg bg-gray-50 p-3">
+                        {fechaVisible(p.fecha)} · {p.restantes} de {p.cantidad} clases pendientes ·
+                        Recuperaciones:{' '}
+                        {s.recuperaciones.filter((r) => r.pagoId === p.id && !r.revocada).length} de{' '}
+                        {base(p)} autorizadas
+                      </li>
+                    ))}
+                  </ul>
+                  <h3 className="mt-4 font-semibold">Recuperaciones</h3>
+                  {!s.recuperaciones.length && (
+                    <p className="text-sm text-gray-600">Sin autorizaciones.</p>
+                  )}
+                  <ul className="space-y-3 text-sm">
+                    {s.recuperaciones.map((r) => (
+                      <li key={r.id}>
+                        {fechaVisible(r.fecha)} ·{' '}
+                        {r.revocada ? 'Revocada' : 'Autorizada: completar en el horario habitual'} ·{' '}
+                        {r.motivo} · {r.autorizadaPor}
+                        {!alumnoPropio && !r.revocada && (
+                          <button
+                            type="button"
+                            disabled={ocupado}
+                            onClick={() => abrir('revocarRecuperacion', { id: r.id })}
+                            className="ml-2 min-h-11 font-semibold text-dojo-700"
+                          >
+                            Revocar
+                          </button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                  <h3 className="mt-4 font-semibold">Asistencia</h3>
+                  {!s.asistencias.length && <p className="text-sm text-gray-600">Sin registros.</p>}
+                  <ul className="space-y-2 text-sm">
+                    {s.asistencias.map((a) => (
+                      <li key={a.fecha}>
+                        {fechaVisible(a.fecha)} ·{' '}
+                        {a.estado === 'presente'
+                          ? 'Presente'
+                          : a.estado === 'avisada'
+                            ? 'Ausencia avisada'
+                            : 'Falta'}
+                        {a.estado !== 'presente' && a.politica === 'pendiente'
+                          ? ' · Registro anterior pendiente de revisión'
+                          : ''}
+                      </li>
+                    ))}
+                  </ul>
+                  <h3 className="mt-4 font-semibold">Congelamientos</h3>
+                  {!s.congelamientos.length && (
+                    <p className="text-sm text-gray-600">Sin congelamientos.</p>
+                  )}
+                  <ul className="space-y-2 text-sm">
+                    {s.congelamientos.map((c) => (
+                      <li key={c.id}>
+                        {fechaVisible(c.desde)} · {c.motivo} ·{' '}
+                        {c.reactivado
+                          ? `Reactivado el ${fechaVisible(c.reactivado)}`
+                          : c.hasta
+                            ? `Regreso: ${fechaVisible(c.hasta)}`
+                            : 'Sin fecha'}
+                      </li>
+                    ))}
+                  </ul>
+                  {!alumnoPropio && (
+                    <>
+                      <h3 className="mt-4 font-semibold">Actividad</h3>
+                      <ul className="space-y-2 text-sm">
+                        {s.auditoria.map((a) => (
+                          <li key={a.id}>
+                            {fechaVisible(a.fecha)} · {a.usuario} · {titulos[a.accion] ?? a.accion}
+                            {a.motivo && ` · ${a.motivo}`}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </details>
+              )}
+            </div>
+          </FichaAlumno>
         );
       })}
     </main>
   );
+}
+
+function FichaAlumno({ compacta, children, ...props }) {
+  const Elemento = compacta ? 'details' : 'article';
+  return <Elemento {...props}>{children}</Elemento>;
 }

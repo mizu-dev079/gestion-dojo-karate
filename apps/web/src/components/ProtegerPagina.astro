@@ -11,6 +11,7 @@
 
 <script>
   import { API_URL } from "../lib/api.js";
+  import { enlaceCuentaAdmin, origenCuentaAdmin } from "../lib/navegacionAdmin.js";
   import { enlaceCuenta, origenCuenta } from "../lib/navegacionPerfil.js";
 
   const mostrar = () => {
@@ -37,16 +38,36 @@
       const esPerfil = sesion.perfil !== 'administrador';
       document.querySelectorAll<HTMLElement>('[data-solo-perfiles]').forEach((elemento) => { elemento.hidden = !esPerfil; });
       const inferior = document.querySelector<HTMLElement>('.app-bottom-nav');
-      if (inferior) inferior.hidden = esPerfil;
+      if (inferior) inferior.hidden = true;
+      if (!esPerfil) {
+        const ruta = window.location.pathname.replace(/\/$/, "");
+        const cuenta = document.querySelector<HTMLAnchorElement>(".app-account");
+        if (cuenta) {
+          cuenta.hidden = ruta === "/usuario";
+          cuenta.href = enlaceCuentaAdmin(ruta === "/ajustes" ? origenCuentaAdmin(window.location.search) : ruta);
+        }
+        const atras = document.querySelector<HTMLAnchorElement>(".app-back");
+        if (atras) {
+          atras.hidden = ruta === "/clases";
+          if (ruta === "/ajustes") {
+            atras.href = enlaceCuentaAdmin(origenCuentaAdmin(window.location.search));
+            atras.title = "Volver a mi cuenta";
+            atras.setAttribute("aria-label", "Volver a mi cuenta");
+          }
+          if (ruta === "/usuario") {
+            atras.href = origenCuentaAdmin(window.location.search);
+            atras.title = "Volver";
+            atras.setAttribute("aria-label", "Volver");
+          }
+        }
+      }
       if (esPerfil) {
         const ruta = window.location.pathname.replace(/\/$/, '');
         const origen = ruta === '/calendario' ? '/calendario' : ruta === '/alumnos' ? '/alumnos' : origenCuenta(window.location.search);
         const cuenta = document.querySelector<HTMLAnchorElement>('.app-account');
         if (cuenta) {
           cuenta.href = enlaceCuenta(origen);
-          if (ruta === '/usuario') {
-            cuenta.hidden = true;
-          }
+          cuenta.hidden = ruta === '/usuario';
         }
         const atras = document.querySelector<HTMLAnchorElement>('.app-back');
         if (atras) {

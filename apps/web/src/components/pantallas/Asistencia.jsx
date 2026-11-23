@@ -3,7 +3,8 @@ import { useOperacion } from '../../hooks/useOperacion.js';
 import { useSesion } from '../../hooks/useSesion.js';
 import { apiFetch, leerRespuesta } from '../../lib/api.js';
 import Mensaje from '../Mensaje.jsx';
-import SelectorFechaAsistencia from '../SelectorFechaAsistencia.jsx';
+import IconoPerfil from '../perfiles/IconoPerfil.jsx';
+import SelectorDiasAsistencia from '../SelectorDiasAsistencia.jsx';
 
 const hoy = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(new Date());
 const campo = 'mt-1 min-h-11 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-base';
@@ -129,7 +130,21 @@ function GestionSesion({ sesion, profesores, admin, ocupado, guardar, cerrar }) 
 }
 export default function Asistencia() {
   const acceso = useSesion();
+  const [maximo, setMaximo] = useState(hoy);
   const [fecha, setFecha] = useState(hoy);
+  useEffect(() => {
+    const actualizar = () => {
+      const limite = hoy();
+      setMaximo(limite);
+      setFecha((actual) => (actual > limite ? limite : actual));
+    };
+    const intervalo = setInterval(actualizar, 60_000);
+    window.addEventListener('focus', actualizar);
+    return () => {
+      clearInterval(intervalo);
+      window.removeEventListener('focus', actualizar);
+    };
+  }, []);
   const [datos, setDatos] = useState(null);
   const [cargando, setCargando] = useState(false);
   const [gestion, setGestion] = useState(null);
@@ -207,11 +222,24 @@ export default function Asistencia() {
     <main className="space-y-4 p-4" aria-busy={ocupado || cargando}>
       <Mensaje aviso={aviso} />
       <section className="space-y-3 rounded-2xl border border-gray-200 bg-white p-4">
-        <h2 className="text-lg font-bold">
+        <h2 className="perfil-titulo">
+          <span className="perfil-icono">
+            <IconoPerfil nombre="calendario" />
+          </span>
           {admin ? 'Sesiones y asistencia' : 'Mis sesiones y asistencia'}
         </h2>
 
-        <SelectorFechaAsistencia fecha={fecha} cambiar={setFecha} disabled={ocupado || cargando} />
+        <SelectorDiasAsistencia
+          fecha={fecha}
+          maximo={maximo}
+          cambiar={(dia) => {
+            if (dia !== fecha) {
+              setCargando(true);
+              setFecha(dia);
+            }
+          }}
+          disabled={ocupado || cargando}
+        />
         <button
           className={boton}
           disabled={ocupado || cargando}

@@ -4,6 +4,7 @@ import { apiFetch, leerRespuesta } from '../../lib/api.js';
 import { agruparClases, idClase } from '../../lib/turnos.js';
 import IndicadorCupos from '../IndicadorCupos.jsx';
 import Mensaje from '../Mensaje.jsx';
+import IconoPerfil from '../perfiles/IconoPerfil.jsx';
 
 const estadoGrupo = (estado) =>
   ['aceptado', 'aprobado'].includes(estado)
@@ -187,7 +188,12 @@ export default function Postulaciones() {
         </div>
       )}
       <section className="space-y-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-        <h2 className="font-bold text-gray-900">Postulaciones recibidas</h2>
+        <h2 className="perfil-titulo">
+          <span className="perfil-icono">
+            <IconoPerfil nombre="postulaciones" />
+          </span>
+          Postulaciones recibidas
+        </h2>
         <label className="block text-sm font-medium text-gray-700" htmlFor="selectorClase">
           Clase
         </label>
