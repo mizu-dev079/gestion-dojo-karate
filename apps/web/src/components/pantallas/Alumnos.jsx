@@ -23,7 +23,6 @@ const titulos = {
   asistencia: 'Registrar asistencia',
   congelar: 'Congelar plan',
   recuperar: 'Brindar recuperación',
-  limiteRecuperaciones: 'Ajustar límite de recuperaciones',
   revocarRecuperacion: 'Revocar recuperación',
   solicitarCongelamiento: 'Solicitar congelamiento',
   resolverSolicitud: 'Resolver solicitud',
@@ -62,12 +61,6 @@ function FormularioAccion({ alumno, seleccion, ocupado, guardar, cerrar, planes 
       Object.assign(d, { hasta: f.get('hasta') || null, motivo: f.get('motivo') });
     if (accion === 'recuperar')
       Object.assign(d, { fecha: f.get('fecha'), motivo: f.get('motivo') });
-    if (accion === 'limiteRecuperaciones')
-      Object.assign(d, {
-        pagoId: f.get('pagoId'),
-        limite: Number(f.get('limite')),
-        motivo: f.get('motivo'),
-      });
     if (accion === 'revocarRecuperacion')
       Object.assign(d, { id: seleccion.id, motivo: f.get('motivo') });
     if (accion === 'resolverSolicitud')
@@ -185,27 +178,6 @@ function FormularioAccion({ alumno, seleccion, ocupado, guardar, cerrar, planes 
             </p>
           </>
         )}
-        {accion === 'limiteRecuperaciones' && (
-          <>
-            <label className="block text-sm font-semibold">
-              Paquete
-              <select name="pagoId" required className={campo}>
-                {s.pagos.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {fechaVisible(p.fecha)} · {p.cantidad} clases · Límite actual {base(p)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block text-sm font-semibold">
-              Nuevo límite
-              <input name="limite" type="number" min="0" max="12" required className={campo} />
-            </label>
-            <p className="text-sm text-gray-600">
-              El cambio afecta solo al paquete elegido y queda registrado con tu motivo.
-            </p>
-          </>
-        )}
         {accion === 'resolverSolicitud' && (
           <label className="block text-sm font-semibold">
             Decisión
@@ -219,7 +191,6 @@ function FormularioAccion({ alumno, seleccion, ocupado, guardar, cerrar, planes 
           'congelar',
           'solicitarCongelamiento',
           'recuperar',
-          'limiteRecuperaciones',
           'revocarRecuperacion',
           'resolverSolicitud',
         ].includes(accion) && (
@@ -607,14 +578,6 @@ export default function Alumnos() {
                     className={secundario}
                   >
                     Brindar recuperación
-                  </button>
-                  <button
-                    type="button"
-                    disabled={ocupado}
-                    onClick={() => abrir('limiteRecuperaciones')}
-                    className={secundario}
-                  >
-                    Ajustar límite
                   </button>
                 </div>
               </details>

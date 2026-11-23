@@ -1,6 +1,6 @@
-import Alumnos from '../../pantallas/Alumnos.jsx';
+import MisClases from './MisClases.jsx';
 
-// Mantener los componentes propios de este perfil en esta carpeta.
+// Componente principal del perfil profesor: gestión de alumnos a través de sus clases asignadas.
 export default function PanelProfesor() {
-  return <Alumnos />;
+  return <MisClases />;
 }

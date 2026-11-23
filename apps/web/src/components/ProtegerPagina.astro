@@ -44,18 +44,20 @@
         const cuenta = document.querySelector<HTMLAnchorElement>('.app-account');
         if (cuenta) {
           cuenta.href = enlaceCuenta(origen);
-          if (ruta === '/usuario') cuenta.setAttribute('aria-current', 'page');
+          if (ruta === '/usuario') {
+            cuenta.hidden = true;
+          }
         }
         const atras = document.querySelector<HTMLAnchorElement>('.app-back');
         if (atras) {
           atras.hidden = ruta === '/alumnos';
           const destino = ruta === '/usuario' ? origen : ruta === '/ajustes' ? enlaceCuenta(origen) : '/alumnos';
-          const etiqueta = ruta === '/ajustes' ? 'Volver a mi cuenta' : destino === '/calendario' ? 'Volver a asistencia' : sesion.perfil === 'alumno' ? 'Volver a mis clases' : 'Volver a mis alumnos';
+          const etiqueta = ruta === '/ajustes' ? 'Volver a mi cuenta' : destino === '/calendario' ? 'Volver a asistencia' : 'Volver a mis clases';
           atras.href = destino;
           atras.setAttribute('aria-label', etiqueta);
           atras.title = etiqueta;
         }
-        const titulos: Record<string, string> = { '/alumnos': sesion.perfil === 'alumno' ? 'Mis clases' : 'Mis alumnos', '/calendario': 'Asistencia', '/usuario': 'Mi cuenta' };
+        const titulos: Record<string, string> = { '/alumnos': 'Mis clases', '/calendario': 'Asistencia', '/usuario': 'Mi cuenta' };
         const titulo = titulos[ruta];
         if (titulo) {
           const encabezado = document.querySelector('.app-header__title h1');
