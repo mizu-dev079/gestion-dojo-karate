@@ -1,6 +1,7 @@
+import { etiquetaTurno } from '../../../lib/clases.js';
+import { chip, etiqueta } from '../../../lib/estilos.js';
+import { primerNombre } from '../../../lib/seguimiento.js';
 import IconoPerfil from '../IconoPerfil.jsx';
-import { chip, etiqueta } from './estilos.js';
-import { primerNombre } from './utilidades.js';
 
 export default function Bienvenida({ alumno }) {
   const s = alumno.seguimiento;
@@ -13,7 +14,10 @@ export default function Bienvenida({ alumno }) {
     <header className="perfil-hero">
       <h2 className="perfil-saludo">Hola, {primerNombre(alumno.nombre)}</h2>
       {alumno.clase && (
-        <p className="mt-1 text-sm text-gray-300">{alumno.clase.turno ?? alumno.clase.nivel}</p>
+        <p className="mt-1 text-sm text-gray-300">
+          {alumno.clase.nivel}
+          {etiquetaTurno(alumno.clase) !== 'Horario' && ` · ${etiquetaTurno(alumno.clase)}`}
+        </p>
       )}
       <div className="perfil-hero__pie">
         <span className={`${chip} ${estado.estilo}`}>{estado.texto}</span>

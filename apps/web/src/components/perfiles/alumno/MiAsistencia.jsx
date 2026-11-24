@@ -1,7 +1,5 @@
 import { useState } from 'react';
-import ConfirmarAccion from '../../ConfirmarAccion.jsx';
-import IconoPerfil from '../IconoPerfil.jsx';
-import { botonSecundario, enlace, tarjeta, tituloTarjeta } from './estilos.js';
+import { botonSecundario, enlace, tarjeta, tituloTarjeta } from '../../../lib/estilos.js';
 import {
   avisosVigentes,
   congelamientoActual,
@@ -10,7 +8,9 @@ import {
   estadoAsistencia,
   fechaVisible,
   proximoEntrenamiento,
-} from './utilidades.js';
+} from '../../../lib/seguimiento.js';
+import ConfirmarAccion from '../../ConfirmarAccion.jsx';
+import IconoPerfil from '../IconoPerfil.jsx';
 
 function nombreDia(fecha, hoy) {
   if (fecha === hoy) return 'Hoy';

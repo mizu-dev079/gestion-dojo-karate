@@ -1,217 +1,19 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useActualizarAlVolver } from '../../hooks/useActualizarAlVolver.js';
 import { useOperacion } from '../../hooks/useOperacion.js';
 import { useSesion } from '../../hooks/useSesion.js';
 import { apiFetch, leerRespuesta } from '../../lib/api.js';
+import { fechaVisible } from '../../lib/fechas.js';
+import { limiteRecuperaciones as base } from '../../lib/seguimiento.js';
+import FormularioAccion, { titulos } from '../FormularioAccion.jsx';
 import Mensaje from '../Mensaje.jsx';
 import IconoPerfil from '../perfiles/IconoPerfil.jsx';
 
-const hoy = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(new Date());
 const campo = 'mt-1 min-h-11 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-base';
 const boton =
   'min-h-11 rounded-xl bg-dojo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-dojo-700 disabled:opacity-50';
 const secundario =
   'min-h-11 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-semibold disabled:opacity-50';
-const fechaVisible = (f) =>
-  new Intl.DateTimeFormat('es-PE', { dateStyle: 'medium', timeZone: 'UTC' }).format(
-    new Date(`${f}T00:00:00Z`),
-  );
-const base = (p) => p.limiteRecuperaciones ?? (p.cantidad === 4 ? 1 : 2);
-const titulos = {
-  activarPlan: 'Activar plan',
-  configurarPlan: 'Cambiar plan',
-  renovarPlan: 'Renovar plan',
-  asistencia: 'Registrar asistencia',
-  congelar: 'Congelar plan',
-  recuperar: 'Brindar recuperación',
-  revocarRecuperacion: 'Revocar recuperación',
-  solicitarCongelamiento: 'Solicitar congelamiento',
-  resolverSolicitud: 'Resolver solicitud',
-  retirarAviso: 'Retirar aviso de ausencia',
-};
-
-function FormularioAccion({ alumno, seleccion, ocupado, guardar, cerrar, planes }) {
-  const s = alumno.seguimiento;
-  const accion = seleccion.accion;
-  const planElegido = accion === 'configurarPlan' ? (s.proximoPlan ?? s.plan) : s.plan;
-  const [cantidad, setCantidad] = useState(
-    String(
-      planes.some((p) => p.cantidad === planElegido?.cantidad)
-        ? planElegido.cantidad
-        : (planes.find((p) => p.cantidad === 8)?.cantidad ?? planes[0]?.cantidad ?? ''),
-    ),
-  );
-  const faltas = s.asistencias.filter(
-    (a) =>
-      a.estado !== 'presente' &&
-      a.fecha <= hoy() &&
-      !s.recuperaciones.some((r) => r.fecha === a.fecha && !r.revocada),
-  );
-  async function enviar(e) {
-    e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    const d = { accion, version: s.version };
-    if (['activarPlan', 'configurarPlan'].includes(accion))
-      Object.assign(d, {
-        cantidad: Number(cantidad),
-        dias: f.getAll('dias'),
-      });
-    if (['activarPlan', 'renovarPlan'].includes(accion))
-      Object.assign(d, { fecha: f.get('fecha') });
-    if (['congelar', 'solicitarCongelamiento'].includes(accion))
-      Object.assign(d, { hasta: f.get('hasta') || null, motivo: f.get('motivo') });
-    if (accion === 'recuperar')
-      Object.assign(d, { fecha: f.get('fecha'), motivo: f.get('motivo') });
-    if (accion === 'revocarRecuperacion')
-      Object.assign(d, { id: seleccion.id, motivo: f.get('motivo') });
-    if (accion === 'resolverSolicitud')
-      Object.assign(d, {
-        id: seleccion.id,
-        aprobar: f.get('aprobar') === 'si',
-        motivo: f.get('motivo'),
-      });
-    await guardar(alumno.id, d);
-  }
-  return (
-    <form
-      onSubmit={enviar}
-      className="mt-4 space-y-4 rounded-xl border border-dojo-200 bg-dojo-50 p-4"
-    >
-      <h3 className="font-bold">{titulos[accion]}</h3>
-      <fieldset disabled={ocupado} className="space-y-4">
-        {['activarPlan', 'configurarPlan'].includes(accion) && (
-          <>
-            <label className="block text-sm font-semibold">
-              Plan de clases
-              <select
-                value={cantidad}
-                onChange={(e) => {
-                  setCantidad(e.target.value);
-                }}
-                className={campo}
-              >
-                {planes.map((p) => (
-                  <option key={p.id} value={p.cantidad}>
-                    {p.cantidad} clases continuas
-                  </option>
-                ))}
-              </select>
-            </label>
-            <p className="text-sm text-gray-600">
-              Límite inicial:{' '}
-              {planes.find((p) => p.cantidad === Number(cantidad))?.recuperaciones ?? 0}{' '}
-              recuperaciones por paquete, por inasistencias justificadas y con autorización manual.
-              Las clases se conservan hasta completarlas.{' '}
-              {accion === 'configurarPlan' &&
-                'El nuevo plan se mostrará cuando se terminen las clases pendientes. No se añaden clases hasta renovar.'}
-            </p>
-            <fieldset>
-              <legend className="font-semibold">Días del alumno</legend>
-              <div className="flex flex-wrap gap-3">
-                {(alumno.clase?.frecuencia ?? []).map((dia) => (
-                  <label key={dia} className="flex min-h-11 items-center gap-2">
-                    <input
-                      type="checkbox"
-                      name="dias"
-                      value={dia}
-                      defaultChecked={(planElegido?.dias ?? alumno.clase.frecuencia).includes(dia)}
-                      className="h-5 w-5 accent-dojo-600"
-                    />
-                    {dia}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-          </>
-        )}
-        {['activarPlan', 'renovarPlan'].includes(accion) && (
-          <>
-            <p className="text-sm text-gray-600">
-              Habilita las clases del paquete.{' '}
-              {accion === 'renovarPlan' &&
-                `Se habilitarán ${(s.proximoPlan ?? s.plan).cantidad} clases. Se conservan ${s.pendientes} clases pendientes y se consumen primero.`}
-            </p>
-            <label className="block text-sm font-semibold">
-              Fecha de activación
-              <input
-                name="fecha"
-                type="date"
-                required
-                defaultValue={hoy()}
-                max={hoy()}
-                className={campo}
-              />
-            </label>
-          </>
-        )}
-        {['congelar', 'solicitarCongelamiento'].includes(accion) && (
-          <>
-            <p className="text-sm text-gray-600">
-              {accion === 'solicitarCongelamiento'
-                ? 'El profesor o administrador revisará tu solicitud. El plan seguirá activo hasta su aprobación.'
-                : 'Se pausa el plan conservando las clases pendientes y el cupo.'}
-            </p>
-            <label className="block text-sm font-semibold">
-              Fecha de regreso (opcional)
-              <input name="hasta" type="date" min={hoy()} className={campo} />
-            </label>
-            <p className="text-sm text-gray-600">
-              Sin fecha, se mantiene congelado hasta que el profesor o administrador lo reactive.
-            </p>
-          </>
-        )}
-        {accion === 'recuperar' && (
-          <>
-            <label className="block text-sm font-semibold">
-              Falta a recuperar
-              <select name="fecha" required className={campo} defaultValue="">
-                <option value="">Selecciona una falta registrada</option>
-                {faltas.map((a) => (
-                  <option key={a.fecha} value={a.fecha}>
-                    {fechaVisible(a.fecha)} · {a.estado === 'avisada' ? 'Avisada' : 'Falta'}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <p className="text-sm text-gray-600">
-              Se aplaza esa clase al siguiente día habitual. No se añaden clases al plan ni se
-              registra presencia automáticamente.
-            </p>
-          </>
-        )}
-        {accion === 'resolverSolicitud' && (
-          <label className="block text-sm font-semibold">
-            Decisión
-            <select name="aprobar" className={campo}>
-              <option value="si">Aprobar congelamiento solicitado</option>
-              <option value="no">Rechazar solicitud</option>
-            </select>
-          </label>
-        )}
-        {[
-          'congelar',
-          'solicitarCongelamiento',
-          'recuperar',
-          'revocarRecuperacion',
-          'resolverSolicitud',
-        ].includes(accion) && (
-          <label className="block text-sm font-semibold">
-            Motivo
-            <textarea name="motivo" required maxLength={300} className={campo} />
-          </label>
-        )}
-        <div className="flex flex-wrap gap-2">
-          <button type="submit" className={boton}>
-            {ocupado ? 'Guardando…' : titulos[accion]}
-          </button>
-          <button type="button" onClick={cerrar} className={secundario}>
-            Cancelar
-          </button>
-        </div>
-      </fieldset>
-    </form>
-  );
-}
-
 export default function Alumnos() {
   const sesion = useSesion();
   const [alumnos, setAlumnos] = useState([]);
@@ -223,44 +25,54 @@ export default function Alumnos() {
   const [vista, setVista] = useState('todos');
   const [claseId, setClaseId] = useState('');
   const [seleccion, setSeleccion] = useState(null);
+  const cargaActual = useRef(0);
   const { ocupado, aviso, setAviso, ejecutar } = useOperacion();
-  const cargar = useCallback(async () => {
-    setCargando(true);
-    setProfesores([]);
-    try {
-      const [datos, listaProfesores, catalogo] = await Promise.all([
-        apiFetch('/alumnos', { cache: 'no-store' }).then((r) =>
-          leerRespuesta(r, 'No se pudieron cargar los alumnos.'),
-        ),
-        sesion?.perfil === 'administrador'
-          ? apiFetch('/profesores', { cache: 'no-store' }).then((r) =>
-              leerRespuesta(r, 'No se pudieron cargar los profesores registrados.'),
-            )
-          : Promise.resolve([]),
-        apiFetch('/planes', { cache: 'no-store' }).then((r) =>
-          leerRespuesta(r, 'No se pudieron cargar los planes oficiales.'),
-        ),
-      ]);
-      const actuales = [
-        ...new Set(
-          listaProfesores.filter((p) => p.estado === 'activo' && p.nombre).map((p) => p.nombre),
-        ),
-      ].sort();
-      setAlumnos(datos);
-      setPlanes(catalogo);
-      setProfesores(actuales);
-      setProfesor((seleccionado) => (actuales.includes(seleccionado) ? seleccionado : ''));
-    } catch (error) {
-      setProfesor('');
-      setAviso({ tipo: 'error', texto: error.message });
-    } finally {
-      setCargando(false);
-    }
-  }, [sesion, setAviso]);
+  const cargar = useCallback(
+    async ({ silencioso = false } = {}) => {
+      const carga = ++cargaActual.current;
+      if (!silencioso) setCargando(true);
+      try {
+        const [datos, listaProfesores, catalogo] = await Promise.all([
+          apiFetch('/alumnos', { cache: 'no-store' }).then((r) =>
+            leerRespuesta(r, 'No se pudieron cargar los alumnos.'),
+          ),
+          apiFetch('/profesores', { cache: 'no-store' }).then((r) =>
+            leerRespuesta(r, 'No se pudieron cargar los profesores registrados.'),
+          ),
+          apiFetch('/planes', { cache: 'no-store' }).then((r) =>
+            leerRespuesta(r, 'No se pudieron cargar los planes oficiales.'),
+          ),
+        ]);
+        if (carga !== cargaActual.current) return;
+        const actuales = [
+          ...new Set(
+            listaProfesores.filter((p) => p.estado === 'activo' && p.nombre).map((p) => p.nombre),
+          ),
+        ].sort();
+        setAlumnos(datos);
+        setPlanes(catalogo);
+        setProfesores(actuales);
+        setProfesor((seleccionado) => (actuales.includes(seleccionado) ? seleccionado : ''));
+      } catch (error) {
+        if (carga !== cargaActual.current) return;
+        setProfesor('');
+        setAviso({ tipo: 'error', texto: error.message });
+      } finally {
+        if (carga === cargaActual.current) setCargando(false);
+      }
+    },
+    [setAviso],
+  );
   useEffect(() => {
-    if (sesion) cargar();
+    if (sesion?.perfil === 'administrador') cargar();
+    return () => {
+      cargaActual.current += 1;
+    };
   }, [sesion, cargar]);
+  useActualizarAlVolver(cargar, ocupado || Boolean(seleccion), sesion?.perfil === 'administrador');
   async function guardar(id, datos) {
+    cargaActual.current += 1;
+    setCargando(false);
     const ok = await ejecutar(async () => {
       const seguimiento = await leerRespuesta(
         await apiFetch(`/alumnos/${id}`, {
@@ -274,6 +86,7 @@ export default function Alumnos() {
       return 'Registro guardado correctamente.';
     });
     if (ok) setSeleccion(null);
+    return ok;
   }
   const visibles = alumnos.filter((a) => {
     const s = a.seguimiento;
@@ -297,114 +110,54 @@ export default function Alumnos() {
         Cargando tu perfil…
       </p>
     );
-  const alumnoPropio = sesion.perfil === 'alumno',
-    admin = sesion.perfil === 'administrador';
-  const esProfesor = sesion.perfil === 'profesor';
-  const ContenedorFiltros = esProfesor ? 'details' : 'div';
-  const OpcionesFiltros = admin ? 'details' : 'div';
+  if (sesion.perfil !== 'administrador') return null;
   const filtrosActivos = [profesor, claseId, vista === 'todos' ? '' : vista].filter(Boolean).length;
   return (
-    <main
-      className={`${esProfesor ? 'perfil-page perfil-profesor-alumnos' : ''} space-y-4 px-4 pb-6 pt-4`}
-      aria-busy={cargando || ocupado}
-    >
-      {esProfesor && (
-        <header className="perfil-hero">
-          <p className="perfil-eyebrow">ÁREA DEL PROFESOR</p>
-          <h2 className="perfil-saludo">Tu grupo</h2>
-          <div className="perfil-resumen">
-            <div>
-              <strong>{cargando ? '—' : alumnos.length}</strong>
-              <span>Alumnos</span>
-            </div>
-            <div>
-              <strong>
-                {cargando
-                  ? '—'
-                  : alumnos.filter((a) =>
-                      a.seguimiento.solicitudes.some((s) => s.estado === 'pendiente'),
-                    ).length}
-              </strong>
-              <span>Solicitudes por revisar</span>
-            </div>
-          </div>
-          <a href="/calendario" className="perfil-hero__accion">
-            <IconoPerfil nombre="calendario" />
-            Registrar asistencia
-            <IconoPerfil nombre="flecha" />
-          </a>
-        </header>
-      )}
+    <main className="space-y-4 px-4 pb-6 pt-4" aria-busy={cargando || ocupado}>
       <Mensaje aviso={aviso} />
       <section className="space-y-3 rounded-2xl border border-gray-200 bg-white p-4">
-        {!esProfesor && (
-          <>
-            <h2 className="perfil-titulo">
-              <span className="perfil-icono">
-                <IconoPerfil nombre="alumnos" />
-              </span>
-              {alumnoPropio ? 'Mis clases' : 'Planes de alumnos'}
-            </h2>
-
-            {!admin && (
-              <a
-                href="/calendario"
-                className="inline-flex min-h-11 items-center rounded-xl bg-dojo-600 px-4 py-2 font-semibold text-white"
-              >
-                Asistencia
-              </a>
-            )}
-          </>
-        )}
-        {admin && (
-          <a
-            href="/cuentas/alumnos"
-            className="inline-flex min-h-11 items-center font-semibold text-dojo-700"
-          >
-            Cuentas de alumnos
-          </a>
-        )}
-        <ContenedorFiltros className={esProfesor ? 'perfil-filtros' : 'space-y-3'}>
-          {esProfesor && (
-            <summary>
-              Buscar y filtrar alumnos<span aria-hidden="true">⌄</span>
+        <h2 className="perfil-titulo">
+          <span className="perfil-icono">
+            <IconoPerfil nombre="alumnos" />
+          </span>
+          Planes de alumnos
+        </h2>
+        <a
+          href="/cuentas/alumnos"
+          className="inline-flex min-h-11 items-center font-semibold text-dojo-700"
+        >
+          Cuentas de alumnos
+        </a>
+        <div className="space-y-3">
+          <label className="block text-sm font-semibold">
+            Buscar alumno
+            <input
+              type="search"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              className={campo}
+            />
+          </label>
+          <details className="space-y-3">
+            <summary className="font-semibold text-dojo-700">
+              Filtros
+              {filtrosActivos
+                ? ` · ${filtrosActivos} ${filtrosActivos === 1 ? 'activo' : 'activos'}`
+                : ''}
             </summary>
-          )}
-          {!alumnoPropio && (
             <label className="block text-sm font-semibold">
-              Buscar alumno
-              <input
-                type="search"
-                value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
+              Profesor
+              <select
+                value={profesor}
+                onChange={(e) => setProfesor(e.target.value)}
                 className={campo}
-              />
+              >
+                <option value="">Todos</option>
+                {profesores.map((p) => (
+                  <option key={p}>{p}</option>
+                ))}
+              </select>
             </label>
-          )}
-          <OpcionesFiltros className="space-y-3">
-            {admin && (
-              <summary className="font-semibold text-dojo-700">
-                Filtros
-                {filtrosActivos
-                  ? ` · ${filtrosActivos} ${filtrosActivos === 1 ? 'activo' : 'activos'}`
-                  : ''}
-              </summary>
-            )}
-            {admin && (
-              <label className="block text-sm font-semibold">
-                Profesor
-                <select
-                  value={profesor}
-                  onChange={(e) => setProfesor(e.target.value)}
-                  className={campo}
-                >
-                  <option value="">Todos</option>
-                  {profesores.map((p) => (
-                    <option key={p}>{p}</option>
-                  ))}
-                </select>
-              </label>
-            )}
             <label className="block text-sm font-semibold">
               Clase
               <select
@@ -419,30 +172,22 @@ export default function Alumnos() {
                   ).values(),
                 ].map((c) => (
                   <option key={c.id} value={c.id}>
-                    {esProfesor ? (
-                      `${c.turno || c.nivel} · ${c.horaInicio}`
-                    ) : (
-                      <>
-                        {c.nivel}
-                        {c.turno ? ` · ${c.turno}` : ''} · {c.sede} · {c.horaInicio}
-                      </>
-                    )}
+                    {c.nivel}
+                    {c.turno ? ` · ${c.turno}` : ''} · {c.sede} · {c.horaInicio}
                   </option>
                 ))}
               </select>
             </label>
-            {!alumnoPropio && (
-              <label className="block text-sm font-semibold">
-                Mostrar
-                <select value={vista} onChange={(e) => setVista(e.target.value)} className={campo}>
-                  <option value="todos">Todos los alumnos</option>
-                  <option value="sin-plan">Sin plan registrado</option>
-                  <option value="congelados">Planes congelados</option>
-                  <option value="faltas">Con faltas sin recuperación</option>
-                </select>
-              </label>
-            )}
-          </OpcionesFiltros>
+            <label className="block text-sm font-semibold">
+              Mostrar
+              <select value={vista} onChange={(e) => setVista(e.target.value)} className={campo}>
+                <option value="todos">Todos los alumnos</option>
+                <option value="sin-plan">Sin plan registrado</option>
+                <option value="congelados">Planes congelados</option>
+                <option value="faltas">Con faltas sin recuperación</option>
+              </select>
+            </label>
+          </details>
           <button
             type="button"
             onClick={cargar}
@@ -451,74 +196,51 @@ export default function Alumnos() {
           >
             {cargando ? 'Cargando…' : 'Actualizar datos'}
           </button>
-        </ContenedorFiltros>
+        </div>
       </section>
       {!cargando && !visibles.length && (
-        <p className="rounded-xl bg-white p-4 text-gray-600">
-          {alumnoPropio
-            ? 'No tienes inscripciones activas asignadas. Consulta al administrador.'
-            : 'No hay alumnos para estos filtros.'}
-        </p>
+        <p className="rounded-xl bg-white p-4 text-gray-600">No hay alumnos para estos filtros.</p>
       )}
       {visibles.map((alumno) => {
         const s = alumno.seguimiento,
           pausa = s.congelamientos.at(-1),
           abrir = (accion, datos = {}) => setSeleccion({ alumnoId: alumno.id, accion, ...datos });
         return (
-          <FichaAlumno
-            compacta={admin}
+          <details
             key={alumno.id}
-            className={`${esProfesor ? 'perfil-tarjeta perfil-ficha-alumno' : ''} rounded-2xl border border-gray-200 bg-white ${esProfesor ? 'p-5' : 'p-4'}`}
+            className={`rounded-2xl border border-gray-200 bg-white ${'p-4'}`}
           >
-            {admin && (
-              <summary className="admin-alumno__resumen">
-                <strong>
-                  {alumno.nombre}
-                  {(s.congelado ||
-                    s.solicitudes.some((solicitud) => solicitud.estado === 'pendiente')) && (
-                    <span className="mt-1 block text-xs font-medium text-dojo-700">
-                      {s.solicitudes.some((solicitud) => solicitud.estado === 'pendiente')
-                        ? 'Solicitud pendiente'
-                        : 'Congelado'}
-                    </span>
-                  )}
-                </strong>
-                <span className="text-sm text-dojo-700">
-                  {s.plan ? `${s.pendientes} clases` : 'Sin plan'}
-                </span>
-              </summary>
-            )}
-            <div className={admin ? 'admin-alumno__datos' : undefined}>
-              <h2 className="text-lg font-bold">
-                {esProfesor && (
-                  <span className="perfil-avatar" aria-hidden="true">
-                    {alumno.nombre
-                      .trim()
-                      .split(/\s+/)
-                      .slice(0, 2)
-                      .map((n) => n[0])
-                      .join('')}
+            <summary className="admin-alumno__resumen">
+              <strong>
+                {alumno.nombre}
+                {(s.congelado ||
+                  s.solicitudes.some((solicitud) => solicitud.estado === 'pendiente')) && (
+                  <span className="mt-1 block text-xs font-medium text-dojo-700">
+                    {s.solicitudes.some((solicitud) => solicitud.estado === 'pendiente')
+                      ? 'Solicitud pendiente'
+                      : 'Congelado'}
                   </span>
                 )}
-                {alumno.nombre}
-              </h2>
+              </strong>
+              <span className="text-sm text-dojo-700">
+                {s.plan ? `${s.pendientes} clases` : 'Sin plan'}
+              </span>
+            </summary>
+            <div className="admin-alumno__datos">
+              <h2 className="text-lg font-bold">{alumno.nombre}</h2>
               <p className="mt-1 text-sm text-gray-600">
                 {alumno.clase
                   ? `${alumno.clase.nivel} · ${alumno.clase.sede} · Prof. ${alumno.clase.profesor} · ${alumno.clase.horaInicio} – ${alumno.clase.horaFin}`
                   : 'La clase ya no existe. Consulta al administrador.'}
               </p>
               <p
-                className={esProfesor ? 'perfil-estado' : 'mt-2 font-semibold text-dojo-800'}
+                className="mt-2 font-semibold text-dojo-800"
                 data-estado={s.congelado ? 'congelado' : s.plan ? 'activo' : 'sin-plan'}
               >
                 {!s.plan ? 'Sin plan' : s.congelado ? 'Congelado · cupo reservado' : 'Activo'}
-                {s.plan && !esProfesor && ` · ${s.pendientes} clases pendientes`}
+                {s.plan && ` · ${s.pendientes} clases pendientes`}
               </p>
-              {esProfesor && s.plan && (
-                <p className="perfil-saldo-ficha">
-                  <strong>{s.pendientes}</strong> clases pendientes
-                </p>
-              )}
+
               {s.plan && (
                 <p className="mt-1 text-sm text-gray-600">
                   {s.plan.dias.join(', ')} · {s.plan.cantidad} clases por paquete
@@ -541,7 +263,7 @@ export default function Alumnos() {
                 </p>
               )}
               <div className="mt-4 flex flex-wrap gap-2">
-                {!s.plan && admin && alumno.clase && (
+                {!s.plan && alumno.clase && (
                   <button
                     type="button"
                     disabled={ocupado}
@@ -553,39 +275,25 @@ export default function Alumnos() {
                 )}
                 {s.plan && alumno.clase && !s.congelado && (
                   <>
-                    {admin && (
-                      <>
-                        <button
-                          type="button"
-                          disabled={ocupado}
-                          onClick={() => abrir('renovarPlan')}
-                          className={secundario}
-                        >
-                          Renovar
-                        </button>
-                        <button
-                          type="button"
-                          disabled={ocupado}
-                          onClick={() => abrir('configurarPlan')}
-                          className={secundario}
-                        >
-                          Cambiar plan
-                        </button>
-                      </>
-                    )}
-                    {alumnoPropio && (
-                      <button
-                        type="button"
-                        disabled={ocupado || s.solicitudes.some((r) => r.estado === 'pendiente')}
-                        onClick={() => abrir('solicitarCongelamiento')}
-                        className={secundario}
-                      >
-                        Solicitar congelamiento
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      disabled={ocupado}
+                      onClick={() => abrir('renovarPlan')}
+                      className={secundario}
+                    >
+                      Renovar
+                    </button>
+                    <button
+                      type="button"
+                      disabled={ocupado}
+                      onClick={() => abrir('configurarPlan')}
+                      className={secundario}
+                    >
+                      Cambiar plan
+                    </button>
                   </>
                 )}
-                {s.plan && !alumnoPropio && s.congelado && (
+                {s.plan && s.congelado && (
                   <button
                     type="button"
                     disabled={ocupado}
@@ -596,7 +304,7 @@ export default function Alumnos() {
                   </button>
                 )}
               </div>
-              {s.plan && !alumnoPropio && alumno.clase && (
+              {s.plan && alumno.clase && (
                 <details className="mt-3">
                   <summary className="min-h-11 cursor-pointer py-3 font-semibold text-dojo-700">
                     Gestionar plan
@@ -631,7 +339,7 @@ export default function Alumnos() {
                     {r.hasta ? `Regreso: ${fechaVisible(r.hasta)}` : 'Sin fecha de regreso'}
                   </p>
                   {r.respuesta && <p className="text-sm">Respuesta: {r.respuesta}</p>}
-                  {!alumnoPropio && r.estado === 'pendiente' && (
+                  {r.estado === 'pendiente' && (
                     <button
                       type="button"
                       disabled={ocupado}
@@ -680,7 +388,7 @@ export default function Alumnos() {
                         {fechaVisible(r.fecha)} ·{' '}
                         {r.revocada ? 'Revocada' : 'Autorizada: completar en el horario habitual'} ·{' '}
                         {r.motivo} · {r.autorizadaPor}
-                        {!alumnoPropio && !r.revocada && (
+                        {!r.revocada && (
                           <button
                             type="button"
                             disabled={ocupado}
@@ -726,30 +434,22 @@ export default function Alumnos() {
                       </li>
                     ))}
                   </ul>
-                  {!alumnoPropio && (
-                    <>
-                      <h3 className="mt-4 font-semibold">Actividad</h3>
-                      <ul className="space-y-2 text-sm">
-                        {s.auditoria.map((a) => (
-                          <li key={a.id}>
-                            {fechaVisible(a.fecha)} · {a.usuario} · {titulos[a.accion] ?? a.accion}
-                            {a.motivo && ` · ${a.motivo}`}
-                          </li>
-                        ))}
-                      </ul>
-                    </>
-                  )}
+
+                  <h3 className="mt-4 font-semibold">Actividad</h3>
+                  <ul className="space-y-2 text-sm">
+                    {s.auditoria.map((a) => (
+                      <li key={a.id}>
+                        {fechaVisible(a.fecha)} · {a.usuario} · {titulos[a.accion] ?? a.accion}
+                        {a.motivo && ` · ${a.motivo}`}
+                      </li>
+                    ))}
+                  </ul>
                 </details>
               )}
             </div>
-          </FichaAlumno>
+          </details>
         );
       })}
     </main>
   );
-}
-
-function FichaAlumno({ compacta, children, ...props }) {
-  const Elemento = compacta ? 'details' : 'article';
-  return <Elemento {...props}>{children}</Elemento>;
 }

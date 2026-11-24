@@ -1,27 +1,19 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useActualizarAlVolver } from '../../hooks/useActualizarAlVolver.js';
+import { useFechaAsistencia } from '../../hooks/useFechaAsistencia.js';
 import { useOperacion } from '../../hooks/useOperacion.js';
 import { useSesion } from '../../hooks/useSesion.js';
 import { apiFetch, leerRespuesta } from '../../lib/api.js';
+import { hoyLima as hoy } from '../../lib/fechas.js';
+import { etiquetasAsistencia as etiquetas } from '../../lib/seguimiento.js';
 import Mensaje from '../Mensaje.jsx';
 import IconoPerfil from '../perfiles/IconoPerfil.jsx';
 import SelectorDiasAsistencia from '../SelectorDiasAsistencia.jsx';
 
-const hoy = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(new Date());
 const campo = 'mt-1 min-h-11 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-base';
 const boton =
   'min-h-11 rounded-xl border border-dojo-600 bg-white px-3 py-2 text-sm font-semibold text-dojo-700 disabled:opacity-50';
-const etiquetas = {
-  pendiente: 'Pendiente',
-  presente: 'Presente',
-  ausente: 'Ausente',
-  falta: 'Faltó',
-  avisada: 'Avisó que faltará',
-  congelado: 'Plan congelado',
-  cancelada: 'Cancelada',
-  'sin sesión': 'Sin sesión contratada',
-};
-
-function GestionSesion({ sesion, profesores, admin, ocupado, guardar, cerrar }) {
+function GestionSesion({ sesion, profesores, ocupado, guardar, cerrar }) {
   const [accion, setAccion] = useState('profesor');
   async function enviar(e) {
     e.preventDefault();
@@ -35,7 +27,7 @@ function GestionSesion({ sesion, profesores, admin, ocupado, guardar, cerrar }) 
   return (
     <form onSubmit={enviar} className="mt-3 space-y-3 rounded-xl bg-dojo-50 p-3">
       <fieldset disabled={ocupado} className="space-y-3">
-        {admin && (
+        {
           <label className="block text-sm font-semibold">
             Acción
             <select
@@ -49,7 +41,7 @@ function GestionSesion({ sesion, profesores, admin, ocupado, guardar, cerrar }) 
               <option value="estado">Cambiar estado o cancelar sesión</option>
             </select>
           </label>
-        )}
+        }
         {accion === 'profesor' && (
           <label className="block text-sm font-semibold">
             Asistencia del profesor
@@ -60,12 +52,12 @@ function GestionSesion({ sesion, profesores, admin, ocupado, guardar, cerrar }) 
               defaultValue="presente"
             >
               <option value="presente">Presente — sesión realizada</option>
-              {admin && (
+              {
                 <>
                   <option value="ausente">Ausente — sesión por resolver</option>
                   <option value="pendiente">Pendiente</option>
                 </>
-              )}
+              }
             </select>
           </label>
         )}
@@ -107,14 +99,8 @@ function GestionSesion({ sesion, profesores, admin, ocupado, guardar, cerrar }) 
           </>
         )}
         <label className="block text-sm font-semibold">
-          {admin ? 'Motivo' : 'Observación de asistencia'}
-          <textarea
-            className={campo}
-            name="motivo"
-            maxLength={300}
-            required
-            defaultValue={admin ? '' : 'Asistencia propia del profesor'}
-          />
+          Motivo
+          <textarea className={campo} name="motivo" maxLength={300} required defaultValue={''} />
         </label>
         <div className="flex flex-wrap gap-2">
           <button type="submit" className={boton}>
@@ -130,26 +116,11 @@ function GestionSesion({ sesion, profesores, admin, ocupado, guardar, cerrar }) 
 }
 export default function Asistencia() {
   const acceso = useSesion();
-  const [maximo, setMaximo] = useState(hoy);
-  const [fecha, setFecha] = useState(hoy);
-  useEffect(() => {
-    const actualizar = () => {
-      const limite = hoy();
-      setMaximo(limite);
-      setFecha((actual) => (actual > limite ? limite : actual));
-    };
-    const intervalo = setInterval(actualizar, 60_000);
-    window.addEventListener('focus', actualizar);
-    return () => {
-      clearInterval(intervalo);
-      window.removeEventListener('focus', actualizar);
-    };
-  }, []);
+  const { fecha, setFecha, limite: maximo } = useFechaAsistencia();
   const [datos, setDatos] = useState(null);
   const [cargando, setCargando] = useState(false);
   const [gestion, setGestion] = useState(null);
   const { ocupado, aviso, setAviso, ejecutar } = useOperacion();
-  const admin = acceso?.perfil === 'administrador';
   const cargar = useCallback(async () => {
     const nuevos = await leerRespuesta(
       await apiFetch(`/sesiones?fecha=${fecha}`, { cache: 'no-store' }),
@@ -158,7 +129,7 @@ export default function Asistencia() {
     setDatos(nuevos);
   }, [fecha]);
   useEffect(() => {
-    if (!acceso || acceso.perfil === 'alumno') return;
+    if (acceso?.perfil !== 'administrador') return;
     let vigente = true;
     setDatos(null);
     setGestion(null);
@@ -183,6 +154,7 @@ export default function Asistencia() {
       vigente = false;
     };
   }, [acceso, fecha, setAviso]);
+  useActualizarAlVolver(cargar, ocupado || gestion !== null, acceso?.perfil === 'administrador');
   async function guardar(sesion, cambio) {
     return ejecutar(async () => {
       await leerRespuesta(
@@ -212,12 +184,7 @@ export default function Asistencia() {
     });
   }
   if (!acceso) return <p className="p-4">Cargando tu perfil…</p>;
-  if (acceso.perfil === 'alumno')
-    return (
-      <p className="p-4">
-        Consulta tu asistencia desde <a href="/alumnos">Mis clases</a>.
-      </p>
-    );
+  if (acceso.perfil !== 'administrador') return null;
   return (
     <main className="space-y-4 p-4" aria-busy={ocupado || cargando}>
       <Mensaje aviso={aviso} />
@@ -226,7 +193,7 @@ export default function Asistencia() {
           <span className="perfil-icono">
             <IconoPerfil nombre="calendario" />
           </span>
-          {admin ? 'Sesiones y asistencia' : 'Mis sesiones y asistencia'}
+          Sesiones y asistencia
         </h2>
 
         <SelectorDiasAsistencia
@@ -288,14 +255,13 @@ export default function Asistencia() {
               disabled={ocupado || cargando}
               onClick={() => setGestion(gestion === s.claseId ? null : s.claseId)}
             >
-              {admin ? 'Gestionar sesión' : 'Marcar mi asistencia'}
+              Gestionar sesión
             </button>
           )}
           {gestion === s.claseId && s.estado !== 'cancelada' && (
             <GestionSesion
               sesion={s}
               profesores={datos.profesores}
-              admin={admin}
               ocupado={ocupado}
               guardar={guardar}
               cerrar={() => setGestion(null)}

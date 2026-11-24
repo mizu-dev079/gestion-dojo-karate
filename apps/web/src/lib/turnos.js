@@ -8,5 +8,13 @@ export function agruparClases(turnos) {
     if (!grupos.has(id)) grupos.set(id, { id, nombre: t.claseNombre ?? t.nivel, turnos: [] });
     grupos.get(id).turnos.push(t);
   }
-  return [...grupos.values()];
+  return [...grupos.values()].map((grupo) => ({
+    ...grupo,
+    turnos: [...grupo.turnos].sort(
+      (a, b) =>
+        Number(!a.frecuencia?.includes('Lunes')) - Number(!b.frecuencia?.includes('Lunes')) ||
+        String(a.horaInicio).localeCompare(String(b.horaInicio)) ||
+        Number(a.id) - Number(b.id),
+    ),
+  }));
 }

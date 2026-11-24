@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useOperacion } from '../../../hooks/useOperacion.js';
 import { apiFetch, leerRespuesta } from '../../../lib/api.js';
+import { botonPrincipal, tarjeta } from '../../../lib/estilos.js';
+import { desplazar, horaLima, hoyLima } from '../../../lib/seguimiento.js';
 import Mensaje from '../../Mensaje.jsx';
 import IconoPerfil from '../IconoPerfil.jsx';
 import Bienvenida from './Bienvenida.jsx';
 import Congelamiento from './Congelamiento.jsx';
-import { botonPrincipal, tarjeta } from './estilos.js';
 import HistorialAlumno from './HistorialAlumno.jsx';
 import MiAsistencia from './MiAsistencia.jsx';
 import MiClase from './MiClase.jsx';
 import Recuperaciones from './Recuperaciones.jsx';
 import ResumenPlan from './ResumenPlan.jsx';
-import { desplazar, horaLima, hoyLima } from './utilidades.js';
 
 const reloj = () => ({ hoy: hoyLima(), hora: horaLima() });
 

@@ -19,5 +19,13 @@
   "liveshare.autoShareTerminals": false,
   "liveshare.shareExternalFiles": false,
   "liveshare.allowGuestTaskControl": false,
-  "liveshare.allowGuestDebugControl": false
+  "liveshare.allowGuestDebugControl": false,
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.astro": true,
+    "**/.turbo": true,
+    "**/coverage": true,
+    "**/*.tsbuildinfo": true
+  }
 }

@@ -1,5 +1,10 @@
-import { chip, etiqueta, tarjeta, tituloTarjeta } from './estilos.js';
-import { fechaVisible, paqueteActual, recuperacionesDelPaquete, unidad } from './utilidades.js';
+import { chip, etiqueta, tarjeta, tituloTarjeta } from '../../../lib/estilos.js';
+import {
+  fechaVisible,
+  paqueteActual,
+  recuperacionesDelPaquete,
+  unidad,
+} from '../../../lib/seguimiento.js';
 
 export default function Recuperaciones({ alumno }) {
   const s = alumno.seguimiento;

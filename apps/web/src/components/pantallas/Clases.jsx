@@ -1,22 +1,32 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useOperacion } from '../../hooks/useOperacion.js';
 import { apiFetch, leerRespuesta } from '../../lib/api.js';
+import { actualizarNavegacion } from '../../lib/navegacion.js';
 import { agruparClases } from '../../lib/turnos.js';
+import ImagenClase from '../ImagenClase.jsx';
 import Mensaje from '../Mensaje.jsx';
 import TarjetaClase from '../TarjetaClase.jsx';
-
-const imagenClase = (nombre) => {
-  const clave = nombre.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
-  if (clave.startsWith('mini samurai')) return '/imagenes/clases/mini-samurais.png';
-  if (clave.startsWith('jovenes guerreros')) return '/imagenes/clases/jovenes-guerreros.png';
-  if (clave.startsWith('avanzados')) return '/imagenes/clases/avanzados.png';
-  return null;
-};
 
 export default function Clases() {
   const { ocupado, aviso, setAviso, ejecutar } = useOperacion();
   const [clases, setClases] = useState([]);
   const [grupoSeleccionado, setGrupoSeleccionado] = useState(null);
+  useEffect(() => {
+    const leer = () => {
+      const valor = new URLSearchParams(window.location.search).get('clase');
+      setGrupoSeleccionado(valor ? Number(valor) : null);
+    };
+    leer();
+    window.addEventListener('popstate', leer);
+    return () => window.removeEventListener('popstate', leer);
+  }, []);
+  function elegirGrupo(id) {
+    setGrupoSeleccionado(id);
+    const url = new URL(window.location.href);
+    if (id) url.searchParams.set('clase', id);
+    else url.searchParams.delete('clase');
+    actualizarNavegacion(url, false);
+  }
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState('');
   const [profesores, setProfesores] = useState([]);
@@ -387,7 +397,7 @@ export default function Clases() {
                 <button
                   type="button"
                   className="min-h-11 font-semibold text-dojo-700"
-                  onClick={() => setGrupoSeleccionado(null)}
+                  onClick={() => elegirGrupo(null)}
                 >
                   ← Volver a las clases
                 </button>
@@ -412,19 +422,7 @@ export default function Clases() {
                   key={g.id}
                   className="flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
                 >
-                  {imagenClase(g.nombre) && (
-                    <div className="flex h-44 items-center justify-center border-b border-gray-100 bg-gray-50 px-4 py-3 sm:h-52">
-                      <img
-                        src={imagenClase(g.nombre)}
-                        alt={`Ilustración de karate de ${g.nombre}`}
-                        width="640"
-                        height="480"
-                        loading="lazy"
-                        decoding="async"
-                        className="h-full w-full object-contain"
-                      />
-                    </div>
-                  )}
+                  <ImagenClase nombre={g.nombre} />
                   <div className="flex flex-1 flex-col gap-3 p-4">
                     <h2 className="text-lg font-bold">{g.nombre}</h2>
                     <p className="text-sm text-gray-600">
@@ -434,7 +432,7 @@ export default function Clases() {
                     <button
                       type="button"
                       className="mt-auto min-h-11 rounded-xl bg-dojo-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-dojo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-dojo-600"
-                      onClick={() => setGrupoSeleccionado(g.id)}
+                      onClick={() => elegirGrupo(g.id)}
                     >
                       Ver turnos de {g.nombre}
                     </button>

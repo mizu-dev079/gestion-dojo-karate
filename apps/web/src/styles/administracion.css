@@ -1,7 +1,6 @@
 /* Administración comparte la identidad y los componentes visuales de los perfiles. */
 html[data-perfil="administrador"] .admin-body {
   --app-width: 60rem;
-  --nav-height: 0rem;
   background: #f4f3f1;
 }
 

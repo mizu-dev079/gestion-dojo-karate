@@ -1,12 +1,7 @@
 import { useState } from 'react';
-import FormularioAccionProfesor from './FormularioAccionProfesor.jsx';
-
-const fechaVisible = (f) =>
-  new Intl.DateTimeFormat('es-PE', { dateStyle: 'medium', timeZone: 'UTC' }).format(
-    new Date(`${f}T00:00:00Z`),
-  );
-
-const base = (p) => p.limiteRecuperaciones ?? (p.cantidad === 4 ? 1 : 2);
+import { fechaVisible } from '../../../lib/fechas.js';
+import { limiteRecuperaciones as base } from '../../../lib/seguimiento.js';
+import FormularioAccion from '../../FormularioAccion.jsx';
 
 export default function FichaAlumnoProfesor({ alumno, seleccion, setSeleccion, ocupado, guardar }) {
   const [expandido, setExpandido] = useState(false);
@@ -178,7 +173,7 @@ export default function FichaAlumnoProfesor({ alumno, seleccion, setSeleccion, o
 
           {/* Formulario de acción contextual */}
           {tieneAccionActiva && (
-            <FormularioAccionProfesor
+            <FormularioAccion
               alumno={alumno}
               seleccion={seleccion}
               ocupado={ocupado}
@@ -187,8 +182,8 @@ export default function FichaAlumnoProfesor({ alumno, seleccion, setSeleccion, o
             />
           )}
 
-          {/* Botones de gestión del plan */}
-          {s.plan && (
+          {/* Las acciones se concentran en el formulario mientras está abierto. */}
+          {s.plan && !tieneAccionActiva && (
             <div className="pt-1 flex flex-wrap gap-2">
               {!s.congelado && (
                 <button

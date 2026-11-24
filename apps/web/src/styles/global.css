@@ -50,7 +50,6 @@
 /* Marco compartido por las pantallas de administración. */
 .admin-body {
   --app-width: 40rem;
-  --nav-height: 4.5rem;
   margin: 0;
   background: var(--page-background);
   color: var(--text-primary);
@@ -115,7 +114,7 @@
 }
 
 .admin-content {
-  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 1.5rem);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1.5rem);
 }
 .admin-content .grid > *,
 .admin-content .flex > * {
@@ -144,71 +143,6 @@
 .admin-content button {
   min-height: 2.75rem;
 }
-.admin-content .ant-picker-calendar {
-  min-width: 0;
-}
-.admin-content .ant-picker-calendar table {
-  table-layout: fixed;
-  width: 100%;
-}
-
-.app-bottom-nav {
-  position: fixed;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 40;
-  width: 100%;
-  max-width: var(--app-width);
-  margin-inline: auto;
-  border-top: 1px solid var(--border);
-  padding: 0 max(0.375rem, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px)
-    max(0.375rem, env(safe-area-inset-left, 0px));
-  background: var(--surface);
-  box-shadow: 0 -4px 20px rgb(15 23 42 / 4%);
-}
-.app-bottom-nav__items {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  height: var(--nav-height);
-  align-items: stretch;
-}
-.app-bottom-nav__link {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.25rem;
-  color: var(--text-muted);
-  text-decoration: none;
-  -webkit-tap-highlight-color: transparent;
-}
-.app-bottom-nav__icon {
-  display: flex;
-  width: 2.75rem;
-  height: 2rem;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0.75rem;
-  transition: background 150ms;
-}
-.app-bottom-nav__label {
-  font-size: clamp(0.6rem, 2.5vw, 0.75rem);
-  font-weight: 500;
-  line-height: 1.25;
-  white-space: nowrap;
-}
-.app-bottom-nav__link[aria-current="page"] {
-  color: var(--accent);
-}
-.app-bottom-nav__link[aria-current="page"] .app-bottom-nav__icon {
-  background: var(--accent-soft);
-}
-.app-bottom-nav__link[aria-current="page"] .app-bottom-nav__label {
-  font-weight: 700;
-}
-.app-bottom-nav__link:hover .app-bottom-nav__icon,
 .app-back:hover {
   background: var(--surface-subtle);
 }
@@ -233,11 +167,6 @@
 @media (min-width: 640px) {
   .admin-shell {
     border-inline: 1px solid var(--border);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .app-bottom-nav__icon {
-    transition: none;
   }
 }
 
@@ -370,13 +299,8 @@
   font-size: clamp(0.875rem, 3vw, 1rem);
 }
 
-.app-bottom-nav__link[hidden] {
-  display: none;
-}
-
 .app-back[hidden],
-.app-account[hidden],
-.app-bottom-nav[hidden] {
+.app-account[hidden] {
   display: none;
 }
 .app-account {
@@ -396,7 +320,4 @@
   background: var(--accent-soft);
   color: var(--accent);
   border-color: #f0c8c4;
-}
-html:is([data-perfil="profesor"], [data-perfil="alumno"]) .admin-body {
-  --nav-height: 0rem;
 }

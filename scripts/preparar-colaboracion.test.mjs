@@ -24,8 +24,8 @@ test('exporta solo el frontend y contratos; excluye secretos, API, cachés y enl
   try {
     // Obtener una fuente válida sin copiar secretos del repositorio real.
     prepararColaboracion({ raiz, destino: fuente });
-    mkdirSync(join(fuente, 'docs'));
-    writeFileSync(join(fuente, 'docs/09-colaboracion-simulada.md'), 'Guía de prueba');
+    // La copia también debe poder exportarse sin documentación externa.
+    assert.equal(existsSync(join(fuente, 'docs')), false);
     for (const f of [
       'apps/web/.env',
       'apps/web/.env.local',
@@ -70,6 +70,14 @@ test('exporta solo el frontend y contratos; excluye secretos, API, cachés y enl
       'node scripts/iniciar-simulacion.mjs',
     );
     assert.ok(readdirSync(destino).includes('LEEME-COLABORACION.md'));
+    assert.match(
+      readFileSync(join(destino, 'LEEME-COLABORACION.md'), 'utf8'),
+      /pnpm install --frozen-lockfile/,
+    );
+    assert.match(
+      readFileSync(join(destino, 'LEEME-COLABORACION.md'), 'utf8'),
+      /sin conexión con Sheets/,
+    );
     assert.throws(() => prepararColaboracion({ raiz: fuente, destino }), /ya existe/);
     assert.throws(
       () => prepararColaboracion({ raiz: fuente, destino: join(fuente, 'interior') }),

@@ -1,8 +1,8 @@
 import { useId, useState } from 'react';
 import { apiFetch, leerRespuesta } from '../../lib/api.js';
+import { campo } from '../../lib/estilos.js';
 import { enlaceAyuda } from '../../lib/navegacionPerfil.js';
 import CampoContrasena from '../CampoContrasena.jsx';
-import { campo } from './alumno/estilos.js';
 import IconoPerfil from './IconoPerfil.jsx';
 
 export default function CuentaPerfil({ usuario, perfil }) {

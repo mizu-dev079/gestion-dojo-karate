@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { API_URL } from '../../lib/api.js';
+import { etiquetaTurno } from '../../lib/clases.js';
 import { enlaceFormulario } from '../../lib/enlace-formulario.js';
 import CopiarEnlace from '../CopiarEnlace.jsx';
+import ImagenClase from '../ImagenClase.jsx';
 import QrFormulario from '../QrFormulario.jsx';
 
 export default function CompartirConvocatoria() {
@@ -67,21 +69,22 @@ export default function CompartirConvocatoria() {
       <div className="mx-auto max-w-full">
         <section className="rounded-3xl bg-white px-5 py-7 shadow-sm">
           <div className="text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-50">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-500 text-xl font-bold text-white">
-                ✓
-              </div>
-            </div>
-
-            <h2 className="text-lg font-bold text-gray-900">Comparte esta clase</h2>
+            <h2 className="text-lg font-bold text-gray-900">Compartir clase</h2>
 
             {clase && (
               <div className="mt-4 rounded-2xl bg-[var(--accent-soft)] px-4 py-3">
-                <p className="text-sm font-semibold text-[var(--accent)]">
+                <ImagenClase nombre={clase.nivel} compacta />
+                <p className="text-base font-semibold text-[var(--accent)]">
                   {clase.nivel || clase.nombre || 'Clase'}
                 </p>
 
-                <p className="mt-1 text-xs text-gray-500">Sede {clase.sede || 'Sin especificar'}</p>
+                {etiquetaTurno(clase) !== 'Horario' && (
+                  <p className="mt-1 font-semibold">{etiquetaTurno(clase)}</p>
+                )}
+                <p className="mt-1 text-sm text-gray-600">
+                  {clase.frecuencia?.join(', ')} · {clase.horaInicio}–{clase.horaFin}
+                </p>
+                <p className="mt-1 text-sm text-gray-500">{clase.sede || 'Sede por asignar'}</p>
               </div>
             )}
           </div>
@@ -89,8 +92,8 @@ export default function CompartirConvocatoria() {
           {clase && (
             <QrFormulario
               url={enlace}
-              nombreArchivo={'qr-clase-' + clase.id}
-              tamano={160}
+              nombreArchivo={`qr-clase-${clase.id}`}
+              tamano={192}
               claseContenedor="mt-7 flex justify-center"
               claseMarco="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
               claseBoton="mx-auto mt-4 block rounded-full border border-[var(--color-dojo-200)] bg-[var(--accent-soft)] px-4 py-2 text-sm font-semibold text-[var(--accent)] transition hover:bg-[var(--color-dojo-100)]"
@@ -110,7 +113,7 @@ export default function CompartirConvocatoria() {
                 'noopener,noreferrer',
               );
             }}
-            className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#25d366] text-xs font-semibold text-white shadow-sm transition hover:bg-[#20bd5b] hover:shadow-md"
+            className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#25d366] text-base font-semibold text-white shadow-sm transition hover:bg-[#20bd5b] hover:shadow-md"
           >
             <span className="text-sm">◉</span>
             Reenviar por WhatsApp

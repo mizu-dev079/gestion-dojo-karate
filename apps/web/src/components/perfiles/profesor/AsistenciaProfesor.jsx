@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useActualizarAlVolver } from '../../../hooks/useActualizarAlVolver.js';
+import { useFechaAsistencia } from '../../../hooks/useFechaAsistencia.js';
 import { useOperacion } from '../../../hooks/useOperacion.js';
 import { useSesion } from '../../../hooks/useSesion.js';
 import { apiFetch, leerRespuesta } from '../../../lib/api.js';
+import { sesionesDelTurno } from '../../../lib/clases.js';
+import { actualizarNavegacion } from '../../../lib/navegacion.js';
+import { etiquetasAsistencia as etiquetas } from '../../../lib/seguimiento.js';
 import Mensaje from '../../Mensaje.jsx';
 import SelectorDiasAsistencia from '../../SelectorDiasAsistencia.jsx';
-import { hoyLima } from '../alumno/utilidades.js';
 import IconoPerfil from '../IconoPerfil.jsx';
 
 const fechaEspañol = (fecha) =>
@@ -21,96 +25,94 @@ const capitalizar = (texto) =>
     .map((parte) => parte.charAt(0).toUpperCase() + parte.slice(1))
     .join(' ');
 
-const etiquetas = {
-  pendiente: 'Pendiente',
-  presente: 'Presente',
-  falta: 'Faltó',
-  avisada: 'Avisó ausencia',
-  congelado: 'Plan congelado',
-  'sin sesión': 'Sin sesión contratada',
-  cancelada: 'Cancelada por el dojo',
-};
-
-export default function AsistenciaProfesor() {
+export default function AsistenciaProfesor({
+  claseId = null,
+  incrustada = false,
+  recargarAlumnos,
+} = {}) {
   const sesion = useSesion();
-  const [limite, setLimite] = useState(hoyLima);
+  const { fecha, setFecha, limite } = useFechaAsistencia();
   const hoy = limite;
-  const [fecha, setFecha] = useState(hoyLima);
-  const diaAnterior = useRef(limite);
+  const [filtroTurno, setFiltroTurno] = useState(null);
+  const turnoSeleccionado = claseId ?? filtroTurno;
+  useEffect(() => {
+    if (claseId) return;
+    const leer = () => setFiltroTurno(new URLSearchParams(window.location.search).get('turno'));
+    leer();
+    window.addEventListener('popstate', leer);
+    return () => window.removeEventListener('popstate', leer);
+  }, [claseId]);
   const [sesiones, setSesiones] = useState([]);
   const [alumnos, setAlumnos] = useState([]);
+  const [errorCarga, setErrorCarga] = useState('');
   const [cargando, setCargando] = useState(true);
   const [gestionProfesor, setGestionProfesor] = useState(null);
   const [justificacionesAbiertas, setJustificacionesAbiertas] = useState(false);
   const [alumnoSeleccionado, setAlumnoSeleccionado] = useState(null);
   const [fechaAusencia, setFechaAusencia] = useState(hoy);
   const [motivoJustificacion, setMotivoJustificacion] = useState('');
-  const { ocupado, aviso, setAviso, ejecutar } = useOperacion();
+  const { ocupado, aviso, ejecutar } = useOperacion();
   const cargaActual = useRef(0);
 
-  const cargar = useCallback(async () => {
-    const carga = ++cargaActual.current;
-    setCargando(true);
-    try {
-      const [resultadoSesiones, resultadoAlumnos] = await Promise.all([
-        apiFetch(`/sesiones?fecha=${fecha}`, { cache: 'no-store' }).then((r) =>
-          leerRespuesta(r, 'No se pudieron cargar las sesiones.'),
-        ),
-        apiFetch('/alumnos', { cache: 'no-store' }).then((r) =>
-          leerRespuesta(r, 'No se pudieron cargar los alumnos.'),
-        ),
-      ]);
-      if (carga !== cargaActual.current) return;
-      setSesiones(resultadoSesiones.sesiones ?? []);
-      setAlumnos(resultadoAlumnos ?? []);
-    } catch (error) {
-      if (carga === cargaActual.current) {
-        setSesiones([]);
-        setAlumnos([]);
-        setAviso({ tipo: 'error', texto: error.message });
+  const cargar = useCallback(
+    async ({ silencioso = false } = {}) => {
+      const carga = ++cargaActual.current;
+      if (!silencioso) setCargando(true);
+      try {
+        const [resultadoSesiones, resultadoAlumnos] = await Promise.all([
+          apiFetch(`/sesiones?fecha=${fecha}`, { cache: 'no-store' }).then((r) =>
+            leerRespuesta(r, 'No se pudieron cargar las sesiones.'),
+          ),
+          apiFetch('/alumnos', { cache: 'no-store' }).then((r) =>
+            leerRespuesta(r, 'No se pudieron cargar los alumnos.'),
+          ),
+        ]);
+        if (carga !== cargaActual.current) return;
+        setErrorCarga('');
+        setSesiones(sesionesDelTurno(resultadoSesiones.sesiones ?? [], turnoSeleccionado));
+        setAlumnos(
+          (resultadoAlumnos ?? []).filter(
+            (a) => !turnoSeleccionado || String(a.claseId) === String(turnoSeleccionado),
+          ),
+        );
+      } catch (error) {
+        if (carga === cargaActual.current) {
+          setSesiones([]);
+          setAlumnos([]);
+          setErrorCarga(error.message);
+        }
+      } finally {
+        if (carga === cargaActual.current) setCargando(false);
       }
-    } finally {
-      if (carga === cargaActual.current) setCargando(false);
-    }
-  }, [fecha, setAviso]);
+    },
+    [fecha, turnoSeleccionado],
+  );
 
   useEffect(() => {
     if (sesion?.perfil !== 'profesor') return;
+    setGestionProfesor(null);
+    setJustificacionesAbiertas(false);
     cargar();
     return () => {
       cargaActual.current += 1;
     };
   }, [sesion, cargar]);
 
-  useEffect(() => {
-    const verificarCambio = () => {
-      const actual = hoyLima();
-      if (actual === diaAnterior.current) return;
-      const anterior = diaAnterior.current;
-      diaAnterior.current = actual;
-      setLimite(actual);
-      setFecha((valor) => (valor === anterior || valor > actual ? actual : valor));
-      setGestionProfesor(null);
-    };
-    verificarCambio();
-    const intervalo = window.setInterval(verificarCambio, 30000);
-    window.addEventListener('focus', verificarCambio);
-    document.addEventListener('visibilitychange', verificarCambio);
-    return () => {
-      window.clearInterval(intervalo);
-      window.removeEventListener('focus', verificarCambio);
-      document.removeEventListener('visibilitychange', verificarCambio);
-    };
-  }, []);
+  useActualizarAlVolver(
+    cargar,
+    ocupado || gestionProfesor !== null || justificacionesAbiertas,
+    sesion?.perfil === 'profesor',
+  );
 
   function elegirFecha(dia) {
-    const actual = hoyLima();
-    const elegida = dia > actual ? actual : dia;
-    if (elegida === fecha) return;
+    if (dia === fecha) return;
     setCargando(true);
-    setGestionProfesor(null);
     cerrarFormularioJustificacion();
-    setFecha(elegida);
+    setFecha(dia);
+  }
+  async function actualizarSeguimiento() {
+    await cargar();
+    if (recargarAlumnos) await recargarAlumnos({ silencioso: true });
   }
 
   const justificaciones = useMemo(
@@ -153,7 +155,7 @@ export default function AsistenciaProfesor() {
       );
 
       setGestionProfesor(null);
-      await cargar();
+      await actualizarSeguimiento();
       return 'Asistencia del profesor confirmada.';
     });
   }
@@ -174,7 +176,7 @@ export default function AsistenciaProfesor() {
         'No se pudo registrar la asistencia.',
       );
 
-      await cargar();
+      await actualizarSeguimiento();
       return estado === 'avisada' ? 'Aviso de ausencia registrado.' : 'Asistencia registrada.';
     });
   }
@@ -194,7 +196,7 @@ export default function AsistenciaProfesor() {
         'No se pudo retirar el aviso.',
       );
 
-      await cargar();
+      await actualizarSeguimiento();
       return 'Aviso retirado.';
     });
   }
@@ -219,7 +221,7 @@ export default function AsistenciaProfesor() {
         'No se pudo autorizar la recuperación.',
       );
 
-      await cargar();
+      await actualizarSeguimiento();
       setMotivoJustificacion('');
       setAlumnoSeleccionado(null);
       setJustificacionesAbiertas(false);
@@ -241,45 +243,71 @@ export default function AsistenciaProfesor() {
     return null;
   }
 
+  const Contenedor = incrustada ? 'section' : 'main';
   return (
-    <main
-      className="perfil-page perfil-profesor-page perfil-asistencia-page space-y-5 p-4"
+    <Contenedor
+      className={
+        incrustada
+          ? 'space-y-4'
+          : 'perfil-page perfil-profesor-page perfil-asistencia-page space-y-5 p-4'
+      }
       aria-busy={ocupado || cargando}
     >
-      <header className="perfil-hero">
-        <p className="perfil-eyebrow">ÁREA DEL PROFESOR</p>
-        <h2 className="perfil-saludo">Tu jornada</h2>
-        <div className="perfil-resumen">
-          <div>
-            <strong>{cargando ? '—' : sesiones.length}</strong>
-            <span>Turnos</span>
-          </div>
-          <div>
-            <strong>
-              {cargando
-                ? '—'
-                : new Set(
-                    sesiones.flatMap((s) => s.alumnos.filter((a) => a.programado).map((a) => a.id)),
-                  ).size}
-            </strong>
-            <span>Alumnos del día</span>
-          </div>
-        </div>
-      </header>
-      <nav className="perfil-accesos" aria-label="Secciones de asistencia">
-        <a href="#asistencia-propia">
-          <IconoPerfil nombre="presente" />
-          <span>Mi asistencia</span>
-        </a>
-        <a href="#asistencia-alumnos">
-          <IconoPerfil nombre="alumnos" />
-          <span>Alumnos</span>
-        </a>
-        <a href="#recuperaciones">
-          <IconoPerfil nombre="historial" />
-          <span>Recuperaciones</span>
-        </a>
-      </nav>
+      {!incrustada && (
+        <>
+          <header className="perfil-hero">
+            <p className="perfil-eyebrow">ÁREA DEL PROFESOR</p>
+            <h2 className="perfil-saludo">Tu jornada</h2>
+            <div className="perfil-resumen">
+              <div>
+                <strong>{cargando ? '—' : sesiones.length}</strong>
+                <span>Turnos</span>
+              </div>
+              <div>
+                <strong>
+                  {cargando
+                    ? '—'
+                    : new Set(
+                        sesiones.flatMap((s) =>
+                          s.alumnos.filter((a) => a.programado).map((a) => a.id),
+                        ),
+                      ).size}
+                </strong>
+                <span>Alumnos del día</span>
+              </div>
+            </div>
+          </header>
+          <nav className="perfil-accesos" aria-label="Secciones de asistencia">
+            <a href="#asistencia-propia">
+              <IconoPerfil nombre="presente" />
+              <span>Mi asistencia</span>
+            </a>
+            <a href="#asistencia-alumnos">
+              <IconoPerfil nombre="alumnos" />
+              <span>Alumnos</span>
+            </a>
+            <a href="#recuperaciones">
+              <IconoPerfil nombre="historial" />
+              <span>Recuperaciones</span>
+            </a>
+          </nav>
+        </>
+      )}
+      {!incrustada && filtroTurno && (
+        <button
+          type="button"
+          className="min-h-11 font-semibold text-dojo-700"
+          disabled={ocupado}
+          onClick={() => {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('turno');
+            actualizarNavegacion(url);
+            setFiltroTurno(null);
+          }}
+        >
+          Ver todos mis turnos
+        </button>
+      )}
       <Mensaje aviso={aviso} />
 
       <section className="perfil-tarjeta perfil-selector-diario space-y-4 rounded-2xl border border-gray-200 bg-white p-5">
@@ -307,6 +335,18 @@ export default function AsistenciaProfesor() {
 
       {cargando ? (
         <p role="status">Cargando sesiones…</p>
+      ) : errorCarga ? (
+        <div role="alert" className="rounded-xl border border-dojo-100 bg-white p-4 text-dojo-800">
+          <p>{errorCarga}</p>
+          <button
+            type="button"
+            disabled={ocupado}
+            onClick={() => cargar()}
+            className="mt-2 min-h-11 font-semibold"
+          >
+            Reintentar
+          </button>
+        </div>
       ) : (
         <>
           <section
@@ -662,6 +702,6 @@ export default function AsistenciaProfesor() {
           </section>
         </>
       )}
-    </main>
+    </Contenedor>
   );
 }

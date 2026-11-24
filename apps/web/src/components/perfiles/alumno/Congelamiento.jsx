@@ -7,14 +7,14 @@ import {
   etiqueta,
   tarjeta,
   tituloTarjeta,
-} from './estilos.js';
+} from '../../../lib/estilos.js';
 import {
   congelamientoActual,
   desplazar,
   fechaVisible,
   solicitudPendiente,
   ultimaSolicitud,
-} from './utilidades.js';
+} from '../../../lib/seguimiento.js';
 
 const estados = {
   pendiente: { texto: 'Pendiente de revisión', estilo: etiqueta.neutro },

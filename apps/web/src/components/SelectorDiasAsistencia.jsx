@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { desplazar, fechaVisible } from './perfiles/alumno/utilidades.js';
+import { desplazar, fechaVisible } from '../lib/seguimiento.js';
 
 const nombreDia = (fecha, formato) =>
   new Intl.DateTimeFormat('es-PE', {

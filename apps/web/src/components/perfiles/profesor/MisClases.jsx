@@ -1,8 +1,16 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useActualizarAlVolver } from '../../../hooks/useActualizarAlVolver.js';
 import { useOperacion } from '../../../hooks/useOperacion.js';
 import { useSesion } from '../../../hooks/useSesion.js';
 import { apiFetch, leerRespuesta } from '../../../lib/api.js';
-import { agruparClases, idClase } from '../../../lib/turnos.js';
+import {
+  etiquetaTurno,
+  clasesDelProfesor as obtenerClasesDelProfesor,
+} from '../../../lib/clases.js';
+import { actualizarNavegacion } from '../../../lib/navegacion.js';
+import { primerNombre } from '../../../lib/seguimiento.js';
+import { agruparClases } from '../../../lib/turnos.js';
+import ImagenClase from '../../ImagenClase.jsx';
 import Mensaje from '../../Mensaje.jsx';
 import IconoPerfil from '../IconoPerfil.jsx';
 import DetalleClase from './DetalleClase.jsx';
@@ -12,36 +20,42 @@ export default function MisClases() {
   const sesion = useSesion();
   const [alumnos, setAlumnos] = useState([]);
   const [catalogoClases, setCatalogoClases] = useState([]);
+  const [errorCarga, setErrorCarga] = useState('');
   const [cargando, setCargando] = useState(true);
   const [claseSeleccionadaId, setClaseSeleccionadaId] = useState(null);
   const [pestañaInicialDetalle, setPestañaInicialDetalle] = useState('alumnos');
   const [mostrarSolicitudes, setMostrarSolicitudes] = useState(false);
+  const [formularioAbierto, setFormularioAbierto] = useState(false);
   const [seleccionSolicitud, setSeleccionSolicitud] = useState(null);
 
-  const { ocupado, aviso, setAviso, ejecutar } = useOperacion();
+  const cargaActual = useRef(0);
+  const { ocupado, aviso, ejecutar } = useOperacion();
 
   // Carga de alumnos y catálogo de clases
-  const cargar = useCallback(async () => {
-    setCargando(true);
+  const cargar = useCallback(async ({ silencioso = false } = {}) => {
+    const carga = ++cargaActual.current;
+    if (!silencioso) setCargando(true);
     try {
       const [datosAlumnos, datosCatalogo] = await Promise.all([
         apiFetch('/alumnos', { cache: 'no-store' }).then((r) =>
           leerRespuesta(r, 'No se pudieron cargar los alumnos.'),
         ),
-        apiFetch('/clases/catalogo', { cache: 'no-store' })
-          .then((r) => (r.ok ? r.json() : { clases: [] }))
-          .catch(() => ({ clases: [] })),
+        apiFetch('/clases/catalogo', { cache: 'no-store' }).then((r) =>
+          leerRespuesta(r, 'No se pudieron cargar las clases.'),
+        ),
       ]);
 
+      if (carga !== cargaActual.current) return;
+      setErrorCarga('');
       setAlumnos(datosAlumnos ?? []);
       const turnosPlanos = (datosCatalogo.clases ?? []).flatMap((c) => c.turnos ?? [c]);
       setCatalogoClases(turnosPlanos);
     } catch (error) {
-      setAviso({ tipo: 'error', texto: error.message });
+      if (carga === cargaActual.current) setErrorCarga(error.message);
     } finally {
-      setCargando(false);
+      if (carga === cargaActual.current) setCargando(false);
     }
-  }, [setAviso]);
+  }, []);
 
   useEffect(() => {
     if (sesion?.perfil === 'profesor') {
@@ -51,6 +65,8 @@ export default function MisClases() {
 
   // Guardar cambios en el seguimiento de un alumno (acciones como congelar, recuperar, etc.)
   async function guardarAlumno(id, datos) {
+    cargaActual.current += 1;
+    setCargando(false);
     const ok = await ejecutar(async () => {
       const seguimiento = await leerRespuesta(
         await apiFetch(`/alumnos/${id}`, {
@@ -63,49 +79,44 @@ export default function MisClases() {
       setAlumnos((previos) => previos.map((a) => (a.id === id ? { ...a, seguimiento } : a)));
       return 'Registro actualizado correctamente.';
     });
-    if (ok) {
-      setSeleccionSolicitud(null);
-    }
+    if (ok) setSeleccionSolicitud(null);
+    return ok;
   }
 
-  // Agrupar clases del profesor
-  const clasesDelProfesor = useMemo(() => {
-    // 1. Clases donde hay alumnos asignados
-    const mapaClases = new Map();
-
-    for (const alumno of alumnos) {
-      if (alumno.clase) {
-        const id = alumno.clase.id;
-        if (!mapaClases.has(id)) {
-          mapaClases.set(id, {
-            ...alumno.clase,
-            alumnosIds: new Set([alumno.id]),
-          });
-        } else {
-          mapaClases.get(id).alumnosIds.add(alumno.id);
-        }
-      }
+  const clasesDelProfesor = useMemo(
+    () => obtenerClasesDelProfesor(alumnos, catalogoClases, sesion),
+    [alumnos, catalogoClases, sesion],
+  );
+  const grupos = agruparClases(clasesDelProfesor);
+  useActualizarAlVolver(
+    cargar,
+    ocupado || formularioAbierto || Boolean(seleccionSolicitud),
+    sesion?.perfil === 'profesor',
+  );
+  useEffect(() => {
+    const leer = () => {
+      const p = new URLSearchParams(window.location.search);
+      setClaseSeleccionadaId(p.get('turno'));
+      setPestañaInicialDetalle(p.get('seccion') === 'asistencia' ? 'asistencia' : 'alumnos');
+    };
+    leer();
+    window.addEventListener('popstate', leer);
+    return () => window.removeEventListener('popstate', leer);
+  }, []);
+  function seleccionarClase(id, seccion = 'alumnos', reemplazar = false) {
+    setClaseSeleccionadaId(id);
+    setPestañaInicialDetalle(seccion);
+    const url = new URL(window.location.href);
+    if (id) {
+      url.searchParams.set('turno', id);
+      url.searchParams.set('seccion', seccion);
+    } else {
+      url.searchParams.delete('turno');
+      url.searchParams.delete('seccion');
+      url.searchParams.delete('fecha');
     }
-
-    // 2. Clases del catálogo que pertenezcan al profesor
-    const nombreProfesor = alumnos[0]?.clase?.profesor ?? sesion?.usuario ?? '';
-    for (const turno of catalogoClases) {
-      const esDelProfesor =
-        (turno.profesorId && sesion?.profesorId && turno.profesorId === sesion.profesorId) ||
-        (turno.profesor &&
-          nombreProfesor &&
-          turno.profesor.trim().toLowerCase() === nombreProfesor.trim().toLowerCase());
-
-      if (esDelProfesor && !mapaClases.has(turno.id)) {
-        mapaClases.set(turno.id, {
-          ...turno,
-          alumnosIds: new Set(),
-        });
-      }
-    }
-
-    return Array.from(mapaClases.values());
-  }, [alumnos, catalogoClases, sesion]);
+    actualizarNavegacion(url, reemplazar);
+  }
 
   // Total de solicitudes pendientes
   const alumnosConSolicitudes = useMemo(() => {
@@ -123,19 +134,38 @@ export default function MisClases() {
     return alumnos.filter((a) => a.claseId === claseActiva.id || a.clase?.id === claseActiva.id);
   }, [alumnos, claseActiva]);
 
+  const errorVisible = errorCarga && (
+    <div role="alert" className="rounded-xl border border-dojo-100 bg-white p-4 text-dojo-800">
+      <p>{errorCarga}</p>
+      <button
+        type="button"
+        disabled={ocupado || cargando}
+        onClick={() => cargar()}
+        className="mt-2 min-h-11 font-semibold"
+      >
+        Reintentar
+      </button>
+    </div>
+  );
+
   // Si hay una clase seleccionada, renderizamos el detalle de esa clase
   if (claseActiva) {
     return (
       <main className="perfil-page perfil-profesor-page space-y-4 px-4 pb-12 pt-4">
         <Mensaje aviso={aviso} />
+        {errorVisible}
         <DetalleClase
           clase={claseActiva}
+          setFormularioAbierto={setFormularioAbierto}
           alumnosClase={alumnosClaseActiva}
-          onVolver={() => setClaseSeleccionadaId(null)}
+          onVolver={() => {
+            seleccionarClase(null);
+            cargar({ silencioso: true });
+          }}
           ocupado={ocupado}
           guardarAlumno={guardarAlumno}
           recargarAlumnos={cargar}
-          ejecutar={ejecutar}
+          cambiarPestaña={(seccion) => seleccionarClase(claseActiva.id, seccion, true)}
           pestañaInicial={pestañaInicialDetalle}
         />
       </main>
@@ -147,15 +177,21 @@ export default function MisClases() {
       className="perfil-page perfil-profesor-page space-y-5 px-4 pb-12 pt-4"
       aria-busy={cargando || ocupado}
     >
+      <Mensaje aviso={aviso} />
+      {errorVisible}
       {/* Hero del profesor: Resumen general y acceso a solicitudes */}
       <header className="perfil-hero">
         <p className="perfil-eyebrow">ÁREA DEL PROFESOR</p>
-        <h2 className="perfil-saludo">Mis clases</h2>
+        <h2 className="perfil-saludo">
+          {clasesDelProfesor[0]?.profesor
+            ? `Hola, ${primerNombre(clasesDelProfesor[0].profesor)}`
+            : 'Tus clases'}
+        </h2>
 
         <div className="perfil-resumen">
           <div>
-            <strong>{cargando ? '—' : clasesDelProfesor.length}</strong>
-            <span>{clasesDelProfesor.length === 1 ? 'Clase asignada' : 'Clases asignadas'}</span>
+            <strong>{cargando ? '—' : grupos.length}</strong>
+            <span>{grupos.length === 1 ? 'Clase asignada' : 'Clases asignadas'}</span>
           </div>
           <div>
             <strong>{cargando ? '—' : alumnos.length}</strong>
@@ -185,8 +221,6 @@ export default function MisClases() {
           )}
         </div>
       </header>
-
-      <Mensaje aviso={aviso} />
 
       {/* Sección desplegable de solicitudes pendientes (si existen y se activan) */}
       {mostrarSolicitudes && alumnosConSolicitudes.length > 0 && (
@@ -237,7 +271,7 @@ export default function MisClases() {
           <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center text-sm text-gray-600">
             Cargando tus clases asignadas…
           </div>
-        ) : clasesDelProfesor.length === 0 ? (
+        ) : clasesDelProfesor.length === 0 && errorCarga ? null : clasesDelProfesor.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center space-y-2">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-400">
               <IconoPerfil nombre="clase" size={24} />
@@ -249,87 +283,58 @@ export default function MisClases() {
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
-            {clasesDelProfesor.map((clase) => {
-              const cantidadAlumnos = clase.alumnosIds?.size ?? 0;
-              const nombre = clase.turno || clase.claseNombre || clase.nivel;
-              const dias = Array.isArray(clase.frecuencia)
-                ? clase.frecuencia.join(', ')
-                : clase.frecuencia;
-
-              // Comprobar si esta clase tiene solicitudes pendientes
-              const solicitudesClase = alumnos.filter(
-                (a) =>
-                  a.claseId === clase.id &&
-                  a.seguimiento?.solicitudes?.some((s) => s.estado === 'pendiente'),
-              ).length;
-
-              return (
-                <article
-                  key={clase.id}
-                  className="perfil-tarjeta rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:border-dojo-200 hover:shadow-md flex flex-col justify-between"
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="text-xs font-bold uppercase tracking-wider text-dojo-600">
-                        {clase.sede || 'Sede por asignar'}
-                      </span>
-                      {solicitudesClase > 0 && (
-                        <span className="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">
-                          {solicitudesClase === 1
-                            ? '1 solicitud'
-                            : `${solicitudesClase} solicitudes`}
-                        </span>
-                      )}
-                    </div>
-
-                    <h4 className="text-lg font-extrabold text-gray-900 leading-snug">{nombre}</h4>
-
-                    <div className="text-xs text-gray-600 space-y-0.5">
-                      <p className="font-medium">{dias || 'Días por confirmar'}</p>
-                      <p className="text-gray-800 font-semibold">
-                        {clase.horaInicio} – {clase.horaFin}
+            {grupos.map((grupo) => (
+              <article
+                key={grupo.id}
+                className="perfil-tarjeta space-y-4 rounded-2xl border border-gray-200 bg-white p-5"
+              >
+                <ImagenClase nombre={grupo.nombre} />
+                <h3 className="text-xl font-bold">{grupo.nombre}</h3>
+                {grupo.turnos.map((clase) => {
+                  const cantidadAlumnos = clase.alumnosIds?.size ?? 0;
+                  const solicitudesClase = alumnos.filter(
+                    (a) =>
+                      String(a.claseId) === String(clase.id) &&
+                      a.seguimiento.solicitudes.some((r) => r.estado === 'pendiente'),
+                  ).length;
+                  return (
+                    <div key={clase.id} className="perfil-clase-turno">
+                      <h4 className="font-bold">{etiquetaTurno(clase)}</h4>
+                      <p className="mt-1 text-sm text-gray-600">
+                        {clase.frecuencia?.join(', ')} · {clase.horaInicio}–{clase.horaFin}
                       </p>
+                      <p className="mt-1 text-sm text-gray-600">
+                        {clase.sede || 'Sede por asignar'}
+                      </p>
+                      <p className="mt-2 text-sm">
+                        {cantidadAlumnos} {cantidadAlumnos === 1 ? 'alumno' : 'alumnos'}
+                        {solicitudesClase > 0 && (
+                          <span className="ml-2 font-semibold text-dojo-700">
+                            {solicitudesClase} por revisar
+                          </span>
+                        )}
+                      </p>
+                      <div className="perfil-clase-turno__acciones">
+                        <button
+                          type="button"
+                          onClick={() => seleccionarClase(clase.id)}
+                          className="min-h-11 rounded-xl bg-dojo-600 px-3 py-2 font-semibold text-white"
+                        >
+                          Ver alumnos
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => seleccionarClase(clase.id, 'asistencia')}
+                          className="min-h-11 rounded-xl border border-gray-300 px-3 py-2 font-semibold"
+                        >
+                          Asistencia
+                        </button>
+                      </div>
                     </div>
-
-                    <div className="pt-2 flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700">
-                        <IconoPerfil nombre="alumnos" size={14} />
-                        {cantidadAlumnos}{' '}
-                        {cantidadAlumnos === 1 ? 'alumno inscrito' : 'alumnos inscritos'}
-                      </span>
-                      {clase.cupos !== undefined && (
-                        <span className="text-xs text-gray-500 font-medium">
-                          Cupos: {clase.cupos}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="mt-5 pt-4 border-t border-gray-100 flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPestañaInicialDetalle('alumnos');
-                        setClaseSeleccionadaId(clase.id);
-                      }}
-                      className="flex-1 min-h-11 rounded-xl bg-dojo-600 px-3 py-2 text-xs font-bold text-white text-center hover:bg-dojo-700 transition-colors shadow-sm"
-                    >
-                      Ver alumnos ({cantidadAlumnos})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPestañaInicialDetalle('asistencia');
-                        setClaseSeleccionadaId(clase.id);
-                      }}
-                      className="min-h-11 rounded-xl border border-gray-300 bg-white px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                      Asistencia
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
+                  );
+                })}
+              </article>
+            ))}
           </div>
         )}
       </section>

@@ -52,3 +52,25 @@ test('la cuenta del administrador conserva el origen y rechaza destinos ajenos',
     assert.equal(enlaceCuentaAdmin(ruta), '/usuario?volver=%2Fclases');
   }
 });
+
+test('cuenta y ayuda conservan turno, sección y fecha y rechazan consultas manipuladas', () => {
+  for (const ruta of [
+    '/alumnos?turno=4&seccion=asistencia&fecha=2026-11-16',
+    '/calendario?turno=4&fecha=2026-11-16',
+  ]) {
+    const cuenta = new URL(enlaceCuenta(ruta), 'https://dojo.test');
+    assert.equal(origenCuenta(cuenta.search), ruta);
+    const ayuda = new URL(enlaceAyuda(cuenta.search), cuenta);
+    assert.equal(origenCuenta(ayuda.search), ruta);
+  }
+  for (const ruta of [
+    '/alumnos?turno=1&turno=2',
+    '/calendario?fecha=2026-02-31',
+    '/alumnos?seccion=cuentas',
+    '/alumnos?turno=https://otro.test',
+  ]) {
+    assert.equal(origenCuenta(`?volver=${encodeURIComponent(ruta)}`), '/alumnos');
+  }
+  const origen = '/postulaciones?clase=4&estado=aceptado';
+  assert.equal(origenCuentaAdmin(`?volver=${encodeURIComponent(origen)}`), origen);
+});

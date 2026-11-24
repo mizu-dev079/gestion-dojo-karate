@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useOperacion } from '../../hooks/useOperacion.js';
 import { apiFetch, leerRespuesta } from '../../lib/api.js';
+import { actualizarNavegacion } from '../../lib/navegacion.js';
 import { agruparClases, idClase } from '../../lib/turnos.js';
 import IndicadorCupos from '../IndicadorCupos.jsx';
 import Mensaje from '../Mensaje.jsx';
@@ -29,11 +30,27 @@ const fechaTexto = (fecha) => {
 };
 
 export default function Postulaciones() {
+  const [sinAcceso, setSinAcceso] = useState([]);
   const [clases, setClases] = useState([]);
   const [postulaciones, setPostulaciones] = useState([]);
   const [claseId, setClaseId] = useState('');
   const seleccionClase = useRef('');
   const [estado, setEstado] = useState('todas');
+  useEffect(() => {
+    const leer = () => {
+      const valor = new URLSearchParams(window.location.search).get('estado');
+      if (['todas', 'pendiente', 'aceptado', 'rechazado'].includes(valor)) setEstado(valor);
+    };
+    leer();
+    window.addEventListener('popstate', leer);
+    return () => window.removeEventListener('popstate', leer);
+  }, []);
+  function elegirEstado(valor) {
+    setEstado(valor);
+    const url = new URL(window.location.href);
+    url.searchParams.set('estado', valor);
+    actualizarNavegacion(url);
+  }
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState('');
   const [modoSeleccion, setModoSeleccion] = useState(false);
@@ -49,12 +66,15 @@ export default function Postulaciones() {
     setCargando(true);
     setErrorCarga('');
     try {
-      const [lista, solicitudes] = await Promise.all([
+      const [lista, solicitudes, opciones] = await Promise.all([
         apiFetch('/clases').then((respuesta) =>
           leerRespuesta(respuesta, 'No se pudieron cargar las clases.'),
         ),
         apiFetch('/clases/postulaciones').then((respuesta) =>
           leerRespuesta(respuesta, 'No se pudieron cargar las postulaciones.'),
+        ),
+        apiFetch('/cuentas/opciones', { cache: 'no-store' }).then((r) =>
+          leerRespuesta(r, 'No se pudieron consultar los accesos.'),
         ),
       ]);
       const solicitada =
@@ -73,12 +93,13 @@ export default function Postulaciones() {
         });
       setClases(lista);
       setPostulaciones(solicitudes);
+      setSinAcceso(opciones.aceptadosSinCuenta ?? []);
       setClaseId(elegida);
       seleccionClase.current = elegida;
       const url = new URL(window.location.href);
       if (elegida) url.searchParams.set('clase', elegida);
       else url.searchParams.delete('clase');
-      window.history.replaceState(null, '', url);
+      actualizarNavegacion(url);
     } catch (error) {
       setErrorCarga(
         error instanceof TypeError
@@ -116,7 +137,7 @@ export default function Postulaciones() {
     setAviso(null);
     const url = new URL(window.location.href);
     url.searchParams.set('clase', valor);
-    window.history.replaceState(null, '', url);
+    actualizarNavegacion(url);
   }
   async function cambiarEstado(postulacion, nuevoEstado) {
     await ejecutar(async () => {
@@ -263,7 +284,7 @@ export default function Postulaciones() {
             value={estado}
             disabled={ocupado}
             onChange={(event) => {
-              setEstado(event.target.value);
+              elegirEstado(event.target.value);
               setSeleccionados([]);
             }}
             className="rounded-xl border border-gray-200 bg-gray-50 px-3"
@@ -279,7 +300,7 @@ export default function Postulaciones() {
             type="button"
             disabled={ocupado}
             onClick={() => {
-              setEstado('todas');
+              elegirEstado('todas');
               setSeleccionados([]);
             }}
             className="text-sm font-semibold text-dojo-700"
@@ -411,6 +432,14 @@ export default function Postulaciones() {
                       )}
                     </dl>
                   </details>
+                  {grupo === 'aceptado' && sinAcceso.some((a) => a.id === postulacion.id) && (
+                    <a
+                      href={`/cuentas/alumnos?inscripcion=${encodeURIComponent(postulacion.id)}&volver=${encodeURIComponent(`/postulaciones?clase=${claseId}&estado=${estado}`)}`}
+                      className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-dojo-600 px-4 py-2 font-semibold text-white"
+                    >
+                      Crear acceso y activar plan
+                    </a>
+                  )}
                   {grupo === 'pendiente' && (
                     <div className="grid grid-cols-2 gap-2 border-t border-gray-100 pt-3">
                       <button

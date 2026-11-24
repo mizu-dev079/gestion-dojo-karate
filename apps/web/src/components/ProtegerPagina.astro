@@ -34,21 +34,23 @@
       }
       window.dojoSesion = sesion;
       document.documentElement.dataset.perfil = sesion.perfil;
-      document.querySelectorAll('[data-solo-admin]').forEach((elemento) => { elemento.hidden = sesion.perfil !== 'administrador'; });
+      const actualizarCabecera = () => {
       const esPerfil = sesion.perfil !== 'administrador';
-      document.querySelectorAll<HTMLElement>('[data-solo-perfiles]').forEach((elemento) => { elemento.hidden = !esPerfil; });
-      const inferior = document.querySelector<HTMLElement>('.app-bottom-nav');
-      if (inferior) inferior.hidden = true;
       if (!esPerfil) {
         const ruta = window.location.pathname.replace(/\/$/, "");
         const cuenta = document.querySelector<HTMLAnchorElement>(".app-account");
         if (cuenta) {
           cuenta.hidden = ruta === "/usuario";
-          cuenta.href = enlaceCuentaAdmin(ruta === "/ajustes" ? origenCuentaAdmin(window.location.search) : ruta);
+          cuenta.href = enlaceCuentaAdmin(ruta === "/ajustes" ? origenCuentaAdmin(window.location.search) : ruta + window.location.search);
         }
         const atras = document.querySelector<HTMLAnchorElement>(".app-back");
         if (atras) {
           atras.hidden = ruta === "/clases";
+          if (ruta === "/cuentas/alumnos" && origenCuentaAdmin(window.location.search).startsWith('/postulaciones')) {
+            atras.href = origenCuentaAdmin(window.location.search);
+            atras.title = "Volver a postulaciones";
+            atras.setAttribute("aria-label", "Volver a postulaciones");
+          }
           if (ruta === "/ajustes") {
             atras.href = enlaceCuentaAdmin(origenCuentaAdmin(window.location.search));
             atras.title = "Volver a mi cuenta";
@@ -63,7 +65,7 @@
       }
       if (esPerfil) {
         const ruta = window.location.pathname.replace(/\/$/, '');
-        const origen = ruta === '/calendario' ? '/calendario' : ruta === '/alumnos' ? '/alumnos' : origenCuenta(window.location.search);
+        const origen = ['/calendario', '/alumnos'].includes(ruta) ? ruta + window.location.search : origenCuenta(window.location.search);
         const cuenta = document.querySelector<HTMLAnchorElement>('.app-account');
         if (cuenta) {
           cuenta.href = enlaceCuenta(origen);
@@ -73,7 +75,7 @@
         if (atras) {
           atras.hidden = ruta === '/alumnos';
           const destino = ruta === '/usuario' ? origen : ruta === '/ajustes' ? enlaceCuenta(origen) : '/alumnos';
-          const etiqueta = ruta === '/ajustes' ? 'Volver a mi cuenta' : destino === '/calendario' ? 'Volver a asistencia' : 'Volver a mis clases';
+          const etiqueta = ruta === '/ajustes' ? 'Volver a mi cuenta' : destino.startsWith('/calendario') ? 'Volver a asistencia' : 'Volver a mis clases';
           atras.href = destino;
           atras.setAttribute('aria-label', etiqueta);
           atras.title = etiqueta;
@@ -86,6 +88,10 @@
           document.title = `${titulo} | Shinken Dojo - Hiroshi`;
         }
       }
+      };
+      actualizarCabecera();
+      window.addEventListener('popstate', actualizarCabecera);
+      window.addEventListener('dojo:navegacion', actualizarCabecera);
       window.dispatchEvent(new Event('dojo:sesion'));
       mostrar();
     })

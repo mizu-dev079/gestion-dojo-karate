@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useActualizarAlVolver } from '../../hooks/useActualizarAlVolver.js';
+import { useFechaAsistencia } from '../../hooks/useFechaAsistencia.js';
 import { useOperacion } from '../../hooks/useOperacion.js';
 import { useSesion } from '../../hooks/useSesion.js';
 import { apiFetch, leerRespuesta } from '../../lib/api.js';
+import { hoyLima, proximoEntrenamiento } from '../../lib/seguimiento.js';
 import Mensaje from '../Mensaje.jsx';
-import { hoyLima, proximoEntrenamiento } from '../perfiles/alumno/utilidades.js';
 import IconoPerfil from '../perfiles/IconoPerfil.jsx';
 import AsistenciaProfesor from '../perfiles/profesor/AsistenciaProfesor.jsx';
 import SelectorDiasAsistencia from '../SelectorDiasAsistencia.jsx';
@@ -12,9 +14,7 @@ import Asistencia from './Asistencia.jsx';
 const hoy = hoyLima;
 
 function CalendarioAlumno() {
-  const [fecha, setFecha] = useState(hoy);
-  const [limite, setLimite] = useState(hoy);
-  const diaAnterior = useRef(limite);
+  const { fecha, setFecha, limite } = useFechaAsistencia();
   const cargaActual = useRef(0);
   const [alumnos, setAlumnos] = useState([]);
   const [sesiones, setSesiones] = useState([]);
@@ -53,25 +53,7 @@ function CalendarioAlumno() {
     };
   }, [cargar]);
 
-  useEffect(() => {
-    const actualizar = () => {
-      const actual = hoy();
-      if (actual === diaAnterior.current) return;
-      const anterior = diaAnterior.current;
-      diaAnterior.current = actual;
-      setLimite(actual);
-      setFecha((valor) => (valor === anterior || valor > actual ? actual : valor));
-    };
-    actualizar();
-    const intervalo = setInterval(actualizar, 30000);
-    window.addEventListener('focus', actualizar);
-    document.addEventListener('visibilitychange', actualizar);
-    return () => {
-      clearInterval(intervalo);
-      window.removeEventListener('focus', actualizar);
-      document.removeEventListener('visibilitychange', actualizar);
-    };
-  }, []);
+  useActualizarAlVolver(cargar, ocupado);
 
   function elegirFecha(dia) {
     const actual = hoy();

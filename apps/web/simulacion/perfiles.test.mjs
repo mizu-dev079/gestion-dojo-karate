@@ -1,9 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {
-  pendientesAntesDelCambio,
-  proximoEntrenamiento,
-} from '../src/components/perfiles/alumno/utilidades.js';
+import { pendientesAntesDelCambio, proximoEntrenamiento } from '../src/lib/seguimiento.js';
 import { crearApiSimulada } from './api.mjs';
 import { datosIniciales } from './datos.mjs';
 

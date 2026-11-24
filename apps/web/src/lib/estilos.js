@@ -1,4 +1,4 @@
-// Clases compartidas por las tarjetas del perfil alumno (blanco, negro y rojo del dojo).
+// Clases compartidas por las tarjetas y formularios del portal (blanco, negro y rojo del dojo).
 export const tarjeta = 'perfil-tarjeta rounded-2xl border border-gray-200 bg-white p-5 shadow-sm';
 export const tituloTarjeta = 'perfil-titulo text-lg font-bold text-gray-900';
 export const botonPrincipal =

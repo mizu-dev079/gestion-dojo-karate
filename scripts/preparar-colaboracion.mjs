@@ -132,9 +132,22 @@ export function prepararColaboracion({
       join(destino, '.gitignore'),
       'node_modules/\ndist/\n.astro/\n.turbo/\n*.tsbuildinfo\n.env\n.env.*\ncredentials/\n',
     );
-    copyFileSync(
-      join(raiz, 'docs/09-colaboracion-simulada.md'),
+    writeFileSync(
       join(destino, 'LEEME-COLABORACION.md'),
+      `# Colaboración con datos simulados
+
+Esta copia contiene frontend, contratos y datos ficticios en memoria, sin conexión con Sheets.
+
+1. Instala Node.js 24 y pnpm 12.6.0.
+2. Ejecuta pnpm install --frozen-lockfile y después pnpm dev.
+3. Abre http://localhost:4322 y comparte ese puerto mediante Live Share.
+4. Para detener el servidor, ejecuta pnpm stop:simulado.
+
+Cuentas de ejemplo: profesor.prueba y alumno.prueba. La contraseña coincide con el usuario.
+No incluye acceso de administrador. Los datos se reinician al volver a iniciar el servidor.
+Trabaja en apps/web/src/components/perfiles/ y coordina los cambios en componentes o utilidades compartidas.
+No copies credenciales ni archivos .env a esta carpeta. El anfitrión revisa e integra el trabajo en el repositorio original.
+`,
     );
     return { destino, archivos: archivos.size };
   } catch (error) {

@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { tarjeta } from './estilos.js';
+import { tarjeta } from '../../../lib/estilos.js';
 import {
   estadoAsistencia,
   fechaVisible,
   limiteRecuperaciones,
   recuperacionesDelPaquete,
-} from './utilidades.js';
+} from '../../../lib/seguimiento.js';
 
 const CANTIDAD_INICIAL = 10;
 

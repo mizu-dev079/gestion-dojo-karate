@@ -1,6 +1,6 @@
+import { tarjeta, tituloTarjeta } from '../../../lib/estilos.js';
+import { cambioProgramado, pendientesAntesDelCambio, unidad } from '../../../lib/seguimiento.js';
 import IconoPerfil from '../IconoPerfil.jsx';
-import { tarjeta, tituloTarjeta } from './estilos.js';
-import { cambioProgramado, pendientesAntesDelCambio, unidad } from './utilidades.js';
 
 export default function ResumenPlan({ alumno }) {
   const s = alumno.seguimiento;
