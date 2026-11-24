@@ -27,9 +27,35 @@ export default function ConfirmarAccion({
     };
   }, []);
 
+  function mantenerFoco(event) {
+    if (event.key !== 'Tab') return;
+    const elementos = [
+      ...dialogo.current.querySelectorAll('button, a[href], input, select, textarea, [tabindex]'),
+    ].filter(
+      (elemento) =>
+        !elemento.disabled && elemento.tabIndex >= 0 && elemento.getClientRects().length,
+    );
+    const primero = elementos[0];
+    const ultimo = elementos.at(-1);
+    if (!primero) {
+      event.preventDefault();
+      dialogo.current.focus();
+      return;
+    }
+    if (event.shiftKey && document.activeElement === primero) {
+      event.preventDefault();
+      ultimo.focus();
+    } else if (!event.shiftKey && document.activeElement === ultimo) {
+      event.preventDefault();
+      primero.focus();
+    }
+  }
+
   return (
     <dialog
       ref={dialogo}
+      tabIndex={-1}
+      onKeyDown={mantenerFoco}
       aria-labelledby={tituloId}
       aria-describedby={descripcionId}
       aria-busy={ocupado}

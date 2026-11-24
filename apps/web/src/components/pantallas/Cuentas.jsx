@@ -50,7 +50,17 @@ function FichaPersona({ nombre, children }) {
   return (
     <details className="group/ficha overflow-hidden rounded-xl border border-gray-200 bg-white">
       <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 font-semibold focus-visible:outline-2 focus-visible:outline-dojo-600 [&::-webkit-details-marker]:hidden">
-        <span className="min-w-0 break-words">{nombre}</span>
+        <span className="registro-persona">
+          <span className="registro-avatar" aria-hidden="true">
+            {nombre
+              .trim()
+              .split(/\s+/)
+              .slice(0, 2)
+              .map((parte) => parte[0])
+              .join('')}
+          </span>
+          <span className="min-w-0 break-words">{nombre}</span>
+        </span>
         <svg
           className="shrink-0 text-gray-500 transition-transform group-open/ficha:rotate-180"
           width="20"

@@ -10,8 +10,8 @@ import {
 import { actualizarNavegacion } from '../../../lib/navegacion.js';
 import { primerNombre } from '../../../lib/seguimiento.js';
 import { agruparClases } from '../../../lib/turnos.js';
-import ImagenClase from '../../ImagenClase.jsx';
 import Mensaje from '../../Mensaje.jsx';
+import PortadaClase from '../../PortadaClase.jsx';
 import IconoPerfil from '../IconoPerfil.jsx';
 import DetalleClase from './DetalleClase.jsx';
 import FichaAlumnoProfesor from './FichaAlumnoProfesor.jsx';
@@ -180,7 +180,7 @@ export default function MisClases() {
       <Mensaje aviso={aviso} />
       {errorVisible}
       {/* Hero del profesor: Resumen general y acceso a solicitudes */}
-      <header className="perfil-hero">
+      <header className="perfil-hero profesor-bienvenida">
         <p className="perfil-eyebrow">ÁREA DEL PROFESOR</p>
         <h2 className="perfil-saludo">
           {clasesDelProfesor[0]?.profesor
@@ -286,10 +286,9 @@ export default function MisClases() {
             {grupos.map((grupo) => (
               <article
                 key={grupo.id}
-                className="perfil-tarjeta space-y-4 rounded-2xl border border-gray-200 bg-white p-5"
+                className="curso-tarjeta profesor-curso perfil-tarjeta space-y-4 rounded-2xl border border-gray-200 bg-white p-5"
               >
-                <ImagenClase nombre={grupo.nombre} />
-                <h3 className="text-xl font-bold">{grupo.nombre}</h3>
+                <PortadaClase nombre={grupo.nombre} turnos={grupo.turnos.length} nivel={3} />
                 {grupo.turnos.map((clase) => {
                   const cantidadAlumnos = clase.alumnosIds?.size ?? 0;
                   const solicitudesClase = alumnos.filter(

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { API_URL } from '../../lib/api.js';
+import { etiquetaTurno } from '../../lib/clases.js';
+import ImagenClase from '../ImagenClase.jsx';
 import IndicadorCupos from '../IndicadorCupos.jsx';
 import MarcaDojo from '../MarcaDojo.jsx';
 import SelectorClaseTurno from '../SelectorClaseTurno.jsx';
@@ -177,11 +179,16 @@ export default function FormularioPostulacion() {
   }
 
   const resumenClase = clase && (
-    <section className="rounded-2xl bg-dojo-50 p-5" aria-label="Clase seleccionada">
-      <h2 className="break-words text-lg font-bold text-dojo-900">
-        {clase.nivel} · Sede {clase.sede}
-      </h2>
-      {clase.turno && <p className="mt-2 font-semibold text-dojo-900">{clase.turno}</p>}
+    <section
+      className="postulacion-clase rounded-2xl bg-dojo-50 p-5"
+      aria-label="Clase seleccionada"
+    >
+      <ImagenClase nombre={clase.nivel} compacta />
+      <h2 className="break-words text-lg font-bold text-dojo-900">{clase.nivel}</h2>
+      <p className="mt-2 text-sm text-dojo-900">{clase.sede}</p>
+      {etiquetaTurno(clase) !== 'Horario' && (
+        <p className="mt-2 font-semibold text-dojo-900">{etiquetaTurno(clase)}</p>
+      )}
       <p className="mt-2 text-sm text-dojo-900">Prof. {clase.profesor || 'Por asignar'}</p>
       <p className="mt-2 text-sm text-dojo-900">
         {Array.isArray(clase.frecuencia) ? clase.frecuencia.join(', ') : clase.frecuencia}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { API_URL } from '../../lib/api.js';
 import CampoContrasena from '../CampoContrasena.jsx';
 import MarcaDojo from '../MarcaDojo.jsx';
@@ -11,6 +11,8 @@ function destinoSeguro(volver, perfil) {
 }
 
 export default function Login() {
+  const [lista, setLista] = useState(false);
+  useEffect(() => setLista(true), []);
   const [usuario, setUsuario] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -50,46 +52,71 @@ export default function Login() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[var(--page-background)] px-4">
-      <form onSubmit={entrar} className="w-full max-w-sm rounded-3xl bg-white p-7 shadow-sm">
-        <h1 className="text-gray-900">
-          <MarcaDojo />
-        </h1>
-        <p className="mt-1 text-center text-xs text-gray-500">Ingresa con tu cuenta</p>
+    <main className="login-page">
+      <section className="login-portada">
+        <MarcaDojo />
+        <div className="login-portada__mensaje">
+          <p className="portal-eyebrow">Tu espacio de entrenamiento</p>
+          <h1>
+            Bienvenido
+            <br />
+            al dojo<span className="login-punto">.</span>
+          </h1>
+        </div>
+        <span className="login-portada__sello" aria-hidden="true">
+          SHINKEN
+        </span>
+      </section>
+      <form onSubmit={entrar} className="login-formulario" aria-busy={cargando}>
+        <h2 className="login-titulo">Inicia sesión</h2>
+        <p className="login-formulario__subtitulo">Ingresa con tu cuenta del dojo.</p>
 
-        <label className="mt-6 block text-xs font-semibold text-gray-700" htmlFor="usuario">
-          Usuario
-        </label>
-        <input
-          id="usuario"
-          value={usuario}
-          onChange={(e) => setUsuario(e.target.value)}
-          autoComplete="username"
-          required
-          className="mt-1 h-10 w-full rounded-xl border border-gray-200 px-3 text-sm outline-none focus:border-dojo-500"
-        />
+        <fieldset disabled={!lista || cargando}>
+          <legend className="sr-only">Datos de acceso</legend>
+          <label
+            className="login-label mt-6 block text-xs font-semibold text-gray-700"
+            htmlFor="usuario"
+          >
+            Usuario
+          </label>
+          <input
+            id="usuario"
+            value={usuario}
+            onChange={(e) => setUsuario(e.target.value)}
+            autoComplete="username"
+            required
+            className="mt-1 h-10 w-full rounded-xl border border-gray-200 px-3 text-sm outline-none focus:border-dojo-500"
+          />
 
-        <label className="mt-4 block text-xs font-semibold text-gray-700" htmlFor="password">
-          Contraseña
-        </label>
-        <CampoContrasena
-          id="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          autoComplete="current-password"
-          required
-          className="mt-1 h-10 w-full rounded-xl border border-gray-200 px-3 text-sm outline-none focus:border-dojo-500"
-        />
+          <label
+            className="login-label mt-4 block text-xs font-semibold text-gray-700"
+            htmlFor="password"
+          >
+            Contraseña
+          </label>
+          <CampoContrasena
+            id="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
+            required
+            className="mt-1 h-10 w-full rounded-xl border border-gray-200 px-3 text-sm outline-none focus:border-dojo-500"
+          />
 
-        {error && <p className="mt-4 text-xs font-semibold text-red-600">{error}</p>}
+          {error && (
+            <p role="alert" className="mt-4 text-sm font-semibold text-red-600">
+              {error}
+            </p>
+          )}
 
-        <button
-          type="submit"
-          disabled={cargando}
-          className="mt-6 h-11 w-full rounded-xl bg-dojo-600 text-sm font-semibold text-white transition hover:bg-dojo-700 disabled:opacity-60"
-        >
-          {cargando ? 'Entrando...' : 'Entrar'}
-        </button>
+          <button
+            type="submit"
+            disabled={cargando}
+            className="login-submit mt-6 h-11 w-full rounded-xl bg-dojo-600 text-sm font-semibold text-white transition hover:bg-dojo-700 disabled:opacity-60"
+          >
+            {cargando ? 'Entrando...' : 'Entrar'}
+          </button>
+        </fieldset>
       </form>
     </main>
   );

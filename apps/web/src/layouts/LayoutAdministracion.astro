@@ -3,8 +3,8 @@ import MarcaDojo from '../components/MarcaDojo.jsx';
 import CabeceraAdministracion from '../components/CabeceraAdministracion.jsx';
 import ProtegerPagina from '../components/ProtegerPagina.astro';
 import '../styles/global.css';
-interface Props { title: string; active: string; backHref?: string; backLabel?: string; }
-const { title, active, backHref, backLabel = 'Volver a clases' } = Astro.props;
+interface Props { title: string; active: string; backHref?: string; backLabel?: string; mostrarNavegacion?: boolean; }
+const { title, active, backHref, backLabel = 'Volver a clases', mostrarNavegacion = true } = Astro.props;
 ---
 <!doctype html>
 <html lang="es">
@@ -35,7 +35,7 @@ const { title, active, backHref, backLabel = 'Volver a clases' } = Astro.props;
         </div>
       </header>
       <div id="contenido" class="admin-content" tabindex="-1">
-        <CabeceraAdministracion active={active} title={title} client:load />
+        {mostrarNavegacion && <CabeceraAdministracion active={active} client:load />}
         <slot />
       </div>
     </div>

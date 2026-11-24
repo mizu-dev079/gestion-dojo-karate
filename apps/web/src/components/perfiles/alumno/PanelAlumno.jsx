@@ -138,8 +138,10 @@ export default function PanelAlumno() {
         </section>
       ) : (
         alumnos.map((alumno) => (
-          <div key={alumno.id} className="space-y-4">
-            <Bienvenida alumno={alumno} />
+          <div key={alumno.id} className="alumno-panel">
+            <Bienvenida alumno={alumno}>
+              <ResumenPlan alumno={alumno} compacto />
+            </Bienvenida>
             <nav className="perfil-accesos" aria-label={`Accesos de ${alumno.nombre}`}>
               <a href="/calendario">
                 <IconoPerfil nombre="calendario" />
@@ -150,14 +152,19 @@ export default function PanelAlumno() {
                 <span>Mi clase</span>
               </a>
               {alumno.seguimiento.plan && (
-                <a href={`#pausa-${alumno.id}`}>
+                <a
+                  href={`#pausa-${alumno.id}`}
+                  onClick={() => {
+                    const panel = document.getElementById(`seguimiento-${alumno.id}`);
+                    if (panel) panel.open = true;
+                  }}
+                >
                   <IconoPerfil nombre="pausa" />
-                  <span>Congelar plan</span>
+                  <span>{alumno.seguimiento.congelado ? 'Mi pausa' : 'Congelar plan'}</span>
                 </a>
               )}
             </nav>
-            <div className="perfil-principal">
-              <ResumenPlan alumno={alumno} />
+            <div className="alumno-agenda">
               <MiAsistencia
                 alumno={alumno}
                 sesiones={sesiones}
@@ -169,9 +176,29 @@ export default function PanelAlumno() {
               />
             </div>
             <MiClase alumno={alumno} />
-            <Recuperaciones alumno={alumno} />
-            <Congelamiento alumno={alumno} hoy={ahora.hoy} ocupado={ocupado} enviar={enviar} />
-            <HistorialAlumno alumno={alumno} />
+            {alumno.seguimiento.plan && (
+              <details id={`seguimiento-${alumno.id}`} className="seguimiento-panel">
+                <summary>
+                  <span className="perfil-icono">
+                    <IconoPerfil nombre="historial" />
+                  </span>
+                  Tu seguimiento
+                  <span className="seguimiento-panel__flecha" aria-hidden="true">
+                    ⌄
+                  </span>
+                </summary>
+                <div className="seguimiento-panel__contenido">
+                  <Recuperaciones alumno={alumno} />
+                  <Congelamiento
+                    alumno={alumno}
+                    hoy={ahora.hoy}
+                    ocupado={ocupado}
+                    enviar={enviar}
+                  />
+                  <HistorialAlumno alumno={alumno} />
+                </div>
+              </details>
+            )}
           </div>
         ))
       )}

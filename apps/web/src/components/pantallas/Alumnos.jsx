@@ -211,6 +211,14 @@ export default function Alumnos() {
             className={`rounded-2xl border border-gray-200 bg-white ${'p-4'}`}
           >
             <summary className="admin-alumno__resumen">
+              <span className="registro-avatar" aria-hidden="true">
+                {alumno.nombre
+                  .trim()
+                  .split(/\s+/)
+                  .slice(0, 2)
+                  .map((parte) => parte[0])
+                  .join('')}
+              </span>
               <strong>
                 {alumno.nombre}
                 {(s.congelado ||
@@ -222,7 +230,7 @@ export default function Alumnos() {
                   </span>
                 )}
               </strong>
-              <span className="text-sm text-dojo-700">
+              <span className="registro-saldo text-sm text-dojo-700">
                 {s.plan ? `${s.pendientes} clases` : 'Sin plan'}
               </span>
             </summary>

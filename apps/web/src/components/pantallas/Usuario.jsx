@@ -28,7 +28,7 @@ export default function Usuario() {
             icono: 'ayuda',
           },
         ].map((enlace) => (
-          <a key={enlace.href} href={enlace.href}>
+          <a className="cuenta-opcion" key={enlace.href} href={enlace.href}>
             <span className="perfil-icono">
               <IconoPerfil nombre={enlace.icono} />
             </span>

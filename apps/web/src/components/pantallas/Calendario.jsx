@@ -93,25 +93,6 @@ function CalendarioAlumno() {
       className="perfil-page perfil-asistencia-page space-y-5 p-4"
       aria-busy={cargando || ocupado}
     >
-      <header className="perfil-hero">
-        <h2 className="perfil-saludo">Tu entrenamiento</h2>
-        <div className="perfil-hero__pie">
-          <span className="perfil-cuenta__rol">Mi asistencia</span>
-          <span className="perfil-hero__emblema">
-            <IconoPerfil nombre="calendario" size={32} />
-          </span>
-        </div>
-      </header>
-      <nav className="perfil-accesos" aria-label="Accesos de asistencia">
-        <a href="/alumnos">
-          <IconoPerfil nombre="clase" />
-          <span>Mis clases</span>
-        </a>
-        <a href="#asistencia-diaria">
-          <IconoPerfil nombre="calendario" />
-          <span>Elegir día</span>
-        </a>
-      </nav>
       <Mensaje aviso={aviso} />
 
       <section

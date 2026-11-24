@@ -3,8 +3,9 @@ import { useOperacion } from '../../hooks/useOperacion.js';
 import { apiFetch, leerRespuesta } from '../../lib/api.js';
 import { actualizarNavegacion } from '../../lib/navegacion.js';
 import { agruparClases } from '../../lib/turnos.js';
-import ImagenClase from '../ImagenClase.jsx';
 import Mensaje from '../Mensaje.jsx';
+import PortadaClase from '../PortadaClase.jsx';
+import IconoPerfil from '../perfiles/IconoPerfil.jsx';
 import TarjetaClase from '../TarjetaClase.jsx';
 
 export default function Clases() {
@@ -420,21 +421,17 @@ export default function Clases() {
               grupos.map((g) => (
                 <section
                   key={g.id}
-                  className="flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
+                  className="curso-tarjeta flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
                 >
-                  <ImagenClase nombre={g.nombre} />
+                  <PortadaClase nombre={g.nombre} turnos={g.turnos.length} />
                   <div className="flex flex-1 flex-col gap-3 p-4">
-                    <h2 className="text-lg font-bold">{g.nombre}</h2>
-                    <p className="text-sm text-gray-600">
-                      {g.turnos.length}{' '}
-                      {g.turnos.length === 1 ? 'turno disponible' : 'turnos disponibles'}
-                    </p>
                     <button
                       type="button"
-                      className="mt-auto min-h-11 rounded-xl bg-dojo-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-dojo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-dojo-600"
+                      aria-label={`Ver turnos de ${g.nombre}`}
+                      className="curso-tarjeta__accion mt-auto min-h-11 rounded-xl bg-dojo-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-dojo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-dojo-600"
                       onClick={() => elegirGrupo(g.id)}
                     >
-                      Ver turnos de {g.nombre}
+                      Ver turnos <IconoPerfil nombre="flecha" size={18} />
                     </button>
                   </div>
                 </section>

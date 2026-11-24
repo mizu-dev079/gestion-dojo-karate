@@ -255,7 +255,7 @@ export default function Postulaciones() {
           </fieldset>
         )}
         {clase && (
-          <div className="space-y-2">
+          <div className="postulacion-contexto space-y-2">
             <p className="text-sm font-medium text-gray-800">
               {clase.frecuencia?.join(', ')}
               {clase.edadMinima != null && (
@@ -269,7 +269,7 @@ export default function Postulaciones() {
             <p className="text-sm text-gray-600">
               {clase.horaInicio} – {clase.horaFin} · Prof. {clase.profesor}
             </p>
-            <IndicadorCupos disponibles={clase.cuposDisponibles} total={clase.cupos} />
+            <IndicadorCupos disponibles={clase.cuposDisponibles} total={clase.cupos} compacto />
           </div>
         )}
         <div>

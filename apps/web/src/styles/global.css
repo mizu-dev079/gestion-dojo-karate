@@ -2,6 +2,7 @@
 @import "./tema.css";
 @import "./perfiles.css";
 @import "./administracion.css";
+@import "./portal.css";
 
 /* Paleta única de Shinken Dojo: blanco, negro y rojo. */
 @theme {

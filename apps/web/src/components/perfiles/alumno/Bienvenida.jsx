@@ -3,7 +3,7 @@ import { chip, etiqueta } from '../../../lib/estilos.js';
 import { primerNombre } from '../../../lib/seguimiento.js';
 import IconoPerfil from '../IconoPerfil.jsx';
 
-export default function Bienvenida({ alumno }) {
+export default function Bienvenida({ alumno, children }) {
   const s = alumno.seguimiento;
   const estado = !s.plan
     ? { texto: 'Sin plan activo', estilo: etiqueta.neutro }
@@ -11,7 +11,8 @@ export default function Bienvenida({ alumno }) {
       ? { texto: 'Plan congelado', estilo: 'bg-white text-gray-900' }
       : { texto: 'Plan activo', estilo: etiqueta.activo };
   return (
-    <header className="perfil-hero">
+    <header className="perfil-hero alumno-membresia">
+      <p className="perfil-eyebrow">Tu entrenamiento</p>
       <h2 className="perfil-saludo">Hola, {primerNombre(alumno.nombre)}</h2>
       {alumno.clase && (
         <p className="mt-1 text-sm text-gray-300">
@@ -25,6 +26,7 @@ export default function Bienvenida({ alumno }) {
           <IconoPerfil nombre="clase" size={32} />
         </span>
       </div>
+      {children}
     </header>
   );
 }

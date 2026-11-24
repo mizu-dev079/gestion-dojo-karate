@@ -2,19 +2,24 @@ import { tarjeta, tituloTarjeta } from '../../../lib/estilos.js';
 import { cambioProgramado, pendientesAntesDelCambio, unidad } from '../../../lib/seguimiento.js';
 import IconoPerfil from '../IconoPerfil.jsx';
 
-export default function ResumenPlan({ alumno }) {
+export default function ResumenPlan({ alumno, compacto = false }) {
   const s = alumno.seguimiento;
+  const Contenedor = compacto ? 'div' : 'section';
+  const contenedor = compacto ? 'membresia-saldo' : tarjeta;
+  const titulo = compacto ? 'sr-only' : tituloTarjeta;
   if (!s.plan)
     return (
-      <section className={tarjeta} aria-labelledby={`plan-${alumno.id}`}>
-        <h2 id={`plan-${alumno.id}`} className={tituloTarjeta}>
+      <Contenedor className={contenedor} aria-labelledby={`plan-${alumno.id}`}>
+        <h2 id={`plan-${alumno.id}`} className={titulo}>
           <span className="perfil-icono">
             <IconoPerfil nombre="clase" />
           </span>
           Mis clases
         </h2>
-        <p className="mt-3 text-gray-700">Aún no tienes un plan activo.</p>
-      </section>
+        <p className={compacto ? 'membresia-sinplan' : 'mt-3 text-gray-700'}>
+          Aún no tienes un plan activo.
+        </p>
+      </Contenedor>
     );
 
   const cambio = cambioProgramado(s);
@@ -23,8 +28,8 @@ export default function ResumenPlan({ alumno }) {
   const renovaciones = s.pagos.filter((p) => p.restantes > 0).length;
 
   return (
-    <section className={tarjeta} aria-labelledby={`plan-${alumno.id}`}>
-      <h2 id={`plan-${alumno.id}`} className={tituloTarjeta}>
+    <Contenedor className={contenedor} aria-labelledby={`plan-${alumno.id}`}>
+      <h2 id={`plan-${alumno.id}`} className={titulo}>
         <span className="perfil-icono">
           <IconoPerfil nombre="clase" />
         </span>
@@ -83,6 +88,6 @@ export default function ResumenPlan({ alumno }) {
           </div>
         </div>
       )}
-    </section>
+    </Contenedor>
   );
 }

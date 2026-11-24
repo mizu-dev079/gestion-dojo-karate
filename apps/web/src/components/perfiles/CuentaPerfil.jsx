@@ -43,14 +43,13 @@ export default function CuentaPerfil({ usuario, perfil }) {
 
   return (
     <div className="perfil-page perfil-cuenta space-y-5">
-      <header className="perfil-hero">
-        {profesor && <p className="perfil-eyebrow">ÁREA DEL PROFESOR</p>}
-        <h2 className="perfil-saludo perfil-cuenta__usuario">{usuario}</h2>
-        <div className="perfil-hero__pie">
-          <span className="perfil-cuenta__rol">{profesor ? 'Profesor' : 'Alumno'}</span>
-          <span className="flex items-center justify-center text-[#efb7b2]">
-            <IconoPerfil nombre="cuenta" size={32} />
-          </span>
+      <header className="cuenta-identidad">
+        <span className="cuenta-avatar" aria-hidden="true">
+          {usuario.slice(0, 2).toUpperCase()}
+        </span>
+        <div>
+          <h2 className="perfil-cuenta__usuario">{usuario}</h2>
+          <p className="cuenta-identidad__perfil">{profesor ? 'Profesor' : 'Alumno'}</p>
         </div>
       </header>
       <nav
@@ -76,6 +75,7 @@ export default function CuentaPerfil({ usuario, perfil }) {
           type="button"
           onClick={() => toggleSeccion('seguridad')}
           aria-expanded={seccionActiva === 'seguridad'}
+          aria-controls="clave-cuenta"
           className="flex w-full min-h-13 items-center justify-between px-4 py-3 text-left text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-colors"
         >
           <div className="flex items-center gap-3">
@@ -97,6 +97,7 @@ export default function CuentaPerfil({ usuario, perfil }) {
           type="button"
           onClick={() => toggleSeccion('ayuda')}
           aria-expanded={seccionActiva === 'ayuda'}
+          aria-controls="ayuda-cuenta"
           className="flex w-full min-h-13 items-center justify-between px-4 py-3 text-left text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-colors"
         >
           <div className="flex items-center gap-3">
@@ -198,7 +199,10 @@ export default function CuentaPerfil({ usuario, perfil }) {
       )}
 
       {seccionActiva === 'ayuda' && (
-        <section className="rounded-2xl border border-gray-200/90 bg-white p-4 shadow-sm space-y-3">
+        <section
+          id="ayuda-cuenta"
+          className="rounded-2xl border border-gray-200/90 bg-white p-4 shadow-sm space-y-3"
+        >
           <div className="flex items-center justify-between border-b border-gray-100 pb-3">
             <div className="flex items-center gap-2">
               <span className="text-dojo-700">

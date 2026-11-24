@@ -1,4 +1,4 @@
-export default function IndicadorCupos({ disponibles, total }) {
+export default function IndicadorCupos({ disponibles, total, compacto = false }) {
   const cantidad = Number(disponibles);
   const capacidad = Number(total);
   const capacidadValida = Number.isFinite(capacidad) && capacidad >= 0 && cantidad <= capacidad;
@@ -23,6 +23,17 @@ export default function IndicadorCupos({ disponibles, total }) {
       : cantidad <= 2
         ? 'bg-amber-50 text-amber-900'
         : 'bg-dojo-50 text-dojo-800';
+  if (compacto)
+    return (
+      <p
+        className="cupos-resumen"
+        data-ocupacion={cantidad <= 0 ? 'completa' : cantidad <= 2 ? 'ultimos' : 'disponible'}
+      >
+        <span className="cupos-resumen__punto" aria-hidden="true" />
+        <span>{texto}</span>
+        {ocupados !== null && <span className="sr-only"> · {ocupados} ocupados</span>}
+      </p>
+    );
   return (
     <p className={`rounded-xl px-3 py-2 text-sm ${estilo}`}>
       <span className="block font-semibold">{texto}</span>
