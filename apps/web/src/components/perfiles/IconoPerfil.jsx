@@ -1,4 +1,7 @@
 const trazos = {
+  buscar: ['M21 21l-5-5', 'M18 10a8 8 0 1 0-16 0 8 8 0 0 0 16 0'],
+  filtros: ['M4 7h16M4 17h16', 'M8 4v6M16 14v6'],
+  actualizar: ['M20 7v5h-5', 'M4 17v-5h5', 'M6 7a7 7 0 0 1 12-1l2 3M4 15l2 3a7 7 0 0 0 12-1'],
   postulaciones: ['M8 4H5v17h14V4h-3', 'M9 3h6v4H9z', 'm8 13 2 2 5-5', 'M8 18h8'],
   cuenta: ['M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8', 'M4 21v-2a8 8 0 0 1 16 0v2'],
   seguridad: ['M5 10h14v11H5z', 'M8 10V7a4 4 0 0 1 8 0v3', 'M12 14v3'],

@@ -24,7 +24,7 @@ const normalizarNombre = (valor) =>
 
 function ListadoPersonas({ tipo, busqueda, buscar, children }) {
   return (
-    <section className={tarjeta}>
+    <section className={`${tarjeta} cuentas-directorio`}>
       <h2 className="perfil-titulo">
         <span className="perfil-icono">
           <IconoPerfil nombre="alumnos" />
@@ -32,7 +32,9 @@ function ListadoPersonas({ tipo, busqueda, buscar, children }) {
         {tipo === 'profesores' ? 'Profesores registrados' : 'Alumnos registrados'}
       </h2>
       <label className="block text-sm font-semibold">
-        Buscar {tipo === 'profesores' ? 'profesor' : 'alumno'} por nombre
+        <span className="sr-only">
+          Buscar {tipo === 'profesores' ? 'profesor' : 'alumno'} por nombre
+        </span>
         <input
           type="search"
           value={busqueda}
@@ -48,7 +50,7 @@ function ListadoPersonas({ tipo, busqueda, buscar, children }) {
 
 function FichaPersona({ nombre, children }) {
   return (
-    <details className="group/ficha overflow-hidden rounded-xl border border-gray-200 bg-white">
+    <details name="directorio-cuentas" className="group/ficha directorio-persona">
       <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 font-semibold focus-visible:outline-2 focus-visible:outline-dojo-600 [&::-webkit-details-marker]:hidden">
         <span className="registro-persona">
           <span className="registro-avatar" aria-hidden="true">

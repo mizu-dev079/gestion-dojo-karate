@@ -37,6 +37,7 @@ test('la cuenta del administrador conserva el origen y rechaza destinos ajenos',
     '/profesores',
     '/cuentas',
     '/cuentas/alumnos',
+    '/alumnos?alumno=1001',
   ]) {
     const cuenta = new URL(enlaceCuentaAdmin(ruta), 'https://dojo.test');
     assert.equal(origenCuentaAdmin(cuenta.search), ruta);
@@ -47,6 +48,9 @@ test('la cuenta del administrador conserva el origen y rechaza destinos ajenos',
     '//otro.test',
     'https://otro.test',
     '/clases?otra=1',
+    '/alumnos?alumno=0',
+    '/alumnos?alumno=https://otro.test',
+    '/alumnos?alumno=1001&alumno=1002',
   ]) {
     assert.equal(origenCuentaAdmin(`?volver=${encodeURIComponent(ruta)}`), '/clases');
     assert.equal(enlaceCuentaAdmin(ruta), '/usuario?volver=%2Fclases');

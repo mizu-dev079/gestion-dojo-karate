@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { botonPrincipal as boton, campo, botonSecundario as secundario } from '../lib/estilos.js';
 import { fechaVisible, hoyLima as hoy } from '../lib/fechas.js';
 
@@ -23,6 +23,10 @@ export default function FormularioAccion({
   cerrar,
   planes = [],
 }) {
+  const tituloRef = useRef(null);
+  useEffect(() => {
+    tituloRef.current?.focus();
+  }, []);
   const s = alumno.seguimiento;
   const accion = seleccion.accion;
   const planElegido = accion === 'configurarPlan' ? (s.proximoPlan ?? s.plan) : s.plan;
@@ -65,11 +69,10 @@ export default function FormularioAccion({
     if (await guardar(alumno.id, d)) cerrar();
   }
   return (
-    <form
-      onSubmit={enviar}
-      className="mt-4 space-y-4 rounded-xl border border-dojo-200 bg-dojo-50 p-4"
-    >
-      <h3 className="font-bold">{titulos[accion]}</h3>
+    <form onSubmit={enviar} className="formulario-gestion mt-4 space-y-4">
+      <h3 className="font-bold" ref={tituloRef} tabIndex={-1}>
+        {titulos[accion]}
+      </h3>
       <fieldset disabled={ocupado} className="space-y-4">
         {['activarPlan', 'configurarPlan'].includes(accion) && (
           <>
@@ -89,14 +92,22 @@ export default function FormularioAccion({
                 ))}
               </select>
             </label>
-            <p className="text-sm text-gray-600">
-              Límite inicial:{' '}
-              {planes.find((p) => p.cantidad === Number(cantidad))?.recuperaciones ?? 0}{' '}
-              recuperaciones por paquete, por inasistencias justificadas y con autorización manual.
-              Las clases se conservan hasta completarlas.{' '}
-              {accion === 'configurarPlan' &&
-                'El nuevo plan se mostrará cuando se terminen las clases pendientes. No se añaden clases hasta renovar.'}
-            </p>
+            {accion === 'configurarPlan' && (
+              <p className="text-sm text-gray-600">
+                El cambio se aplicará al terminar las clases de tu plan actual.
+              </p>
+            )}
+            <details className="ficha-detalles">
+              <summary>Condiciones del plan</summary>
+              <p className="text-sm text-gray-600">
+                Límite inicial:{' '}
+                {planes.find((p) => p.cantidad === Number(cantidad))?.recuperaciones ?? 0}{' '}
+                recuperaciones por paquete, por inasistencias justificadas y con autorización
+                manual. Las clases se conservan hasta completarlas.{' '}
+                {accion === 'configurarPlan' &&
+                  'El nuevo plan se mostrará cuando se terminen las clases pendientes. No se añaden clases hasta renovar.'}
+              </p>
+            </details>
             <fieldset>
               <legend className="font-semibold">Días del alumno</legend>
               <div className="flex flex-wrap gap-3">

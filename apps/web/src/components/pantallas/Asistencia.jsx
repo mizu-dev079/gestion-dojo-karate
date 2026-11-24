@@ -4,8 +4,10 @@ import { useFechaAsistencia } from '../../hooks/useFechaAsistencia.js';
 import { useOperacion } from '../../hooks/useOperacion.js';
 import { useSesion } from '../../hooks/useSesion.js';
 import { apiFetch, leerRespuesta } from '../../lib/api.js';
+import { etiquetaTurno } from '../../lib/clases.js';
 import { hoyLima as hoy } from '../../lib/fechas.js';
 import { etiquetasAsistencia as etiquetas } from '../../lib/seguimiento.js';
+import ImagenClase from '../ImagenClase.jsx';
 import Mensaje from '../Mensaje.jsx';
 import IconoPerfil from '../perfiles/IconoPerfil.jsx';
 import SelectorDiasAsistencia from '../SelectorDiasAsistencia.jsx';
@@ -193,7 +195,7 @@ export default function Asistencia() {
           <span className="perfil-icono">
             <IconoPerfil nombre="calendario" />
           </span>
-          Sesiones y asistencia
+          Registro diario
         </h2>
 
         <SelectorDiasAsistencia
@@ -208,12 +210,12 @@ export default function Asistencia() {
           disabled={ocupado || cargando}
         />
         <button
-          className={boton}
+          className="asistencia-actualizar"
           disabled={ocupado || cargando}
           type="button"
           onClick={() => ejecutar(cargar)}
         >
-          Actualizar lista
+          <IconoPerfil nombre="actualizar" size={17} /> Actualizar
         </button>
       </section>
       {!datos && (
@@ -225,89 +227,104 @@ export default function Asistencia() {
       )}
       {datos?.sesiones.length === 0 && <p>No hay sesiones asignadas para esta fecha.</p>}
       {datos?.sesiones.map((s) => (
-        <section
+        <details
           key={s.claseId}
-          className="space-y-3 rounded-2xl border border-gray-200 bg-white p-4"
+          name="asistencia-clases"
+          className="asistencia-turno rounded-2xl border border-gray-200 bg-white"
         >
-          <h3 className="font-bold">
-            {s.nivel} · {s.horaInicio}–{s.horaFin}
-            {s.turno && (
-              <span className="mt-1 block text-sm font-normal text-gray-600">{s.turno}</span>
-            )}
-          </h3>
-          <p className="text-sm">
-            {s.sede} ·{' '}
-            {s.estado === 'cancelada'
-              ? 'Cancelada por el dojo'
-              : s.estado === 'realizada'
-                ? 'Realizada'
-                : 'Programada'}
-          </p>
-          <p className="text-sm">
-            Profesor responsable: <strong>{s.profesor || 'Sin asignar'}</strong> ·{' '}
-            {etiquetas[s.asistenciaProfesor]}
-            {!s.profesorId && ' (requiere asignación por administración)'}
-          </p>
-          {s.estado !== 'cancelada' && (
-            <button
-              className={boton}
-              type="button"
-              disabled={ocupado || cargando}
-              onClick={() => setGestion(gestion === s.claseId ? null : s.claseId)}
-            >
-              Gestionar sesión
-            </button>
-          )}
-          {gestion === s.claseId && s.estado !== 'cancelada' && (
-            <GestionSesion
-              sesion={s}
-              profesores={datos.profesores}
-              ocupado={ocupado}
-              guardar={guardar}
-              cerrar={() => setGestion(null)}
-            />
-          )}
-          {s.estado === 'cancelada' && (
-            <p className="text-sm text-dojo-700">
-              No se descuenta saldo ni se utiliza recuperación. {s.auditoria.at(-1)?.motivo}
+          <summary className="asistencia-turno__titulo">
+            <ImagenClase nombre={s.nivel} compacta />
+            <span>
+              <strong>{s.nivel}</strong>
+              <span>
+                {etiquetaTurno(s) !== 'Horario' && `${etiquetaTurno(s)} · `}
+                {s.horaInicio}–{s.horaFin}
+                {s.estado === 'cancelada' && ' · Cancelada'}
+              </span>
+            </span>
+            <IconoPerfil nombre="flecha" size={18} />
+          </summary>
+          <div className="asistencia-turno__contenido space-y-3">
+            <p className="text-sm">
+              {s.sede} ·{' '}
+              {s.estado === 'cancelada'
+                ? 'Cancelada por el dojo'
+                : s.estado === 'realizada'
+                  ? 'Realizada'
+                  : 'Programada'}
             </p>
-          )}
-          <h4 className="font-semibold">
-            Alumnos · {s.alumnos.filter((a) => a.programado).length} programados
-          </h4>
-          {s.alumnos.length === 0 && (
-            <p className="text-sm">No hay alumnos inscritos en este grupo.</p>
-          )}
-          <ul className="space-y-3">
-            {s.alumnos.map((a) => (
-              <li key={a.id} className="rounded-xl border border-gray-200 p-3">
-                <p className="font-semibold">{a.nombre}</p>
-                <p className="text-sm text-gray-600">
-                  {etiquetas[a.estado] ?? a.estado} · {a.pendientes} clases pendientes
-                </p>
-                {s.estado !== 'cancelada' && a.programado && (
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {[
-                      ['presente', 'Presente'],
-                      ['falta', 'Faltó'],
-                      ['avisada', 'Avisó ausencia'],
-                    ].map(([estado, texto]) => (
-                      <button
-                        key={estado}
-                        type="button"
-                        className={boton}
-                        disabled={ocupado || (fecha > hoy() && estado !== 'avisada')}
-                        onClick={() => marcar(a, estado)}
-                      >
-                        {texto}
-                      </button>
-                    ))}
+            <p className="text-sm">
+              Profesor responsable: <strong>{s.profesor || 'Sin asignar'}</strong> ·{' '}
+              {etiquetas[s.asistenciaProfesor]}
+              {!s.profesorId && ' (requiere asignación por administración)'}
+            </p>
+            {s.estado !== 'cancelada' && (
+              <button
+                className={boton}
+                type="button"
+                disabled={ocupado || cargando}
+                onClick={() => setGestion(gestion === s.claseId ? null : s.claseId)}
+              >
+                Gestionar sesión
+              </button>
+            )}
+            {gestion === s.claseId && s.estado !== 'cancelada' && (
+              <GestionSesion
+                sesion={s}
+                profesores={datos.profesores}
+                ocupado={ocupado}
+                guardar={guardar}
+                cerrar={() => setGestion(null)}
+              />
+            )}
+            {s.estado === 'cancelada' && (
+              <p className="text-sm text-dojo-700">
+                No se descuenta saldo ni se utiliza recuperación. {s.auditoria.at(-1)?.motivo}
+              </p>
+            )}
+            <h4 className="font-semibold">
+              Alumnos · {s.alumnos.filter((a) => a.programado).length} programados
+            </h4>
+            {s.alumnos.length === 0 && (
+              <p className="text-sm">No hay alumnos inscritos en este grupo.</p>
+            )}
+            <ul className="asistencia-directorio">
+              {s.alumnos.map((a) => (
+                <li key={a.id} className="asistente-fila">
+                  <div className="asistente-datos">
+                    <p className="font-semibold">{a.nombre}</p>
+                    <p className="text-sm text-gray-600">
+                      {etiquetas[a.estado] ?? a.estado} · {a.pendientes} clases pendientes
+                    </p>
                   </div>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
+                  {s.estado !== 'cancelada' && a.programado && (
+                    <fieldset
+                      className="asistente-acciones"
+                      aria-label={`Asistencia de ${a.nombre}`}
+                    >
+                      {[
+                        ['presente', 'Presente'],
+                        ['falta', 'Faltó'],
+                        ['avisada', 'Avisó ausencia'],
+                      ].map(([estado, texto]) => (
+                        <button
+                          key={estado}
+                          type="button"
+                          className="asistente-boton"
+                          aria-pressed={a.estado === estado}
+                          disabled={ocupado || (fecha > hoy() && estado !== 'avisada')}
+                          onClick={() => marcar(a, estado)}
+                        >
+                          {texto}
+                        </button>
+                      ))}
+                    </fieldset>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </details>
       ))}
     </main>
   );

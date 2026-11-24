@@ -18,9 +18,6 @@ export default function MiClase({ alumno }) {
     ? alumno.seguimiento.plan.dias
     : (c.frecuencia ?? []);
   const filas = [
-    ['Turno', turno],
-    ['Días', dias.join(', ')],
-    ['Horario', c.horaInicio && c.horaFin ? `${c.horaInicio} a ${c.horaFin}` : ''],
     ['Profesor', c.profesor],
     ['Sede', c.sede],
   ].filter(([, valor]) => valor);
@@ -39,14 +36,26 @@ export default function MiClase({ alumno }) {
         </div>
         <ImagenClase nombre={c.nivel} compacta />
       </div>
-      <dl className="mt-3 divide-y divide-gray-100">
-        {filas.map(([nombre, valor]) => (
-          <div key={nombre} className="flex justify-between gap-4 py-2">
-            <dt className="text-sm text-gray-500">{nombre}</dt>
-            <dd className="text-right font-semibold text-gray-900">{valor}</dd>
-          </div>
-        ))}
-      </dl>
+      <div className="clase-horario">
+        <p>
+          {c.horaInicio && c.horaFin ? `${c.horaInicio} – ${c.horaFin}` : 'Horario por confirmar'}
+        </p>
+        <span>{dias.join(', ')}</span>
+        {turno && <span className="clase-horario__turno">{turno}</span>}
+      </div>
+      {filas.length > 0 && (
+        <details className="ficha-detalles">
+          <summary>Profesor y sede</summary>
+          <dl>
+            {filas.map(([nombre, valor]) => (
+              <div key={nombre}>
+                <dt>{nombre}</dt>
+                <dd>{valor}</dd>
+              </div>
+            ))}
+          </dl>
+        </details>
+      )}
     </section>
   );
 }

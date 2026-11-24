@@ -1,13 +1,13 @@
 /* Sistema visual del portal: componentes y composición de los tres perfiles. */
 :root {
-  --page-background: #f5f5f1;
-  --surface-subtle: #f1f2ed;
-  --text-primary: #202422;
-  --text-secondary: #454b47;
-  --text-muted: #646b66;
-  --border: #e3e6df;
-  --portal-radio: 1.4rem;
-  --portal-sombra: 0 5px 18px #20271e05;
+  --page-background: #f7f7f8;
+  --surface-subtle: #f2f2f4;
+  --text-primary: #202024;
+  --text-secondary: #48484f;
+  --text-muted: #68686f;
+  --border: #e7e7eb;
+  --portal-radio: 1.15rem;
+  --portal-sombra: 0 2px 8px #18181b03;
 }
 body {
   color: var(--text-primary);
@@ -55,7 +55,7 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"], [data-perfil="administ
 }
 .app-header {
   backdrop-filter: blur(16px);
-  background: #f5f5f1f5;
+  background: #f7f7f8f5;
   border-bottom: 1px solid #e7e8e360;
 }
 .app-header__row {
@@ -72,14 +72,14 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"], [data-perfil="administ
   height: 2.1rem;
 }
 .app-header .dojo-brand--compact .dojo-brand__name {
-  color: #535b54;
+  color: #5b5b63;
   font-size: 0.8rem;
   font-weight: 650;
 }
 .app-back,
 .app-account {
   background: #fff;
-  border: 1px solid #dfe3db;
+  border: 1px solid #e2e2e7;
   border-radius: 50%;
 }
 .admin-content > main,
@@ -95,7 +95,7 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"], [data-perfil="administ
 }
 .perfil-hero {
   border-radius: var(--portal-radio);
-  background: linear-gradient(125deg, #29312b 0%, #181d19 68%, #3a2422 100%);
+  background: linear-gradient(125deg, #28282c 0%, #19191d 68%, #3a2422 100%);
   border: 1px solid #ffffff12;
   padding: 1.5rem;
   box-shadow: 0 9px 22px #18231c12;
@@ -116,7 +116,7 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"], [data-perfil="administ
   font-weight: 750;
 }
 .portal-eyebrow {
-  color: #5a6656;
+  color: #62626b;
 }
 .perfil-saludo {
   letter-spacing: -0.04em;
@@ -148,7 +148,7 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"], [data-perfil="administ
   font-size: 2.1rem;
 }
 .perfil-resumen span {
-  color: #d4ddd3;
+  color: #dddddf;
   font-size: 0.8rem;
 }
 .perfil-tarjeta {
@@ -186,7 +186,7 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"], [data-perfil="administ
   padding: 0.55rem 0.2rem;
 }
 .perfil-accesos a + a {
-  border-left: 1px solid #eeefe9;
+  border-left: 1px solid #eeeef1;
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
 }
@@ -240,7 +240,7 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"], [data-perfil="administ
   font-size: 0.9rem;
 }
 .membresia-saldo .perfil-saldo-principal span {
-  color: #b4c0b2;
+  color: #c1c1c8;
   font-size: 0.8rem;
 }
 .membresia-saldo .perfil-plan-etapas {
@@ -264,7 +264,7 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"], [data-perfil="administ
   display: none;
 }
 .membresia-saldo .perfil-plan-etapas h3 {
-  color: #bac5b7;
+  color: #c2c2c9;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-size: 0.68rem;
@@ -294,13 +294,13 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"], [data-perfil="administ
   color: #f0f2ed;
 }
 .membresia-saldo .perfil-plan-vigente p + p {
-  color: #bcc7b9;
+  color: #c4c4cc;
 }
 .alumno-agenda > section {
   padding: 1.25rem;
 }
 .perfil-entrenamiento {
-  background: #f5f6f1;
+  background: #f5f5f7;
   border: 0;
 }
 .perfil-entrenamiento > p:first-child {
@@ -308,7 +308,7 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"], [data-perfil="administ
   font-size: 1.35rem;
 }
 .perfil-entrenamiento > p:first-child span {
-  color: #66705f;
+  color: #66666f;
   margin-top: 0.3rem;
   font-size: 0.9rem;
   font-weight: 500;
@@ -316,7 +316,7 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"], [data-perfil="administ
 }
 .perfil-entrenamiento button {
   background: #fff;
-  border-color: #dfe4d8;
+  border-color: #e2e2e7;
   width: auto;
   min-width: 8.5rem;
   min-height: 2.75rem;
@@ -341,7 +341,7 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"], [data-perfil="administ
   display: none;
 }
 .seguimiento-panel__flecha {
-  color: #6b7467;
+  color: #71717a;
   margin-left: auto;
 }
 .seguimiento-panel[open] .seguimiento-panel__flecha {
@@ -363,7 +363,7 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"], [data-perfil="administ
   overflow: hidden;
 }
 .curso-portada {
-  background: #eef0e8;
+  background: #eeeef1;
   justify-content: space-between;
   align-items: center;
   gap: 0.75rem;
@@ -385,7 +385,7 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"], [data-perfil="administ
   line-height: 1.1;
 }
 .curso-etiqueta {
-  color: #56614e;
+  color: #5d5d67;
   background: #ffffffb0;
   border: 1px solid #fff;
   border-radius: 0.45rem;
@@ -420,7 +420,7 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"], [data-perfil="administ
   display: flex;
 }
 .profesor-curso .perfil-clase-turno {
-  border-color: #edf0e8;
+  border-color: #ededf1;
   margin: 0;
   padding: 1rem 1.2rem;
 }
@@ -456,7 +456,7 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"], [data-perfil="administ
   overflow: hidden;
 }
 .sesion-profesor__cabecera {
-  background: #f0f2eb;
+  background: #f2f2f5;
   justify-content: space-between;
   align-items: center;
   gap: 0.75rem;
@@ -471,7 +471,7 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"], [data-perfil="administ
   line-height: 1.15;
 }
 .sesion-profesor__meta {
-  color: #5b6655;
+  color: #62626d;
   font-size: 0.8rem;
 }
 .sesion-profesor__cabecera .clase-imagen {
@@ -481,7 +481,7 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"], [data-perfil="administ
   margin: 0;
 }
 .sesion-profesor__presencia {
-  border-bottom: 1px solid #edf0e8;
+  border-bottom: 1px solid #ededf1;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.65rem;
@@ -493,8 +493,8 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"], [data-perfil="administ
   min-width: 0;
 }
 .presencia-icono {
-  color: #6c7567;
-  border: 1px solid #e5e8df;
+  color: #71717a;
+  border: 1px solid #e5e5eb;
   border-radius: 50%;
   place-items: center;
   width: 2.25rem;
@@ -508,9 +508,9 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"], [data-perfil="administ
 }
 .sesion-confirmar,
 .sesion-editar {
-  color: #40493a;
+  color: #484850;
   background: #fff;
-  border: 1px solid #dfe4d9;
+  border: 1px solid #e1e1e8;
   border-radius: 0.75rem;
   min-height: 2.75rem;
   padding: 0.55rem 0.8rem;
@@ -526,7 +526,7 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"], [data-perfil="administ
   margin-left: auto;
 }
 .sesion-profesor__formulario {
-  background: #f5f6f1;
+  background: #f5f5f7;
   border-radius: 0.85rem;
   margin: 0 1.2rem 1rem;
   padding: 1rem;
@@ -545,14 +545,14 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"], [data-perfil="administ
   font-weight: 750;
 }
 .sesion-contador {
-  color: #606b59;
-  background: #f1f4eb;
+  color: #686873;
+  background: #f4f4f6;
   border-radius: 1rem;
   padding: 0.2rem 0.6rem;
   font-size: 0.75rem;
 }
 .asistente-fila {
-  border-top: 1px solid #edf0e8;
+  border-top: 1px solid #ededf1;
   padding: 1rem 0;
 }
 .asistente-fila:first-child {
@@ -569,7 +569,7 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"], [data-perfil="administ
   min-width: 0;
 }
 .asistente-fila__estado {
-  color: #697260;
+  color: #6b6b75;
   margin-top: 0.2rem;
   font-size: 0.8rem;
 }
@@ -580,9 +580,9 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"], [data-perfil="administ
   display: grid;
 }
 .sesion-profesor .asistente-boton {
-  color: #59634e;
-  background: #fafbf8;
-  border: 1px solid #e1e6db;
+  color: #62626b;
+  background: #fafafb;
+  border: 1px solid #e1e1e6;
   border-radius: 0.7rem;
   min-height: 2.75rem;
   padding: 0.4rem 0.25rem;
@@ -591,8 +591,8 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"], [data-perfil="administ
 }
 .sesion-profesor .asistente-boton[aria-pressed="true"] {
   color: #fff;
-  background: #2a3529;
-  border-color: #2a3529;
+  background: #29292f;
+  border-color: #29292f;
 }
 .sesion-profesor .asistente-boton[aria-pressed="true"]:before {
   content: "✓ ";
@@ -609,27 +609,28 @@ html:is([data-perfil="profesor"], [data-perfil="alumno"], [data-perfil="administ
 }
 .admin-accesos {
   box-shadow: none;
-  background: #e9ece3;
+  background: #eeeef1;
   border: 0;
-  border-radius: 1.1rem;
+  border-radius: 1rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.25rem;
   margin: 0;
-  padding: 0.35rem;
+  padding: 0.25rem;
 }
 .admin-accesos .admin-link {
   border: 0;
   border-radius: 0.8rem;
-  flex-direction: row;
-  gap: 0.5rem;
-  min-height: 3rem;
-  padding: 0.45rem 0.5rem;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 3.5rem;
+  padding: 0.4rem 0.1rem;
 }
 .admin-accesos .admin-link + .admin-link {
   border: 0;
   border-radius: 0.8rem;
 }
 .admin-link__texto {
-  font-size: 0.85rem;
+  font-size: 0.73rem;
 }
 .admin-accesos .admin-link[aria-current="page"] {
   color: #a61b1b;
@@ -659,8 +660,8 @@ html[data-perfil="administrador"] .admin-content section:has(> #selectorClase) {
   font-size: 0.95rem;
 }
 .admin-alumno__resumen .registro-saldo {
-  color: #4b5b3d;
-  background: #f1f4ec;
+  color: #52525b;
+  background: #f3f3f5;
   border-radius: 0.5rem;
   padding: 0.4rem 0.55rem;
   font-size: 0.75rem;
@@ -739,7 +740,7 @@ html[data-perfil="administrador"] .admin-content section:has(> #selectorClase) {
   font-size: 1.15rem;
 }
 .selector-dias__fecha-completa {
-  color: #5f6b58;
+  color: #686873;
   font-size: 0.85rem;
 }
 .selector-dias__tira {
@@ -747,7 +748,7 @@ html[data-perfil="administrador"] .admin-content section:has(> #selectorClase) {
   margin-top: 1rem;
 }
 .selector-dias__tira > .selector-dias__dia {
-  background: #f1f3eb;
+  background: #f2f2f5;
   border: 0;
   border-radius: 0.85rem;
   flex-basis: 3.35rem;
@@ -762,7 +763,7 @@ html[data-perfil="administrador"] .admin-content section:has(> #selectorClase) {
   color: #fff;
 }
 .selector-dias__hoy {
-  background: #f4f5f0;
+  background: #f5f5f7;
   margin-top: 0.75rem;
 }
 .portal-vacio {
@@ -888,7 +889,7 @@ dialog::backdrop {
     padding: 2rem;
   }
   .login-portada {
-    background: #e8eddf;
+    background: #ededf0;
     border-radius: 2rem;
     flex-direction: column;
     justify-content: space-between;
@@ -898,7 +899,7 @@ dialog::backdrop {
   }
   .login-portada__sello {
     letter-spacing: 0.25em;
-    color: #68765a;
+    color: #656570;
     font-size: 0.7rem;
     display: block;
   }
@@ -910,6 +911,11 @@ dialog::backdrop {
   }
   .admin-accesos .admin-link {
     min-height: 3.3rem;
+    flex-direction: row;
+    gap: 0.6rem;
+  }
+  .admin-link__texto {
+    font-size: 0.85rem;
   }
 }
 @media (width <= 480px) {
@@ -1062,13 +1068,13 @@ details[open] > summary > .detalle-flecha {
 .postulacion-contexto {
   border-radius: 0.9rem;
   padding: 0.9rem;
-  background: #f3f5ed;
+  background: #f5f5f7;
 }
 .cupos-resumen {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  color: #546449;
+  color: #5e5e69;
   font-size: 0.8rem;
   font-weight: 650;
 }

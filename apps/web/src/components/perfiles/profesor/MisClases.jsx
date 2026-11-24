@@ -181,7 +181,7 @@ export default function MisClases() {
       {errorVisible}
       {/* Hero del profesor: Resumen general y acceso a solicitudes */}
       <header className="perfil-hero profesor-bienvenida">
-        <p className="perfil-eyebrow">ÁREA DEL PROFESOR</p>
+        <p className="perfil-eyebrow">Tus clases</p>
         <h2 className="perfil-saludo">
           {clasesDelProfesor[0]?.profesor
             ? `Hola, ${primerNombre(clasesDelProfesor[0].profesor)}`
@@ -212,7 +212,7 @@ export default function MisClases() {
               onClick={() => setMostrarSolicitudes(!mostrarSolicitudes)}
               className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-300 bg-amber-500/20 px-3.5 py-2 text-xs font-bold text-amber-200 hover:bg-amber-500/30 transition-colors"
             >
-              <span>🔔</span>
+              <IconoPerfil nombre="postulaciones" size={18} />
               <span>
                 {alumnosConSolicitudes.length}{' '}
                 {alumnosConSolicitudes.length === 1 ? 'solicitud pendiente' : 'solicitudes'}
@@ -227,7 +227,7 @@ export default function MisClases() {
         <section className="rounded-2xl border-2 border-amber-200 bg-amber-50/50 p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="font-bold text-sm text-amber-900 flex items-center gap-2">
-              <span>🔔</span> Solicitudes pendientes de revisión
+              <IconoPerfil nombre="postulaciones" size={18} /> Solicitudes pendientes de revisión
             </h3>
             <button
               type="button"
@@ -263,7 +263,7 @@ export default function MisClases() {
             disabled={cargando || ocupado}
             className="text-xs font-semibold text-dojo-700 hover:underline disabled:opacity-50"
           >
-            {cargando ? 'Actualizando…' : '↻ Actualizar'}
+            {cargando ? 'Actualizando…' : 'Actualizar'}
           </button>
         </div>
 

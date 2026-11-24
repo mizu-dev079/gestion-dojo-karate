@@ -131,7 +131,7 @@ export default function CuentaPerfil({ usuario, perfil }) {
             <button
               type="button"
               onClick={() => setSeccionActiva(null)}
-              className="text-xs font-semibold text-gray-500 hover:text-gray-800"
+              className="text-sm font-semibold text-gray-500 hover:text-gray-800"
             >
               ✕ Cerrar
             </button>
@@ -139,7 +139,7 @@ export default function CuentaPerfil({ usuario, perfil }) {
 
           <form onSubmit={cambiarClave} aria-busy={guardando} className="space-y-4">
             <fieldset disabled={guardando} className="space-y-4">
-              <div className="text-xs font-semibold text-gray-700">
+              <div className="text-sm font-semibold text-gray-700">
                 <label htmlFor={actualId} className="block mb-1">
                   Contraseña actual
                 </label>
@@ -153,7 +153,7 @@ export default function CuentaPerfil({ usuario, perfil }) {
                   disabled={guardando}
                 />
               </div>
-              <div className="text-xs font-semibold text-gray-700">
+              <div className="text-sm font-semibold text-gray-700">
                 <label htmlFor={nuevaId} className="block mb-1">
                   Nueva contraseña
                 </label>
@@ -168,11 +168,11 @@ export default function CuentaPerfil({ usuario, perfil }) {
                   disabled={guardando}
                 />
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-sm text-gray-500">
                 Mínimo 8 caracteres. Al guardar, se cerrará tu sesión.
               </p>
               {error && (
-                <p role="alert" className="rounded-xl bg-dojo-50 p-2.5 text-xs text-dojo-800">
+                <p role="alert" className="rounded-xl bg-dojo-50 p-2.5 text-sm text-dojo-800">
                   {error}
                 </p>
               )}
@@ -213,17 +213,17 @@ export default function CuentaPerfil({ usuario, perfil }) {
             <button
               type="button"
               onClick={() => setSeccionActiva(null)}
-              className="text-xs font-semibold text-gray-500 hover:text-gray-800"
+              className="text-sm font-semibold text-gray-500 hover:text-gray-800"
             >
               ✕ Cerrar
             </button>
           </div>
-          <p className="text-xs text-gray-600 leading-relaxed">
+          <p className="text-sm text-gray-600 leading-relaxed">
             Consulta la guía del dojo para resolver dudas sobre clases, asistencia y seguimiento.
           </p>
           <a
             href={ayuda}
-            className="flex min-h-11 items-center justify-between rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs font-semibold text-gray-800 hover:bg-gray-100 hover:border-gray-300 transition-colors"
+            className="flex min-h-11 items-center justify-between rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-sm font-semibold text-gray-800 hover:bg-gray-100 hover:border-gray-300 transition-colors"
           >
             <span>Guía de uso e información del sistema</span>
             <span className="text-gray-400">

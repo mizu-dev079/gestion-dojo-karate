@@ -1,6 +1,7 @@
 import { fechaValida } from './fechas.js';
 
 const validar = {
+  alumno: (v) => /^\d+$/.test(v) && Number(v) > 0,
   inscripcion: (v) => /^\d+$/.test(v) && Number(v) > 0,
   volver: (v) => destinoInterno(v, ['/postulaciones'], '') !== '',
   turno: (v) => /^\d+$/.test(v) && Number(v) > 0,
@@ -18,7 +19,7 @@ export function destinoInterno(valor, rutas, defecto) {
   const parametros = new URLSearchParams(consulta);
   const permitidos =
     ruta === '/alumnos'
-      ? ['turno', 'seccion', 'fecha']
+      ? ['turno', 'seccion', 'fecha', 'alumno']
       : ruta === '/calendario'
         ? ['turno', 'fecha']
         : ruta === '/clases'

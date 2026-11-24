@@ -48,7 +48,7 @@ export default function DetalleClase({
         <button
           type="button"
           onClick={onVolver}
-          className="inline-flex min-h-9 items-center gap-1.5 rounded-lg text-xs font-semibold text-gray-600 hover:text-dojo-700 transition-colors focus:outline-none"
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-lg text-xs font-semibold text-gray-600 hover:text-dojo-700 transition-colors focus:outline-none"
         >
           <svg
             aria-hidden="true"
@@ -67,7 +67,7 @@ export default function DetalleClase({
       </div>
 
       {/* Tarjeta oscura de la clase (identidad visual .perfil-hero) */}
-      <header className="perfil-hero">
+      <header className="perfil-hero clase-detalle-hero">
         <ImagenClase nombre={nombreClase} compacta />
         <p className="perfil-eyebrow">{clase.sede || 'SEDE POR ASIGNAR'}</p>
         <h2 className="perfil-saludo break-words">{nombreClase}</h2>
@@ -78,18 +78,10 @@ export default function DetalleClase({
           {diasTexto || 'Días por confirmar'} · {clase.horaInicio} – {clase.horaFin}
         </p>
 
-        <div className="perfil-resumen">
-          <div>
-            <strong>{alumnosClase.length}</strong>
-            <span>{alumnosClase.length === 1 ? 'Alumno inscrito' : 'Alumnos inscritos'}</span>
-          </div>
-          {clase.cupos !== undefined && clase.cupos !== null && (
-            <div>
-              <strong>{clase.cupos}</strong>
-              <span>Cupos del grupo</span>
-            </div>
-          )}
-        </div>
+        <p className="clase-detalle-cupos">
+          {alumnosClase.length} alumnos
+          {clase.cupos !== undefined && clase.cupos !== null ? ` · ${clase.cupos} cupos` : ''}
+        </p>
       </header>
 
       {/* Pestañas de navegación independientes fuera de la tarjeta oscura */}
@@ -100,6 +92,7 @@ export default function DetalleClase({
         <button
           type="button"
           onClick={() => elegirPestaña('alumnos')}
+          aria-pressed={pestaña === 'alumnos'}
           className={`min-h-11 flex-1 sm:flex-none sm:px-6 border-b-2 text-xs font-bold transition-colors ${
             pestaña === 'alumnos'
               ? 'border-dojo-600 text-dojo-700'
@@ -111,6 +104,7 @@ export default function DetalleClase({
         <button
           type="button"
           onClick={() => elegirPestaña('asistencia')}
+          aria-pressed={pestaña === 'asistencia'}
           className={`min-h-11 flex-1 sm:flex-none sm:px-6 border-b-2 text-xs font-bold transition-colors ${
             pestaña === 'asistencia'
               ? 'border-dojo-600 text-dojo-700'

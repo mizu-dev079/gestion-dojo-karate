@@ -374,11 +374,11 @@ export default function Postulaciones() {
                   key={postulacion.id}
                   id={`postulacion-${postulacion.id}`}
                   aria-label={`Postulación de ${postulacion.nombre}`}
-                  className="space-y-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
+                  className="postulacion-ficha space-y-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="break-all font-mono text-xs text-gray-500">
-                      SOL-{postulacion.id}
+                    <p className="text-xs text-gray-500">
+                      {fechaTexto(postulacion.fechaPostulacion)}
                     </p>
                     <span className={`rounded-full px-2 py-1 text-xs font-semibold ${estilo}`}>
                       {etiqueta}
@@ -403,21 +403,29 @@ export default function Postulaciones() {
                     )}
                     <div>
                       <h2 className="break-words font-bold text-gray-900">{postulacion.nombre}</h2>
-                      <p className="mt-1 break-all text-sm text-gray-600">{postulacion.correo}</p>
-                      <p className="mt-1 text-sm text-gray-600">{postulacion.telefono}</p>
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500">
-                    {fechaTexto(postulacion.fechaPostulacion)}
-                  </p>
-                  <p className="rounded-xl bg-dojo-50 px-3 py-2 text-sm font-semibold text-dojo-800">
+
+                  <p className="text-sm text-gray-500">
                     {postulacion.nivel} · {postulacion.sede}
                   </p>
                   <details>
                     <summary className="flex min-h-11 cursor-pointer items-center text-sm font-medium text-gray-600">
-                      Datos adicionales
+                      Ver datos del postulante
                     </summary>
                     <dl className="space-y-2 text-sm text-gray-600">
+                      <div>
+                        <dt className="font-semibold">Código</dt>
+                        <dd>SOL-{postulacion.id}</dd>
+                      </div>
+                      <div>
+                        <dt className="font-semibold">Teléfono</dt>
+                        <dd>{postulacion.telefono || 'No registrado'}</dd>
+                      </div>
+                      <div>
+                        <dt className="font-semibold">Correo</dt>
+                        <dd className="break-all">{postulacion.correo || 'No registrado'}</dd>
+                      </div>
                       <div>
                         <dt className="font-semibold">Fecha de nacimiento</dt>
                         <dd>{postulacion.fechaNacimiento || 'No registrada'}</dd>
@@ -426,8 +434,8 @@ export default function Postulaciones() {
                         <div>
                           <dt className="font-semibold">Apoderado</dt>
                           <dd className="break-words">{postulacion.nombreCompletoApoderado}</dd>
-                          <dd className="break-all">{postulacion.correoApoderado}</dd>
                           <dd>{postulacion.telefonoApoderado}</dd>
+                          <dd className="break-all">{postulacion.correoApoderado}</dd>
                         </div>
                       )}
                     </dl>
